@@ -192,6 +192,11 @@ const handleDropdownFocusLoss = ({ relatedTarget, currentTarget }) => {
 			gap: 1rem;
 		}
 	}
+	@media only screen and (max-width: 500px) { 
+  		nav { 
+			display: none; 
+		} 
+}
 
 	/* Light Mode Styles (Default) */
 	:global(body.light-mode) {

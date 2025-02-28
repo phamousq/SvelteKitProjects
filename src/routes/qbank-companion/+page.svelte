@@ -6,7 +6,7 @@
 	let correctCount = $state(0);
 	let incorrectCount = $state(0);
 	let percentCorrect = $derived(
-		~~((correctCount / (correctCount + incorrectCount)) * 100).toFixed(1)
+		isNaN(+((correctCount / (correctCount + incorrectCount)) * 100).toFixed(1)) ? 100 : ((correctCount / (correctCount + incorrectCount)) * 100).toFixed(1)
 	);
 	let history = $state([]);
 	let previousTimestamp = new Date();
