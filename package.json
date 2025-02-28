@@ -17,6 +17,7 @@
 		"@sveltejs/adapter-static": "^3.0.8",
 		"@sveltejs/kit": "^2.0.0",
 		"@sveltejs/vite-plugin-svelte": "^4.0.0",
+		"@types/node": "^22.13.7",
 		"flowbite": "^3.1.2",
 		"flowbite-svelte": "^0.48.4",
 		"prettier": "^3.3.2",
