@@ -6,7 +6,6 @@
 
 <script lang="ts">
 	import { onMount } from 'svelte';
-	export const prerender = true;
 	let { children } = $props();
 	let routes: string[] = $state([]);
 	// Dark mode state
