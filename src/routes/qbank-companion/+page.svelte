@@ -21,6 +21,10 @@
 		if (storedCorrect) correctCount = parseInt(storedCorrect);
 		if (storedIncorrect) incorrectCount = parseInt(storedIncorrect);
 		if (storedHistory) history = JSON.parse(storedHistory);
+		window.addEventListener('keydown', handleKeyDown);
+		return () => {
+			window.removeEventListener('keydown', handleKeyDown);
+		};
 	});
 
 	$effect(() => {
@@ -142,6 +146,9 @@
 			previousTimestamp = new Date();
 		}
 	}
+	function resetTimer() {
+		previousTimestamp = new Date();
+	}
 
 	function updateNotes(index, notes) {
 		history[index].notes = notes;
@@ -172,7 +179,16 @@
     const averageMilliseconds = totalMilliseconds / history.length;
     return formatTimeDifference(averageMilliseconds);
   }
-	
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === 'd') {
+      incrementCorrect();
+    } else if (event.key === 'f') {
+      incrementIncorrect();
+    } else if (event.key === 'r') {
+	  resetTimer();
+	}
+
+  }
 </script>
 
 <div class="wrapper">
@@ -286,8 +302,7 @@
 		color: #4b4b4b;
 	}
 
-	.reset-button, .export-button,
-	.undo-button {
+	.reset-button, .export-button {
 		padding: 10px 20px;
 		color: white;
 		border: none;
@@ -302,9 +317,6 @@
 		background-color: #28a745;
 	}
 
-	.undo-button {
-		background-color: #6c757d;
-	}
 
 	.wrapper {
 		display: flex;
@@ -313,13 +325,6 @@
 		align-items: center;
 	}
 
-	.wrapper-row {
-		display: flex;
-		flex-direction: row;
-		justify-content: space-around;
-		gap: 10px;
-		width: 100%;
-	}
 
 	.history-table {
 		margin-top: 20px;
@@ -360,7 +365,6 @@
 
 
 	:global(body.dark-mode) .reset-button,
-	:global(body.dark-mode) .undo-button,
 	:global(body.dark-mode) .export-button {
 		background-color: #343a40; /* Darker button background */
 		color: #ffffff; /* White text on dark buttons */
