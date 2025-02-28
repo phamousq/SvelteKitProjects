@@ -219,9 +219,7 @@
 </div>
 
 <style>
-
-
-	.export-button {
+.export-button {
 		padding: 10px 20px;
 		background-color: #28a745;
 		color: white;
@@ -233,22 +231,25 @@
 	}
 	.scoreboard {
 		display: flex;
+		flex-direction: row;
 		justify-content: center;
-		align-items: center;
 		flex-wrap: wrap;
 		gap: 5px;
-		padding: 10px;
+		padding: 5px;
 		font-family: sans-serif;
 	}
 
 	.counter-box {
+		display: flex;
+		flex-direction: column;
 		border: 2px solid #ccc;
 		padding: 20px;
 		text-align: center;
 		cursor: pointer;
-		min-width: 150px;
 		border-radius: 8px;
 		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+		flex-wrap: wrap;
+		min-width: 250px;
 	}
 
 	.correct {
