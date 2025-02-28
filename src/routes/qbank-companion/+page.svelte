@@ -5,14 +5,13 @@
 
 	let correctCount = $state(0);
 	let incorrectCount = $state(0);
+	let countComplete = $derived(correctCount + incorrectCount);
 	let percentCorrect = $derived(
-		isNaN(+((correctCount / (correctCount + incorrectCount)) * 100).toFixed(1)) ? 100 : ((correctCount / (correctCount + incorrectCount)) * 100).toFixed(1)
+		isNaN(+((correctCount / countComplete) * 100).toFixed(1)) ? 100 : ((correctCount / countComplete) * 100).toFixed(1)
 	);
 	let history = $state([]);
 	let previousTimestamp = new Date();
 	let undoHistory = $state([]);
-
-	
 
 	onMount(() => {
 		const storedCorrect = localStorage.getItem('correctCount');
@@ -148,7 +147,31 @@
 		history[index].notes = notes;
 		history = [...history]; // Trigger reactivity
 	}
+	function calculateAverageTimeDifference() {
+    if (history.length === 0) return '0s';
 
+    const totalMilliseconds = history.reduce((sum, item) => {
+      const timeParts = item.timeDifference.split(/m |s/);
+      let minutes = 0;
+      let seconds = 0;
+
+      if (timeParts.length === 3) {
+        minutes = parseInt(timeParts[0]);
+        seconds = parseInt(timeParts[1]);
+      } else if (timeParts.length === 2 && item.timeDifference.includes('m')) {
+        minutes = parseInt(timeParts[0]);
+      } else if (timeParts.length === 2 && item.timeDifference.includes('s')) {
+        seconds = parseInt(timeParts[0]);
+      } else if (timeParts.length === 1) {
+        seconds = parseInt(timeParts[0]);
+      }
+
+      return sum + (minutes * 60 + seconds) * 1000;
+    }, 0);
+
+    const averageMilliseconds = totalMilliseconds / history.length;
+    return formatTimeDifference(averageMilliseconds);
+  }
 	
 </script>
 
@@ -193,9 +216,9 @@
 	<table>
 		<thead>
 			<tr>
-				<th>Question</th>
+				<th>#{countComplete}</th>
 				<th>{percentCorrect}%</th>
-				<th>Time Taken</th>
+				<th>{calculateAverageTimeDifference()}</th>
 				<th>Notes</th>
 			</tr>
 		</thead>
