@@ -2,6 +2,7 @@
 <link href="https://cdn.jsdelivr.net/npm/daisyui@2.11.0/dist/full.css" rel="stylesheet" type="text/css" />
 <script src="https://cdn.tailwindcss.com"></script>
 </svelte:head>
+export const prerender = true;
 
 <script lang="ts">
 	import { onMount } from 'svelte';
