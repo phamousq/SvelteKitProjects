@@ -21,10 +21,10 @@
 		if (storedCorrect) correctCount = parseInt(storedCorrect);
 		if (storedIncorrect) incorrectCount = parseInt(storedIncorrect);
 		if (storedHistory) history = JSON.parse(storedHistory);
-		window.addEventListener('keydown', handleKeyDown);
-		return () => {
-			window.removeEventListener('keydown', handleKeyDown);
-		};
+		// window.addEventListener('keydown', handleKeyDown);
+		// return () => {
+		// 	window.removeEventListener('keydown', handleKeyDown);
+		// };
 	});
 
 	$effect(() => {
@@ -179,16 +179,16 @@
     const averageMilliseconds = totalMilliseconds / history.length;
     return formatTimeDifference(averageMilliseconds);
   }
-  function handleKeyDown(event: KeyboardEvent) {
-    if (event.key === 'd') {
-      incrementCorrect();
-    } else if (event.key === 'f') {
-      incrementIncorrect();
-    } else if (event.key === 'r') {
-	  resetTimer();
-	}
+//   function handleKeyDown(event: KeyboardEvent) {
+//     if (event.key === 'd') {
+//       incrementCorrect();
+//     } else if (event.key === 'f') {
+//       incrementIncorrect();
+//     } else if (event.key === 'r') {
+// 	  resetTimer();
+// 	}
 
-  }
+//   }
 </script>
 
 <div class="wrapper">
