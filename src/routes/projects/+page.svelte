@@ -9,10 +9,10 @@
 
 </script>
 
-<div>
-    <h1>Projects (API, SSR)</h1>
+<div style=" padding: 20px;">
+    <!-- <h1>Projects (API, SSR)</h1> -->
 
-    <ol style="">
+    <ol>
         {#each routes as route}
             <li>
                 <a href="/{route}">{route}</a>
@@ -22,5 +22,8 @@
 </div>
 
 <style>
-
+    ol li {
+    list-style: decimal;
+    list-style-position: inside;
+}
 </style>
