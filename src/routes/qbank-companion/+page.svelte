@@ -154,7 +154,7 @@
 
 <div class="wrapper">
 	<div>
-		<h1 style="font-size: 56px;">Question: {incorrectCount + correctCount + 1}</h1>
+		<h1 style="font-size: 32px; font-weight: bold;">Question: {incorrectCount + correctCount + 1}</h1>
 	</div>
 </div>
 
