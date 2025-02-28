@@ -182,14 +182,17 @@
 </div>
 
 <div class="scoreboard">
-	<button class="counter-box correct" style="flex-grow: 1" onclick={incrementCorrect}>
+	<button class="counter-box correct" style="flex-grow: 10" onclick={incrementCorrect}>
 		<h2>Correct</h2>
 		<p>{correctCount}</p>
 	</button>
 
-	<button class="counter-box incorrect" style="flex-grow: 1" onclick={incrementIncorrect}>
+	<button class="counter-box incorrect" style="flex-grow: 10" onclick={incrementIncorrect}>
 		<h2>Incorrect</h2>
 		<p>{incorrectCount}</p>
+	</button>
+	<button class="counter-box undo" style="flex-grow: 1" onclick={undoLastAction}>
+		<h2>Undo</h2>
 	</button>
 </div>
 
@@ -207,10 +210,9 @@
 	/>
 </div>
 
-<div class="wrapper-row">
+<!-- <div class="wrapper-row">
 	<button class="undo-button" onclick={undoLastAction}>Undo</button>
-	<button class="reset-button" onclick={resetCounts}>Reset</button>
-</div>
+</div> -->
 
 <div class="history-table">
 	<table>
@@ -239,19 +241,11 @@
 </div>
 <div class="wrapper">
 	<button class="export-button" onclick={exportCSV}>Export CSV</button>
+
+	<button class="reset-button" onclick={resetCounts}>Reset</button>
 </div>
 
 <style>
-.export-button {
-		padding: 10px 20px;
-		background-color: #28a745;
-		color: white;
-		border: none;
-		border-radius: 5px;
-		cursor: pointer;
-		margin-top: 20px;
-		width: 50%;
-	}
 	.scoreboard {
 		display: flex;
 		flex-direction: row;
@@ -286,15 +280,26 @@
 		border-color: #f5c6cb;
 		color: #721c24;
 	}
+	.undo {
+		background-color: #c8c8c8;
+		border-color: #a0a0a0;
+		color: #4b4b4b;
+	}
 
-	.reset-button,
+	.reset-button, .export-button,
 	.undo-button {
-		background-color: #007bff;
+		padding: 10px 20px;
 		color: white;
 		border: none;
 		border-radius: 5px;
 		cursor: pointer;
 		width: 40%;
+	}
+	.reset-button {
+		background-color: #007bff;
+	}
+	.export-button {
+		background-color: #28a745;
 	}
 
 	.undo-button {
