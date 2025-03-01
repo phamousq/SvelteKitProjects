@@ -21,6 +21,7 @@
 	let undoHistory = $state([]);
 	let source = $state(''); 
 	let csvLoaded = $state(false);
+	let currentNotes = $state('');
 	
 	// Date pagination variables
 	let currentDate = $state(new Date());
@@ -147,10 +148,12 @@
 			question: dailyQuestionCount,
 			result: 'Correct',
 			timeDifference: timeDifference,
-			notes: '',
+			notes: currentNotes,
 			datetime: currentTimestamp.toISOString(),
 			source: source
 		};
+		clearInputField('notes-input');
+
 
 		undoHistory = [
 			...undoHistory,
@@ -180,10 +183,11 @@
 			question: dailyQuestionCount,
 			result: 'Incorrect',
 			timeDifference: timeDifference,
-			notes: '',
+			notes: currentNotes,
 			datetime: currentTimestamp.toISOString(),
 			source: source
 		};
+		clearInputField('notes-input');
 
 		undoHistory = [
 			...undoHistory,
@@ -451,6 +455,13 @@
 		let dictionary = Object.fromEntries(days.map(x => [x.label, x.count]));
 		return days;
 	});
+
+	function clearInputField(inputId: string) {
+	const inputField = document.getElementById(inputId) as HTMLInputElement | null;
+	if (inputField) {
+		inputField.value = '';
+	}
+	}
 	
 </script>
 <main>
@@ -486,6 +497,16 @@
 		</button>
 	</div>
 	
+	<div class="source-input-container" style="padding-top: 10px">
+		<label for="notes-input">Notes:</label>
+		<input 
+			id="notes-input" 
+			type="text" 
+			bind:value={currentNotes} 
+			placeholder="Enter notes..."
+			class="source-input"
+		/>
+	</div>	
 	<div style="display: flex; padding-left: 10px; padding-right: 10px">
 		<Progressbar
 			progress={visiblePercentCorrect}
