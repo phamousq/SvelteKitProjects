@@ -341,7 +341,7 @@ function _page($$payload, $$props) {
   };
   const each_array = ensure_array_like(filteredHistory);
   const each_array_1 = ensure_array_like(lastSevenDaysData().reverse());
-  $$payload.out += `<main><div class="source-input-container svelte-szy1xe" style="padding-top: 10px"><label for="source-input">Source:</label> <input id="source-input" type="text"${attr("value", source)} placeholder="Enter source..." class="source-input svelte-szy1xe"></div> <div class="wrapper svelte-szy1xe"><div><h1 style="font-size: 32px; font-weight: bold;">Question: ${escape_html(dailyQuestionCount)}</h1></div></div> <div class="scoreboard svelte-szy1xe"><button class="counter-box correct svelte-szy1xe" style="flex-grow: 10"><h2>Correct</h2> <p>${escape_html(visibleCorrectCount)}</p></button> <button class="counter-box incorrect svelte-szy1xe" style="flex-grow: 10"><h2>Incorrect</h2> <p>${escape_html(visibleIncorrectCount)}</p></button> <button class="counter-box undo svelte-szy1xe" style="flex-grow: 1"><h2>Undo</h2></button></div> <div style="display: flex; padding-left: 10px; padding-right: 10px">`;
+  $$payload.out += `<main><div style="display: flex; padding-left: 10px; padding-right: 10px">`;
   Progressbar($$payload, {
     progress: visiblePercentCorrect,
     animate: true,
@@ -353,7 +353,7 @@ function _page($$payload, $$props) {
     labelInsideClass: "bg-green-600 text-green-100 text-base font-medium text-center p-1 leading-none rounded-full",
     class: "mb-8"
   });
-  $$payload.out += `<!----></div> <div class="date-navigation svelte-szy1xe"><button class="date-nav-button svelte-szy1xe">&lt; Previous Day</button> <div class="current-date svelte-szy1xe"><button>${escape_html(formatDate(currentDate))}</button></div> <button class="date-nav-button svelte-szy1xe"${attr("disabled", isToday(currentDate), true)}>Next Day ></button></div> `;
+  $$payload.out += `<!----></div> <div class="source-input-container svelte-szy1xe" style="padding-top: 10px"><label for="source-input">Source:</label> <input id="source-input" type="text"${attr("value", source)} placeholder="Enter source..." class="source-input svelte-szy1xe"></div> <div class="wrapper svelte-szy1xe"><div><h1 style="font-size: 32px; font-weight: bold;">Question: ${escape_html(dailyQuestionCount)}</h1></div></div> <div class="scoreboard svelte-szy1xe"><button class="counter-box correct svelte-szy1xe" style="flex-grow: 10"><h2>Correct</h2> <p>${escape_html(visibleCorrectCount)}</p></button> <button class="counter-box incorrect svelte-szy1xe" style="flex-grow: 10"><h2>Incorrect</h2> <p>${escape_html(visibleIncorrectCount)}</p></button> <button class="counter-box undo svelte-szy1xe" style="flex-grow: 1"><h2>Undo</h2></button></div> <div class="date-navigation svelte-szy1xe"><button class="date-nav-button svelte-szy1xe">&lt; Previous Day</button> <div class="current-date svelte-szy1xe"><button>${escape_html(formatDate(currentDate))}</button></div> <button class="date-nav-button svelte-szy1xe"${attr("disabled", isToday(currentDate), true)}>Next Day ></button></div> `;
   if (filteredHistory.length > 0) {
     $$payload.out += "<!--[-->";
     $$payload.out += `<div class="filtered-stats svelte-szy1xe"><p>${escape_html(filteredHistory.length)} questions on ${escape_html(formatDate(currentDate))}: <span class="correct-stat svelte-szy1xe">${escape_html(visibleCorrectCount)}</span> / <span class="incorrect-stat svelte-szy1xe">${escape_html(visibleIncorrectCount)}</span> (${escape_html(visiblePercentCorrect)}%)</p></div>`;
