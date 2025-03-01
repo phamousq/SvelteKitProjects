@@ -3,6 +3,13 @@
 	import { Progressbar, Button } from 'flowbite-svelte';
 	import { sineOut } from 'svelte/easing';
 
+	import { LayerCake, Svg } from 'layercake';
+  
+    import Line from '../_components/Line.svelte';
+    import Area from '../_components/Area.svelte';
+    import AxisX from '../_components/AxisX.svelte';
+    import AxisY from '../_components/AxisY.svelte';
+
 	let correctCount = $state(0);
 	let incorrectCount = $state(0);
 	let countComplete = $derived(correctCount + incorrectCount);
@@ -437,9 +444,11 @@
 			days.push({
 				date,
 				count: dailyHistory.length,
-				label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) // Changed to show date
+				label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 			});
 		}
+
+		let dictionary = Object.fromEntries(days.map(x => [x.label, x.count]));
 		return days;
 	});
 	
@@ -549,7 +558,7 @@
 				{/each}
 				{#if filteredHistory.length === 0}
 					<tr>
-						<td colspan="5" class="empty-message">No entries for this date. Add new entries or navigate to a different date.</td>
+						<td colspan="5" class="empty-message">No entries for this date.</td>
 					</tr>
 				{/if}
 			</tbody>
@@ -575,9 +584,33 @@
 	<div class="wrapper">Percent Correct: {percentCorrect}%</div>
 
 
-	{#each lastSevenDaysData() as day}
-		{day.count}, 
-	{/each} 
+	<div class="wrapper">
+		<h3>Last 7 Days:</h3>
+		<ul>
+			{#each lastSevenDaysData().reverse() as day}
+				<li>{day.label}: {day.count}</li>
+			{/each}
+		</ul>
+	</div>
+
+	<!-- ! I DONT KNOW HOW TO PIPE DATA INTO LAYERCAKE -->
+
+	<!-- <div class="chart-container">
+		<LayerCake
+		  padding={{ top: 8, right: 10, bottom: 20, left: 25 }}
+		  x={"x"}
+		  y={"y"}
+		  yDomain={[0, null]}
+		  data={Object.fromEntries(lastSevenDaysData().map(x => [x.label, x.count]))}
+		>
+		  <Svg>
+			<AxisX />
+			<AxisY ticks={4} />
+			<Line />
+			<Area />
+		  </Svg>
+		</LayerCake>
+	  </div> -->
 
 </main>
 
