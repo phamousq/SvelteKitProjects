@@ -14,6 +14,9 @@ importers:
       '@tailwindcss/cli':
         specifier: ^4.0.9
         version: 4.0.9
+      '@tailwindcss/postcss':
+        specifier: ^4.0.9
+        version: 4.0.9
       '@tailwindcss/vite':
         specifier: ^4.0.9
         version: 4.0.9(vite@5.4.11(@types/node@22.13.7)(lightningcss@1.29.1))
@@ -788,6 +791,9 @@ packages:
   '@tailwindcss/oxide@4.0.9':
     resolution: {integrity: sha512-eLizHmXFqHswJONwfqi/WZjtmWZpIalpvMlNhTM99/bkHtUs6IqgI1XQ0/W5eO2HiRQcIlXUogI2ycvKhVLNcA==}
     engines: {node: '>= 10'}
+
+  '@tailwindcss/postcss@4.0.9':
+    resolution: {integrity: sha512-BT/E+pdMqulavEAVM5NCpxmGEwHiLDPpkmg/c/X25ZBW+izTe+aZ+v1gf/HXTrihRoCxrUp5U4YyHsBTzspQKQ==}
 
   '@tailwindcss/vite@4.0.9':
     resolution: {integrity: sha512-BIKJO+hwdIsN7V6I7SziMZIVHWWMsV/uCQKYEbeiGRDRld+TkqyRRl9+dQ0MCXbhcVr+D9T/qX2E84kT7V281g==}
@@ -2443,6 +2449,15 @@ snapshots:
       '@tailwindcss/oxide-linux-x64-musl': 4.0.9
       '@tailwindcss/oxide-win32-arm64-msvc': 4.0.9
       '@tailwindcss/oxide-win32-x64-msvc': 4.0.9
+
+  '@tailwindcss/postcss@4.0.9':
+    dependencies:
+      '@alloc/quick-lru': 5.2.0
+      '@tailwindcss/node': 4.0.9
+      '@tailwindcss/oxide': 4.0.9
+      lightningcss: 1.29.1
+      postcss: 8.5.3
+      tailwindcss: 4.0.9
 
   '@tailwindcss/vite@4.0.9(vite@5.4.11(@types/node@22.13.7)(lightningcss@1.29.1))':
     dependencies:
