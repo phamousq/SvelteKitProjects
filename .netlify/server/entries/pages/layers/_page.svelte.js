@@ -1,8 +1,10 @@
-import { P as push, a1 as fallback, a2 as store_set, Q as setContext, _ as store_get, V as add_styles, a3 as slot, $ as unsubscribe_stores, a4 as bind_props, R as pop, Z as getContext, W as attr, X as stringify, Y as escape_html, S as ensure_array_like } from "../../../chunks/index.js";
+import "clsx";
+import { a2 as fallback, a3 as store_set, S as setContext, a4 as store_get, X as add_styles, a5 as slot, a6 as unsubscribe_stores, a7 as bind_props, T as pop, Q as push, a0 as getContext, Y as attr, _ as stringify, Z as escape_html, V as ensure_array_like, a8 as to_class } from "../../../chunks/index.js";
 import { w as writable, d as derived } from "../../../chunks/index3.js";
 import { InternSet, ascending } from "d3-array";
 import { scaleLinear, scaleSqrt } from "d3-scale";
 import { rgb } from "d3-color";
+/* empty css                                                  */
 function canBeZero(val) {
   if (val === 0) {
     return true;
@@ -644,12 +646,8 @@ function LayerCake($$payload, $$props) {
     b.width = b.right - b.left;
     b.height = b.bottom - b.top;
     if (verbose === true) {
-      if (b.width <= 0 && isMounted === true) {
-        console.warn("[LayerCake] Target div has zero or negative width. Did you forget to set an explicit width in CSS on the container?");
-      }
-      if (b.height <= 0 && isMounted === true) {
-        console.warn("[LayerCake] Target div has zero or negative height. Did you forget to set an explicit height in CSS on the container?");
-      }
+      if (b.width <= 0 && isMounted === true) ;
+      if (b.height <= 0 && isMounted === true) ;
     }
     return b;
   });
@@ -1134,7 +1132,7 @@ function AxisX($$payload, $$props) {
   tickVals = Array.isArray(ticks) ? ticks : isBandwidth ? store_get($$store_subs ??= {}, "$xScale", xScale).domain() : typeof ticks === "function" ? ticks(store_get($$store_subs ??= {}, "$xScale", xScale).ticks()) : store_get($$store_subs ??= {}, "$xScale", xScale).ticks(ticks);
   halfBand = isBandwidth ? store_get($$store_subs ??= {}, "$xScale", xScale).bandwidth() / 2 : 0;
   const each_array = ensure_array_like(tickVals);
-  $$payload.out += `<g${attr("class", `axis x-axis svelte-134rqt8 ${stringify([snapLabels ? "snapLabels" : ""].filter(Boolean).join(" "))}`)}><!--[-->`;
+  $$payload.out += `<g${attr("class", to_class("axis x-axis", "svelte-134rqt8", { "snapLabels": snapLabels }))}><!--[-->`;
   for (let i = 0, $$length = each_array.length; i < $$length; i++) {
     let tick = each_array[i];
     if (baseline === true) {
@@ -1143,7 +1141,7 @@ function AxisX($$payload, $$props) {
     } else {
       $$payload.out += "<!--[!-->";
     }
-    $$payload.out += `<!--]--><g${attr("class", `tick tick-${stringify(i)} svelte-134rqt8`)}${attr("transform", `translate(${stringify(store_get($$store_subs ??= {}, "$xScale", xScale)(tick))},${stringify(Math.max(...store_get($$store_subs ??= {}, "$yRange", yRange)))})`)}>`;
+    $$payload.out += `<!--]--><g${attr("class", to_class("tick tick-" + i, "svelte-134rqt8"))}${attr("transform", `translate(${stringify(store_get($$store_subs ??= {}, "$xScale", xScale)(tick))},${stringify(Math.max(...store_get($$store_subs ??= {}, "$yRange", yRange)))})`)}>`;
     if (gridlines === true) {
       $$payload.out += "<!--[-->";
       $$payload.out += `<line class="gridline svelte-134rqt8"${attr("x1", halfBand)}${attr("x2", halfBand)}${attr("y1", -store_get($$store_subs ??= {}, "$height", height))} y2="0"></line>`;
@@ -1207,7 +1205,7 @@ function AxisY($$payload, $$props) {
   for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
     let tick = each_array[$$index];
     const tickValPx = store_get($$store_subs ??= {}, "$yScale", yScale)(tick);
-    $$payload.out += `<g${attr("class", `tick tick-${stringify(tick)} svelte-1gsclux`)}${attr("transform", `translate(${stringify(store_get($$store_subs ??= {}, "$xRange", xRange)[0])}, ${stringify(tickValPx)})`)}>`;
+    $$payload.out += `<g${attr("class", to_class("tick tick-" + tick, "svelte-1gsclux"))}${attr("transform", `translate(${stringify(store_get($$store_subs ??= {}, "$xRange", xRange)[0])}, ${stringify(tickValPx)})`)}>`;
     if (gridlines === true) {
       $$payload.out += "<!--[-->";
       $$payload.out += `<line class="gridline svelte-1gsclux"${attr("x1", x1)}${attr("x2", store_get($$store_subs ??= {}, "$width", width))}${attr("y1", y)}${attr("y2", y)}></line>`;
@@ -1240,7 +1238,162 @@ function AxisY($$payload, $$props) {
   });
   pop();
 }
-function _page($$payload) {
+const data = [
+  {
+    myX: "1979",
+    myY: "7.19"
+  },
+  {
+    myX: "1980",
+    myY: "7.83"
+  },
+  {
+    myX: "1981",
+    myY: "7.24"
+  },
+  {
+    myX: "1982",
+    myY: "7.44"
+  },
+  {
+    myX: "1983",
+    myY: "7.51"
+  },
+  {
+    myX: "1984",
+    myY: "7.1"
+  },
+  {
+    myX: "1985",
+    myY: "6.91"
+  },
+  {
+    myX: "1986",
+    myY: "7.53"
+  },
+  {
+    myX: "1987",
+    myY: "7.47"
+  },
+  {
+    myX: "1988",
+    myY: "7.48"
+  },
+  {
+    myX: "1989",
+    myY: "7.03"
+  },
+  {
+    myX: "1990",
+    myY: "6.23"
+  },
+  {
+    myX: "1991",
+    myY: "6.54"
+  },
+  {
+    myX: "1992",
+    myY: "7.54"
+  },
+  {
+    myX: "1993",
+    myY: "6.5"
+  },
+  {
+    myX: "1994",
+    myY: "7.18"
+  },
+  {
+    myX: "1995",
+    myY: "6.12"
+  },
+  {
+    myX: "1996",
+    myY: "7.87"
+  },
+  {
+    myX: "1997",
+    myY: "6.73"
+  },
+  {
+    myX: "1998",
+    myY: "6.55"
+  },
+  {
+    myX: "1999",
+    myY: "6.23"
+  },
+  {
+    myX: "2000",
+    myY: "6.31"
+  },
+  {
+    myX: "2001",
+    myY: "6.74"
+  },
+  {
+    myX: "2002",
+    myY: "5.95"
+  },
+  {
+    myX: "2003",
+    myY: "6.13"
+  },
+  {
+    myX: "2004",
+    myY: "6.04"
+  },
+  {
+    myX: "2005",
+    myY: "5.56"
+  },
+  {
+    myX: "2006",
+    myY: "5.91"
+  },
+  {
+    myX: "2007",
+    myY: "4.29"
+  },
+  {
+    myX: "2008",
+    myY: "4.72"
+  },
+  {
+    myX: "2009",
+    myY: "5.38"
+  },
+  {
+    myX: "2010",
+    myY: "4.92"
+  },
+  {
+    myX: "2011",
+    myY: "4.61"
+  },
+  {
+    myX: "2012",
+    myY: "3.62"
+  },
+  {
+    myX: "2013",
+    myY: "5.35"
+  },
+  {
+    myX: "2014",
+    myY: "5.28"
+  },
+  {
+    myX: "2015",
+    myY: "4.63"
+  },
+  {
+    myX: "2016",
+    myY: "4.72"
+  }
+];
+function _page($$payload, $$props) {
+  push();
   const xKey = "myX";
   const yKey = "myY";
   data.forEach((d) => {
@@ -1271,6 +1424,7 @@ function _page($$payload) {
     $$slots: { default: true }
   });
   $$payload.out += `<!----></div>`;
+  pop();
 }
 export {
   _page as default

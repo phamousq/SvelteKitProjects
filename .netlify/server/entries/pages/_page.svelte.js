@@ -1,4 +1,5 @@
-import { Y as escape_html } from "../../chunks/index.js";
+import { Z as escape_html } from "../../chunks/index.js";
+import "clsx";
 import _page$1 from "./projects/_page.svelte.js";
 function _page($$payload) {
   let title = "Welcome to SvelteKit";

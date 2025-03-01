@@ -8,6 +8,10 @@
       "_internal.js"
     ]
   },
+  "_AxisY.svelte_svelte_type_style_lang.js": {
+    "file": "_app/immutable/assets/AxisY.ucpDXZN1.css",
+    "src": "_AxisY.svelte_svelte_type_style_lang.js"
+  },
   "_equality.js": {
     "file": "chunks/equality.js",
     "name": "equality"
@@ -40,20 +44,21 @@
       "_equality.js"
     ]
   },
-  "node_modules/.pnpm/@sveltejs+kit@2.8.1_@sveltejs+vite-plugin-svelte@4.0.1_svelte@5.2.0_vite@5.4.11_@types+_cdbc7f66bcfb5362aaa5eec7b4d563f8/node_modules/@sveltejs/kit/src/runtime/components/svelte-5/error.svelte": {
+  "node_modules/@sveltejs/kit/src/runtime/components/svelte-5/error.svelte": {
     "file": "entries/fallbacks/error.svelte.js",
     "name": "entries/fallbacks/error.svelte",
-    "src": "node_modules/.pnpm/@sveltejs+kit@2.8.1_@sveltejs+vite-plugin-svelte@4.0.1_svelte@5.2.0_vite@5.4.11_@types+_cdbc7f66bcfb5362aaa5eec7b4d563f8/node_modules/@sveltejs/kit/src/runtime/components/svelte-5/error.svelte",
+    "src": "node_modules/@sveltejs/kit/src/runtime/components/svelte-5/error.svelte",
     "isEntry": true,
     "imports": [
       "_index.js",
-      "_exports.js"
+      "_exports.js",
+      "_index3.js"
     ]
   },
-  "node_modules/.pnpm/@sveltejs+kit@2.8.1_@sveltejs+vite-plugin-svelte@4.0.1_svelte@5.2.0_vite@5.4.11_@types+_cdbc7f66bcfb5362aaa5eec7b4d563f8/node_modules/@sveltejs/kit/src/runtime/server/index.js": {
+  "node_modules/@sveltejs/kit/src/runtime/server/index.js": {
     "file": "index.js",
     "name": "index",
-    "src": "node_modules/.pnpm/@sveltejs+kit@2.8.1_@sveltejs+vite-plugin-svelte@4.0.1_svelte@5.2.0_vite@5.4.11_@types+_cdbc7f66bcfb5362aaa5eec7b4d563f8/node_modules/@sveltejs/kit/src/runtime/server/index.js",
+    "src": "node_modules/@sveltejs/kit/src/runtime/server/index.js",
     "isEntry": true,
     "imports": [
       "_index.js",
@@ -146,7 +151,8 @@
       "_index3.js"
     ],
     "css": [
-      "_app/immutable/assets/_page.B2LGZxiC.css"
+      "_app/immutable/assets/_page.DBiBVi5R.css",
+      "_app/immutable/assets/AxisY.ucpDXZN1.css"
     ]
   },
   "src/routes/projects/+page.svelte": {
@@ -171,7 +177,8 @@
       "_index3.js"
     ],
     "css": [
-      "_app/immutable/assets/_page.B1_VP8S1.css"
+      "_app/immutable/assets/_page.B1_VP8S1.css",
+      "_app/immutable/assets/AxisY.ucpDXZN1.css"
     ]
   },
   "src/routes/qbank/+page.svelte": {

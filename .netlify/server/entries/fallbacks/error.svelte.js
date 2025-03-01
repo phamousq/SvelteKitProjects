@@ -1,41 +1,61 @@
-import { Z as getContext, P as push, Y as escape_html, _ as store_get, $ as unsubscribe_stores, R as pop } from "../../chunks/index.js";
+import { $ as noop, a0 as getContext, Z as escape_html, T as pop, Q as push } from "../../chunks/index.js";
+import "clsx";
 import "../../chunks/exports.js";
+import { w as writable } from "../../chunks/index3.js";
+const SNAPSHOT_KEY = "sveltekit:snapshot";
+const SCROLL_KEY = "sveltekit:scroll";
+function create_updated_store() {
+  const { set, subscribe } = writable(false);
+  {
+    return {
+      subscribe,
+      // eslint-disable-next-line @typescript-eslint/require-await
+      check: async () => false
+    };
+  }
+}
+const is_legacy = noop.toString().includes("$$") || /function \w+\(\) \{\}/.test(noop.toString());
+if (is_legacy) {
+  ({
+    data: {},
+    form: null,
+    error: null,
+    params: {},
+    route: { id: null },
+    state: {},
+    status: -1,
+    url: new URL("https://example.com")
+  });
+}
 function get(key, parse = JSON.parse) {
   try {
     return parse(sessionStorage[key]);
   } catch {
   }
 }
-const SNAPSHOT_KEY = "sveltekit:snapshot";
-const SCROLL_KEY = "sveltekit:scroll";
 get(SCROLL_KEY) ?? {};
 get(SNAPSHOT_KEY) ?? {};
-const getStores = () => {
-  const stores = getContext("__svelte__");
-  return {
-    /** @type {typeof page} */
-    page: {
-      subscribe: stores.page.subscribe
-    },
-    /** @type {typeof navigating} */
-    navigating: {
-      subscribe: stores.navigating.subscribe
-    },
-    /** @type {typeof updated} */
-    updated: stores.updated
-  };
+const stores = {
+  updated: /* @__PURE__ */ create_updated_store()
 };
-const page = {
-  subscribe(fn) {
-    const store = getStores().page;
-    return store.subscribe(fn);
+({
+  check: stores.updated.check
+});
+function context() {
+  return getContext("__request__");
+}
+const page$1 = {
+  get error() {
+    return context().page.error;
+  },
+  get status() {
+    return context().page.status;
   }
 };
+const page = page$1;
 function Error$1($$payload, $$props) {
   push();
-  var $$store_subs;
-  $$payload.out += `<h1>${escape_html(store_get($$store_subs ??= {}, "$page", page).status)}</h1> <p>${escape_html(store_get($$store_subs ??= {}, "$page", page).error?.message)}</p>`;
-  if ($$store_subs) unsubscribe_stores($$store_subs);
+  $$payload.out += `<h1>${escape_html(page.status)}</h1> <p>${escape_html(page.error?.message)}</p>`;
   pop();
 }
 export {

@@ -1,4 +1,4 @@
-import { P as push, S as ensure_array_like, T as head, V as add_styles, W as attr, X as stringify, Y as escape_html, R as pop } from "../../chunks/index.js";
+import { V as ensure_array_like, W as head, X as add_styles, Y as attr, Z as escape_html, T as pop, Q as push, _ as stringify } from "../../chunks/index.js";
 function _layout($$payload, $$props) {
   push();
   let { children } = $$props;

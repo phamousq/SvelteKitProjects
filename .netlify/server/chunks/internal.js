@@ -1,7 +1,9 @@
-import { i as increment_version, a as DIRTY, s as set_signal_status, C as CLEAN, U as UNOWNED, b as DERIVED, M as MAYBE_DIRTY, c as schedule_effect, d as active_effect, B as BRANCH_EFFECT, n as new_deps, u as untracked_writes, e as set_untracked_writes, f as active_reaction, g as is_runes, h as BLOCK_EFFECT, j as derived_sources, k as state_unsafe_mutation, H as HYDRATION_ERROR, l as get_next_sibling, m as define_property, o as set_active_reaction, p as set_active_effect, q as is_array, r as init_operations, t as get_first_child, v as HYDRATION_START, w as is_passive_event, x as array_from, y as effect_root, z as create_text, A as branch, E as push, F as component_context, G as pop, I as HYDRATION_END, J as hydration_failed, K as clear_text_content, L as get, N as flush_sync, O as render, P as push$1, Q as setContext, R as pop$1 } from "./index.js";
-import { e as equals, s as safe_equals } from "./equality.js";
+import { i as increment_write_version, a as DIRTY, s as set_signal_status, C as CLEAN, U as UNOWNED, b as DERIVED, c as schedule_effect, d as active_reaction, u as untracking, e as is_runes, B as BLOCK_EFFECT, f as derived_sources, g as state_unsafe_mutation, h as active_effect, j as BRANCH_EFFECT, R as ROOT_EFFECT, k as untracked_writes, l as set_untracked_writes, M as MAYBE_DIRTY, H as HYDRATION_ERROR, m as get_next_sibling, n as define_property, o as set_active_reaction, p as set_active_effect, q as is_array, r as init_operations, t as get_first_child, v as HYDRATION_START, w as HYDRATION_END, x as hydration_failed, y as clear_text_content, z as array_from, A as component_root, E as is_passive_event, F as create_text, G as branch, I as push, J as component_context, K as pop, L as LEGACY_PROPS, N as get, O as flushSync, P as render, Q as push$1, S as setContext, T as pop$1 } from "./index.js";
+import { s as safe_equals, e as equals } from "./equality.js";
+import "clsx";
 let base = "";
 let assets = base;
+const app_dir = "_app";
 const initial = { base, assets };
 function override(paths) {
   base = paths.base;
@@ -24,15 +26,22 @@ function set_public_env(environment) {
 function set_safe_public_env(environment) {
   safe_public_env = environment;
 }
-function source(v) {
-  return {
+function hydration_mismatch(location) {
+  {
+    console.warn(`https://svelte.dev/e/hydration_mismatch`);
+  }
+}
+function source(v, stack) {
+  var signal = {
     f: 0,
     // TODO ideally we could skip this altogether, but it causes type errors
     v,
     reactions: null,
     equals,
-    version: 0
+    rv: 0,
+    wv: 0
   };
+  return signal;
 }
 // @__NO_SIDE_EFFECTS__
 function mutable_source(initial_value, immutable = false) {
@@ -43,7 +52,7 @@ function mutable_source(initial_value, immutable = false) {
   return s;
 }
 function set(source2, value) {
-  if (active_reaction !== null && is_runes() && (active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 && // If the source was created locally within the current derived, then
+  if (active_reaction !== null && !untracking && is_runes() && (active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 && // If the source was created locally within the current derived, then
   // we allow the mutation.
   (derived_sources === null || !derived_sources.includes(source2))) {
     state_unsafe_mutation();
@@ -52,19 +61,15 @@ function set(source2, value) {
 }
 function internal_set(source2, value) {
   if (!source2.equals(value)) {
+    source2.v;
     source2.v = value;
-    source2.version = increment_version();
+    source2.wv = increment_write_version();
     mark_reactions(source2, DIRTY);
-    if (active_effect !== null && (active_effect.f & CLEAN) !== 0 && (active_effect.f & BRANCH_EFFECT) === 0) {
-      if (new_deps !== null && new_deps.includes(source2)) {
-        set_signal_status(active_effect, DIRTY);
-        schedule_effect(active_effect);
+    if (active_effect !== null && (active_effect.f & CLEAN) !== 0 && (active_effect.f & (BRANCH_EFFECT | ROOT_EFFECT)) === 0) {
+      if (untracked_writes === null) {
+        set_untracked_writes([source2]);
       } else {
-        if (untracked_writes === null) {
-          set_untracked_writes([source2]);
-        } else {
-          untracked_writes.push(source2);
-        }
+        untracked_writes.push(source2);
       }
     }
   }
@@ -93,11 +98,6 @@ function mark_reactions(signal, status) {
         );
       }
     }
-  }
-}
-function hydration_mismatch(location) {
-  {
-    console.warn("hydration_mismatch");
   }
 }
 let hydrating = false;
@@ -170,8 +170,10 @@ function handle_event_propagation(event) {
       current_target.host || null;
       try {
         var delegated = current_target["__" + event_name];
-        if (delegated !== void 0 && !/** @type {any} */
-        current_target.disabled) {
+        if (delegated !== void 0 && (!/** @type {any} */
+        current_target.disabled || // DOM could've been updated already by the time this is reached, so we check this as well
+        // -> the target could not have been disabled because it emits the event in the first place
+        event.target === current_target)) {
           if (is_array(delegated)) {
             var [fn, ...data] = delegated;
             fn.apply(current_target, [event, ...data]);
@@ -294,7 +296,7 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
   event_handle(array_from(all_registered_events));
   root_event_handles.add(event_handle);
   var component = void 0;
-  var unmount2 = effect_root(() => {
+  var unmount2 = component_root(() => {
     var anchor_node = anchor ?? target.appendChild(create_text());
     branch(() => {
       if (context) {
@@ -338,7 +340,6 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
         }
       }
       root_event_handles.delete(event_handle);
-      mounted_components.delete(component);
       if (anchor_node !== anchor) {
         anchor_node.parentNode?.removeChild(anchor_node);
       }
@@ -348,11 +349,13 @@ function _mount(Component, { target, anchor, props = {}, events, context, intro 
   return component;
 }
 let mounted_components = /* @__PURE__ */ new WeakMap();
-function unmount(component) {
+function unmount(component, options2) {
   const fn = mounted_components.get(component);
   if (fn) {
-    fn();
+    mounted_components.delete(component);
+    return fn(options2);
   }
+  return Promise.resolve();
 }
 function asClassComponent$1(component) {
   return class extends Svelte4Component {
@@ -389,6 +392,7 @@ class Svelte4Component {
           return get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
         },
         has(target, prop) {
+          if (prop === LEGACY_PROPS) return true;
           get(sources.get(prop) ?? add_source(prop, Reflect.get(target, prop)));
           return Reflect.has(target, prop);
         },
@@ -407,7 +411,7 @@ class Svelte4Component {
       recover: options2.recover
     });
     if (!options2?.props?.$$host || options2.sync === false) {
-      flush_sync();
+      flushSync();
     }
     this.#events = props.$$events;
     for (const key of Object.keys(this.#instance)) {
@@ -529,13 +533,13 @@ function Root($$payload, $$props) {
 }
 const root = asClassComponent(Root);
 const options = {
-  app_dir: "_app",
   app_template_contains_nonce: false,
   csp: { "mode": "auto", "directives": { "upgrade-insecure-requests": false, "block-all-mixed-content": false }, "reportOnly": { "upgrade-insecure-requests": false, "block-all-mixed-content": false } },
   csrf_check_origin: true,
   embedded: false,
   env_public_prefix: "PUBLIC_",
   env_private_prefix: "",
+  hash_routing: false,
   hooks: null,
   // added lazily, via `get_hooks`
   preload_strategy: "modulepreload",
@@ -614,28 +618,42 @@ const options = {
 		<div class="error">
 			<span class="status">` + status + '</span>\n			<div class="message">\n				<h1>' + message + "</h1>\n			</div>\n		</div>\n	</body>\n</html>\n"
   },
-  version_hash: "wt7d0b"
+  version_hash: "1c9nte8"
 };
 async function get_hooks() {
-  return {};
+  let handle;
+  let handleFetch;
+  let handleError;
+  let init;
+  let reroute;
+  let transport;
+  return {
+    handle,
+    handleFetch,
+    handleError,
+    init,
+    reroute,
+    transport
+  };
 }
 export {
   assets as a,
   base as b,
-  read_implementation as c,
-  options as d,
-  set_public_env as e,
-  set_safe_public_env as f,
+  app_dir as c,
+  read_implementation as d,
+  options as e,
+  set_private_env as f,
   get_hooks as g,
-  set_read_implementation as h,
-  set_private_env as i,
-  prerendering as j,
-  set_assets as k,
-  set_building as l,
-  set_manifest as m,
-  set_prerendering as n,
+  prerendering as h,
+  set_public_env as i,
+  set_safe_public_env as j,
+  set_read_implementation as k,
+  set_assets as l,
+  set_building as m,
+  set_manifest as n,
   override as o,
   public_env as p,
+  set_prerendering as q,
   reset as r,
   safe_public_env as s
 };

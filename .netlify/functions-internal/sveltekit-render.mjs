@@ -12,7 +12,7 @@ return {
 	assets: new Set(["favicon.png"]),
 	mimeTypes: {".png":"image/png"},
 	_: {
-		client: {"start":"_app/immutable/entry/start.Q3bgptjV.js","app":"_app/immutable/entry/app.BXcBT4UU.js","imports":["_app/immutable/entry/start.Q3bgptjV.js","_app/immutable/chunks/entry.uHSwiC3z.js","_app/immutable/chunks/runtime.DJMXGEip.js","_app/immutable/chunks/index.DkAyA3j8.js","_app/immutable/chunks/utils.BFXNdIWR.js","_app/immutable/entry/app.BXcBT4UU.js","_app/immutable/chunks/runtime.DJMXGEip.js","_app/immutable/chunks/render.BykzWnoZ.js","_app/immutable/chunks/utils.C3zNWYze.js","_app/immutable/chunks/template.Zwttk-xh.js","_app/immutable/chunks/disclose-version.Bg9kRutz.js","_app/immutable/chunks/if.DyLolnHQ.js","_app/immutable/chunks/proxy.BQXmlXEo.js","_app/immutable/chunks/this.DFivyEz7.js","_app/immutable/chunks/props.DI7cCwgF.js","_app/immutable/chunks/store.DGxUpW5l.js","_app/immutable/chunks/utils.BFXNdIWR.js","_app/immutable/chunks/index-client.B_2xFVko.js"],"stylesheets":[],"fonts":[],"uses_env_dynamic_public":false},
+		client: {start:"_app/immutable/entry/start.D-LV6RPN.js",app:"_app/immutable/entry/app.LcIaNbQM.js",imports:["_app/immutable/entry/start.D-LV6RPN.js","_app/immutable/chunks/BE1qXs5l.js","_app/immutable/chunks/ElgziEz4.js","_app/immutable/chunks/UpVIQojP.js","_app/immutable/chunks/DWpa_j7_.js","_app/immutable/entry/app.LcIaNbQM.js","_app/immutable/chunks/ElgziEz4.js","_app/immutable/chunks/DS91B4iN.js","_app/immutable/chunks/DjjeMIaw.js","_app/immutable/chunks/waHtgrzP.js","_app/immutable/chunks/Bg9kRutz.js","_app/immutable/chunks/D0FFFCxD.js","_app/immutable/chunks/DzMkccrD.js","_app/immutable/chunks/DrQwjIDV.js","_app/immutable/chunks/BhGB-oJm.js","_app/immutable/chunks/UpVIQojP.js","_app/immutable/chunks/DWpa_j7_.js"],stylesheets:[],fonts:[],uses_env_dynamic_public:false},
 		nodes: [
 			__memo(() => import('../server/nodes/0.js')),
 			__memo(() => import('../server/nodes/1.js')),
@@ -114,6 +114,7 @@ return {
 				endpoint: null
 			}
 		],
+		prerendered_routes: new Set([]),
 		matchers: async () => {
 			
 			return {  };

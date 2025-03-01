@@ -1,6 +1,8 @@
-import { a5 as noop, a6 as sanitize_props, a7 as rest_props, P as push, a1 as fallback, a8 as spread_attributes, Y as escape_html, W as attr, X as stringify, _ as store_get, $ as unsubscribe_stores, a4 as bind_props, R as pop, S as ensure_array_like } from "../../../chunks/index.js";
+import { $ as noop, a9 as sanitize_props, aa as rest_props, a2 as fallback, ab as spread_attributes, Z as escape_html, ac as clsx, Y as attr, _ as stringify, a4 as store_get, a6 as unsubscribe_stores, a7 as bind_props, T as pop, Q as push, V as ensure_array_like } from "../../../chunks/index.js";
 import { w as writable } from "../../../chunks/index3.js";
+import "clsx";
 import { twMerge } from "tailwind-merge";
+/* empty css                                                  */
 const now = () => Date.now();
 const raf = {
   // don't access requestAnimationFrame eagerly outside method
@@ -88,7 +90,7 @@ function get_interpolator(a, b) {
     );
     return (t) => a + t * delta;
   }
-  throw new Error(`Cannot interpolate ${type} values`);
+  return () => b;
 }
 function tweened(value, defaults = {}) {
   const store = writable(value);
@@ -206,20 +208,22 @@ function Progressbar($$payload, $$props) {
   _progress.set(Number(progress));
   if (labelOutside) {
     $$payload.out += "<!--[-->";
-    $$payload.out += `<div${spread_attributes({
-      ...$$restProps,
-      class: twMerge("flex justify-between mb-1", classLabelOutside)
-    })}><span class="text-base font-medium text-blue-700 dark:text-white">${escape_html(labelOutside)}</span> <span class="text-sm font-medium text-blue-700 dark:text-white">${escape_html(progress)}%</span></div>`;
+    $$payload.out += `<div${spread_attributes(
+      {
+        ...$$restProps,
+        class: clsx(twMerge("flex justify-between mb-1", classLabelOutside))
+      }
+    )}><span class="text-base font-medium text-blue-700 dark:text-white">${escape_html(labelOutside)}</span> <span class="text-sm font-medium text-blue-700 dark:text-white">${escape_html(progress)}%</span></div>`;
   } else {
     $$payload.out += "<!--[!-->";
   }
-  $$payload.out += `<!--]--> <div${attr("class", twMerge(divClass, size, $$sanitized_props.class))}>`;
+  $$payload.out += `<!--]--> <div${attr("class", clsx(twMerge(divClass, size, $$sanitized_props.class)))}>`;
   if (labelInside) {
     $$payload.out += "<!--[-->";
-    $$payload.out += `<div${attr("class", twMerge(barColors[color], labelInsideClass))}${attr("style", `width: ${stringify(store_get($$store_subs ??= {}, "$_progress", _progress))}%`)}>${escape_html(store_get($$store_subs ??= {}, "$_progress", _progress).toFixed(precision))}%</div>`;
+    $$payload.out += `<div${attr("class", clsx(twMerge(barColors[color], labelInsideClass)))}${attr("style", `width: ${stringify(store_get($$store_subs ??= {}, "$_progress", _progress))}%`)}>${escape_html(store_get($$store_subs ??= {}, "$_progress", _progress).toFixed(precision))}%</div>`;
   } else {
     $$payload.out += "<!--[!-->";
-    $$payload.out += `<div${attr("class", twMerge(barColors[color], size, "rounded-full", progressClass))}${attr("style", `width: ${stringify(store_get($$store_subs ??= {}, "$_progress", _progress))}%`)}></div>`;
+    $$payload.out += `<div${attr("class", clsx(twMerge(barColors[color], size, "rounded-full", progressClass)))}${attr("style", `width: ${stringify(store_get($$store_subs ??= {}, "$_progress", _progress))}%`)}></div>`;
   }
   $$payload.out += `<!--]--></div>`;
   if ($$store_subs) unsubscribe_stores($$store_subs);
@@ -330,13 +334,13 @@ function _page($$payload, $$props) {
         date,
         count: dailyHistory.length,
         label: date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-        // Changed to show date
       });
     }
+    Object.fromEntries(days.map((x) => [x.label, x.count]));
     return days;
   };
   const each_array = ensure_array_like(filteredHistory);
-  const each_array_1 = ensure_array_like(lastSevenDaysData());
+  const each_array_1 = ensure_array_like(lastSevenDaysData().reverse());
   $$payload.out += `<main><div class="source-input-container svelte-szy1xe" style="padding-top: 10px"><label for="source-input">Source:</label> <input id="source-input" type="text"${attr("value", source)} placeholder="Enter source..." class="source-input svelte-szy1xe"></div> <div class="wrapper svelte-szy1xe"><div><h1 style="font-size: 32px; font-weight: bold;">Question: ${escape_html(dailyQuestionCount)}</h1></div></div> <div class="scoreboard svelte-szy1xe"><button class="counter-box correct svelte-szy1xe" style="flex-grow: 10"><h2>Correct</h2> <p>${escape_html(visibleCorrectCount)}</p></button> <button class="counter-box incorrect svelte-szy1xe" style="flex-grow: 10"><h2>Incorrect</h2> <p>${escape_html(visibleIncorrectCount)}</p></button> <button class="counter-box undo svelte-szy1xe" style="flex-grow: 1"><h2>Undo</h2></button></div> <div style="display: flex; padding-left: 10px; padding-right: 10px">`;
   Progressbar($$payload, {
     progress: visiblePercentCorrect,
@@ -370,7 +374,7 @@ function _page($$payload, $$props) {
   $$payload.out += `<!--]-->`;
   if (filteredHistory.length === 0) {
     $$payload.out += "<!--[-->";
-    $$payload.out += `<tr class="svelte-szy1xe"><td colspan="5" class="empty-message svelte-szy1xe">No entries for this date. Add new entries or navigate to a different date.</td></tr>`;
+    $$payload.out += `<tr class="svelte-szy1xe"><td colspan="5" class="empty-message svelte-szy1xe">No entries for this date.</td></tr>`;
   } else {
     $$payload.out += "<!--[!-->";
   }
@@ -386,12 +390,12 @@ function _page($$payload, $$props) {
     }
     $$payload.out += `<!--]-->`;
   }
-  $$payload.out += `<!--]--></div> <div class="wrapper svelte-szy1xe">Total Questions Done: ${escape_html(history.length)}</div> <div class="wrapper svelte-szy1xe">Percent Correct: ${escape_html(percentCorrect)}%</div> <!--[-->`;
+  $$payload.out += `<!--]--></div> <div class="wrapper svelte-szy1xe">Total Questions Done: ${escape_html(history.length)}</div> <div class="wrapper svelte-szy1xe">Percent Correct: ${escape_html(percentCorrect)}%</div> <div class="wrapper svelte-szy1xe"><h3>Last 7 Days:</h3> <ul><!--[-->`;
   for (let $$index_1 = 0, $$length = each_array_1.length; $$index_1 < $$length; $$index_1++) {
     let day = each_array_1[$$index_1];
-    $$payload.out += `<!---->${escape_html(day.count)},`;
+    $$payload.out += `<li>${escape_html(day.label)}: ${escape_html(day.count)}</li>`;
   }
-  $$payload.out += `<!--]--></main>`;
+  $$payload.out += `<!--]--></ul></div></main>`;
   pop();
 }
 export {
