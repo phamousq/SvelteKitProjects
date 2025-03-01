@@ -423,6 +423,26 @@
 		const averageMilliseconds = totalMilliseconds / items.length;
 		return formatTimeDifference(averageMilliseconds);
 	}
+
+	const lastSevenDaysData = $derived(() => {
+		const days = [];
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		
+		for (let i = 6; i >= 0; i--) {
+			const date = new Date(today);
+			date.setDate(date.getDate() - i);
+			
+			const dailyHistory = filterHistoryByDate(history, date);
+			days.push({
+				date,
+				count: dailyHistory.length,
+				label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) // Changed to show date
+			});
+		}
+		return days;
+	});
+	
 </script>
 <main>
 	<!-- Source input field -->
@@ -553,6 +573,12 @@
 		Total Questions Done: {history.length}
 	</div>
 	<div class="wrapper">Percent Correct: {percentCorrect}%</div>
+
+
+	{#each lastSevenDaysData() as day}
+		{day.count}, 
+	{/each} 
+
 </main>
 
 <style>
@@ -862,5 +888,4 @@
 		border-color: #007bff;
 		box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 	}
-
 </style>
