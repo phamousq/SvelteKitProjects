@@ -1073,15 +1073,15 @@ const BLOCK_OPEN = `<!--${HYDRATION_START}-->`;
 const BLOCK_CLOSE = `<!--${HYDRATION_END}-->`;
 const EMPTY_COMMENT = `<!---->`;
 const INVALID_ATTR_NAME_CHAR_REGEX = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
-function copy_payload({ out, css, head: head2, uid }) {
+function copy_payload({ out, css, head, uid }) {
   return {
     out,
     css: new Set(css),
     head: {
-      title: head2.title,
-      out: head2.out,
-      css: new Set(head2.css),
-      uid: head2.uid
+      title: head.title,
+      out: head.out,
+      css: new Set(head.css),
+      uid: head.uid
     },
     uid
   };
@@ -1134,21 +1134,15 @@ function render(component, options = {}) {
   payload.out += BLOCK_CLOSE;
   for (const cleanup of on_destroy) cleanup();
   on_destroy = prev_on_destroy;
-  let head2 = payload.head.out + payload.head.title;
+  let head = payload.head.out + payload.head.title;
   for (const { hash, code } of payload.css) {
-    head2 += `<style id="${hash}">${code}</style>`;
+    head += `<style id="${hash}">${code}</style>`;
   }
   return {
-    head: head2,
+    head,
     html: payload.out,
     body: payload.out
   };
-}
-function head(payload, fn) {
-  const head_payload = payload.head;
-  head_payload.out += BLOCK_OPEN;
-  fn(head_payload);
-  head_payload.out += BLOCK_CLOSE;
 }
 function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
   if (styles) {
@@ -1311,7 +1305,7 @@ function once(get_value) {
   };
 }
 export {
-  noop as $,
+  spread_attributes as $,
   component_root as A,
   BROWSER as B,
   CLEAN as C,
@@ -1333,36 +1327,35 @@ export {
   setContext as S,
   pop as T,
   UNOWNED as U,
-  ensure_array_like as V,
-  head as W,
-  add_styles as X,
-  attr as Y,
-  escape_html as Z,
-  stringify as _,
+  sanitize_props as V,
+  rest_props as W,
+  fallback as X,
+  element as Y,
+  bind_props as Z,
+  slot as _,
   DERIVED as a,
-  getContext as a0,
-  once as a1,
-  fallback as a2,
-  store_get as a3,
-  slot as a4,
-  unsubscribe_stores as a5,
-  bind_props as a6,
+  clsx as a0,
+  getContext as a1,
+  escape_html as a2,
+  copy_payload as a3,
+  assign_payload as a4,
+  spread_props as a5,
+  attr as a6,
   sanitize_slots as a7,
-  sanitize_props as a8,
-  merge_styles as a9,
-  to_class as aa,
-  clsx as ab,
-  spread_attributes as ac,
-  rest_props as ad,
-  element as ae,
-  spread_props as af,
-  current_component as ag,
-  store_set as ah,
-  invalid_default_snippet as ai,
-  copy_payload as aj,
-  assign_payload as ak,
-  subscribe_to_store as al,
-  run_all as am,
+  store_get as a8,
+  unsubscribe_stores as a9,
+  invalid_default_snippet as aa,
+  noop as ab,
+  ensure_array_like as ac,
+  once as ad,
+  add_styles as ae,
+  stringify as af,
+  merge_styles as ag,
+  to_class as ah,
+  current_component as ai,
+  store_set as aj,
+  subscribe_to_store as ak,
+  run_all as al,
   schedule_effect as b,
   active_reaction as c,
   is_runes as d,

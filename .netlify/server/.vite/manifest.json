@@ -8,6 +8,15 @@
       "_internal.js"
     ]
   },
+  "_client.js": {
+    "file": "chunks/client.js",
+    "name": "client",
+    "imports": [
+      "_exports.js",
+      "_index3.js",
+      "_index.js"
+    ]
+  },
   "_equality.js": {
     "file": "chunks/equality.js",
     "name": "equality"
@@ -15,6 +24,10 @@
   "_exports.js": {
     "file": "chunks/exports.js",
     "name": "exports"
+  },
+  "_html.js": {
+    "file": "chunks/html.js",
+    "name": "html"
   },
   "_index.js": {
     "file": "chunks/index.js",
@@ -31,6 +44,10 @@
       "_index.js",
       "_equality.js"
     ]
+  },
+  "_index4.js": {
+    "file": "chunks/index4.js",
+    "name": "index"
   },
   "_internal.js": {
     "file": "chunks/internal.js",
@@ -58,8 +75,7 @@
     "isEntry": true,
     "imports": [
       "_index.js",
-      "_exports.js",
-      "_index3.js"
+      "_client.js"
     ]
   },
   "node_modules/@sveltejs/kit/src/runtime/server/index.js": {
@@ -81,10 +97,14 @@
     "src": "src/routes/+layout.svelte",
     "isEntry": true,
     "imports": [
-      "_index.js"
+      "_index.js",
+      "_index3.js",
+      "_html.js",
+      "_index4.js",
+      "_client.js"
     ],
     "css": [
-      "_app/immutable/assets/_layout.DlAbqU8n.css"
+      "_app/immutable/assets/_layout.K_OKI-qk.css"
     ]
   },
   "src/routes/+page.svelte": {
@@ -156,7 +176,8 @@
     "imports": [
       "_index.js",
       "_matchMedia.js",
-      "_index3.js"
+      "_index3.js",
+      "_html.js"
     ],
     "css": [
       "_app/immutable/assets/_page.5T0UqmaN.css"
@@ -181,6 +202,7 @@
     "isEntry": true,
     "imports": [
       "_index.js",
+      "_index4.js",
       "_index3.js",
       "_matchMedia.js"
     ],

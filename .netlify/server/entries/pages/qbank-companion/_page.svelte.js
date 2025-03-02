@@ -1,10 +1,11 @@
-import { $ as noop, ag as current_component, a8 as sanitize_props, ad as rest_props, a0 as getContext, a2 as fallback, ac as spread_attributes, ab as clsx, a4 as slot, ae as element, a6 as bind_props, T as pop, Q as push, Z as escape_html, Y as attr, _ as stringify, a3 as store_get, a5 as unsubscribe_stores, ah as store_set, S as setContext, X as add_styles, a7 as sanitize_slots, ai as invalid_default_snippet, af as spread_props, V as ensure_array_like, aj as copy_payload, ak as assign_payload } from "../../../chunks/index.js";
+import { ab as noop, ai as current_component, V as sanitize_props, W as rest_props, a1 as getContext, X as fallback, $ as spread_attributes, a0 as clsx, _ as slot, Y as element, Z as bind_props, T as pop, Q as push, a2 as escape_html, a6 as attr, af as stringify, a8 as store_get, a9 as unsubscribe_stores, aj as store_set, S as setContext, ae as add_styles, a7 as sanitize_slots, aa as invalid_default_snippet, a5 as spread_props, ac as ensure_array_like, a3 as copy_payload, a4 as assign_payload } from "../../../chunks/index.js";
 import { twMerge } from "tailwind-merge";
+import { l as linear$1, c as cubicOut, a as cubicInOut, b as cubicIn, d as sineOut } from "../../../chunks/index4.js";
 import { w as writable, d as derived } from "../../../chunks/index3.js";
 import "clsx";
 import { L as LayerCake } from "../../../chunks/matchMedia.js";
 import { scaleOrdinal, scaleLinear, scaleBand, scaleTime } from "d3-scale";
-import { curveLinearClosed, lineRadial, line, pointRadial, areaRadial, area, curveBumpX, curveBumpY, link, stack, stackOffsetExpand, stackOffsetDiverging, stackOffsetNone } from "d3-shape";
+import { curveLinearClosed, lineRadial, line, pointRadial, areaRadial, area, curveBumpX, curveBumpY, link, stack, stackOffsetExpand, stackOffsetDiverging, stackOffsetNone, arc, pie } from "d3-shape";
 import { extent, max, min, bisector, range, quantile, sum } from "d3-array";
 import { unique, uniqueId, Logger, localPoint, sortFunc, isLiteralObject, format, greatestAbs, notNull, formatDate, PeriodType } from "@layerstack/utils";
 import { cls } from "@layerstack/tailwind";
@@ -58,11 +59,8 @@ function onDestroy(fn) {
 }
 async function tick() {
 }
-function raise(el) {
-  if (el.nextSibling) el.parentNode.appendChild(el);
-}
-const linear$1 = (x) => x;
-function fade(node, { delay = 0, duration = 400, easing = linear$1 } = {}) {
+const linear = (x) => x;
+function fade(node, { delay = 0, duration = 400, easing = linear } = {}) {
   const o = +getComputedStyle(node).opacity;
   return {
     delay,
@@ -70,370 +68,6 @@ function fade(node, { delay = 0, duration = 400, easing = linear$1 } = {}) {
     easing,
     css: (t) => `opacity: ${t * o}`
   };
-}
-function is_date(obj) {
-  return Object.prototype.toString.call(obj) === "[object Date]";
-}
-function tick_spring(ctx, last_value, current_value, target_value) {
-  if (typeof current_value === "number" || is_date(current_value)) {
-    const delta = target_value - current_value;
-    const velocity = (current_value - last_value) / (ctx.dt || 1 / 60);
-    const spring2 = ctx.opts.stiffness * delta;
-    const damper = ctx.opts.damping * velocity;
-    const acceleration = (spring2 - damper) * ctx.inv_mass;
-    const d = (velocity + acceleration) * ctx.dt;
-    if (Math.abs(d) < ctx.opts.precision && Math.abs(delta) < ctx.opts.precision) {
-      return target_value;
-    } else {
-      ctx.settled = false;
-      return is_date(current_value) ? new Date(current_value.getTime() + d) : current_value + d;
-    }
-  } else if (Array.isArray(current_value)) {
-    return current_value.map(
-      (_, i) => (
-        // @ts-ignore
-        tick_spring(ctx, last_value[i], current_value[i], target_value[i])
-      )
-    );
-  } else if (typeof current_value === "object") {
-    const next_value = {};
-    for (const k in current_value) {
-      next_value[k] = tick_spring(ctx, last_value[k], current_value[k], target_value[k]);
-    }
-    return next_value;
-  } else {
-    throw new Error(`Cannot spring ${typeof current_value} values`);
-  }
-}
-function spring(value, opts = {}) {
-  const store = writable(value);
-  const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
-  let last_time;
-  let task;
-  let current_token;
-  let last_value = (
-    /** @type {T} */
-    value
-  );
-  let target_value = (
-    /** @type {T | undefined} */
-    value
-  );
-  let inv_mass = 1;
-  let inv_mass_recovery_rate = 0;
-  let cancel_task = false;
-  function set(new_value, opts2 = {}) {
-    target_value = new_value;
-    const token = current_token = {};
-    if (value == null || opts2.hard || spring2.stiffness >= 1 && spring2.damping >= 1) {
-      cancel_task = true;
-      last_time = raf.now();
-      last_value = new_value;
-      store.set(value = target_value);
-      return Promise.resolve();
-    } else if (opts2.soft) {
-      const rate = opts2.soft === true ? 0.5 : +opts2.soft;
-      inv_mass_recovery_rate = 1 / (rate * 60);
-      inv_mass = 0;
-    }
-    if (!task) {
-      last_time = raf.now();
-      cancel_task = false;
-      task = loop((now2) => {
-        if (cancel_task) {
-          cancel_task = false;
-          task = null;
-          return false;
-        }
-        inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
-        const elapsed = Math.min(now2 - last_time, 1e3 / 30);
-        const ctx = {
-          inv_mass,
-          opts: spring2,
-          settled: true,
-          dt: elapsed * 60 / 1e3
-        };
-        const next_value = tick_spring(ctx, last_value, value, target_value);
-        last_time = now2;
-        last_value = /** @type {T} */
-        value;
-        store.set(value = /** @type {T} */
-        next_value);
-        if (ctx.settled) {
-          task = null;
-        }
-        return !ctx.settled;
-      });
-    }
-    return new Promise((fulfil) => {
-      task.promise.then(() => {
-        if (token === current_token) fulfil();
-      });
-    });
-  }
-  const spring2 = {
-    set,
-    update: (fn, opts2) => set(fn(
-      /** @type {T} */
-      target_value,
-      /** @type {T} */
-      value
-    ), opts2),
-    subscribe: store.subscribe,
-    stiffness,
-    damping,
-    precision
-  };
-  return spring2;
-}
-function linear(t) {
-  return t;
-}
-function cubicInOut(t) {
-  return t < 0.5 ? 4 * t * t * t : 0.5 * Math.pow(2 * t - 2, 3) + 1;
-}
-function cubicIn(t) {
-  return t * t * t;
-}
-function cubicOut(t) {
-  const f = t - 1;
-  return f * f * f + 1;
-}
-function sineOut(t) {
-  return Math.sin(t * Math.PI / 2);
-}
-function get_interpolator(a, b) {
-  if (a === b || a !== a) return () => a;
-  const type = typeof a;
-  if (type !== typeof b || Array.isArray(a) !== Array.isArray(b)) {
-    throw new Error("Cannot interpolate values of different type");
-  }
-  if (Array.isArray(a)) {
-    const arr = (
-      /** @type {Array<any>} */
-      b.map((bi, i) => {
-        return get_interpolator(
-          /** @type {Array<any>} */
-          a[i],
-          bi
-        );
-      })
-    );
-    return (t) => arr.map((fn) => fn(t));
-  }
-  if (type === "object") {
-    if (!a || !b) {
-      throw new Error("Object cannot be null");
-    }
-    if (is_date(a) && is_date(b)) {
-      const an = a.getTime();
-      const bn = b.getTime();
-      const delta = bn - an;
-      return (t) => new Date(an + t * delta);
-    }
-    const keys = Object.keys(b);
-    const interpolators = {};
-    keys.forEach((key) => {
-      interpolators[key] = get_interpolator(a[key], b[key]);
-    });
-    return (t) => {
-      const result = {};
-      keys.forEach((key) => {
-        result[key] = interpolators[key](t);
-      });
-      return result;
-    };
-  }
-  if (type === "number") {
-    const delta = (
-      /** @type {number} */
-      b - /** @type {number} */
-      a
-    );
-    return (t) => a + t * delta;
-  }
-  return () => b;
-}
-function tweened(value, defaults = {}) {
-  const store = writable(value);
-  let task;
-  let target_value = value;
-  function set(new_value, opts) {
-    target_value = new_value;
-    if (value == null) {
-      store.set(value = new_value);
-      return Promise.resolve();
-    }
-    let previous_task = task;
-    let started = false;
-    let {
-      delay = 0,
-      duration = 400,
-      easing = linear,
-      interpolate: interpolate2 = get_interpolator
-    } = { ...defaults, ...opts };
-    if (duration === 0) {
-      if (previous_task) {
-        previous_task.abort();
-        previous_task = null;
-      }
-      store.set(value = target_value);
-      return Promise.resolve();
-    }
-    const start = raf.now() + delay;
-    let fn;
-    task = loop((now2) => {
-      if (now2 < start) return true;
-      if (!started) {
-        fn = interpolate2(
-          /** @type {any} */
-          value,
-          new_value
-        );
-        if (typeof duration === "function")
-          duration = duration(
-            /** @type {any} */
-            value,
-            new_value
-          );
-        started = true;
-      }
-      if (previous_task) {
-        previous_task.abort();
-        previous_task = null;
-      }
-      const elapsed = now2 - start;
-      if (elapsed > /** @type {number} */
-      duration) {
-        store.set(value = new_value);
-        return false;
-      }
-      store.set(value = fn(easing(elapsed / duration)));
-      return true;
-    });
-    return task.promise;
-  }
-  return {
-    set,
-    update: (fn, opts) => set(fn(
-      /** @type {any} */
-      target_value,
-      /** @type {any} */
-      value
-    ), opts),
-    subscribe: store.subscribe
-  };
-}
-function uniqueStore(initialValues) {
-  const store = writable(new Set(initialValues ?? []));
-  return {
-    ...store,
-    add(value) {
-      store.update((set) => {
-        set.add(value);
-        return set;
-      });
-    },
-    addEach(values) {
-      store.update((set) => {
-        values.forEach((value) => set.add(value));
-        return set;
-      });
-    },
-    delete(value) {
-      store.update((set) => {
-        set.delete(value);
-        return set;
-      });
-    },
-    toggle(value) {
-      store.update((set) => {
-        if (set.has(value)) {
-          set.delete(value);
-        } else {
-          set.add(value);
-        }
-        return set;
-      });
-    }
-  };
-}
-function selectionStore(props = {}) {
-  const selected = uniqueStore(props.initial ?? []);
-  const all = writable(props.all ?? []);
-  const single = props.single ?? false;
-  const max2 = props.max;
-  return derived([selected, all], ([$selected, $all]) => {
-    function setSelected(values) {
-      selected.update(($selected2) => {
-        if (max2 == null || values.length < max2) {
-          return new Set(values);
-        } else {
-          return $selected2;
-        }
-      });
-    }
-    function toggleSelected(value) {
-      selected.update(($selected2) => {
-        if ($selected2.has(value)) {
-          return new Set([...$selected2].filter((v) => v != value));
-        } else if (single) {
-          return /* @__PURE__ */ new Set([value]);
-        } else {
-          if (max2 == null || $selected2.size < max2) {
-            return $selected2.add(value);
-          } else {
-            return $selected2;
-          }
-        }
-      });
-    }
-    function toggleAll() {
-      let values;
-      if (isAllSelected()) {
-        values = [...$selected].filter((v) => !$all.includes(v));
-      } else {
-        values = [...$selected, ...$all];
-      }
-      selected.set(new Set(values));
-    }
-    function isSelected(value) {
-      return $selected.has(value);
-    }
-    function isAllSelected() {
-      return $all.every((v) => $selected.has(v));
-    }
-    function isAnySelected() {
-      return $all.some((v) => $selected.has(v));
-    }
-    function isMaxSelected() {
-      return max2 != null ? $selected.size >= max2 : false;
-    }
-    function isDisabled(value) {
-      return !isSelected(value) && isMaxSelected();
-    }
-    function clear() {
-      selected.set(/* @__PURE__ */ new Set());
-    }
-    function reset() {
-      selected.set(new Set(props.initial ?? []));
-    }
-    const selectedArr = [...$selected.values()];
-    return {
-      selected: single ? selectedArr[0] ?? null : selectedArr,
-      setSelected,
-      toggleSelected,
-      isSelected,
-      isDisabled,
-      toggleAll,
-      isAllSelected,
-      isAnySelected,
-      isMaxSelected,
-      clear,
-      reset,
-      all
-    };
-  });
 }
 function Button($$payload, $$props) {
   const $$sanitized_props = sanitize_props($$props);
@@ -612,6 +246,243 @@ function Button($$payload, $$props) {
   });
   pop();
 }
+function is_date(obj) {
+  return Object.prototype.toString.call(obj) === "[object Date]";
+}
+function tick_spring(ctx, last_value, current_value, target_value) {
+  if (typeof current_value === "number" || is_date(current_value)) {
+    const delta = target_value - current_value;
+    const velocity = (current_value - last_value) / (ctx.dt || 1 / 60);
+    const spring2 = ctx.opts.stiffness * delta;
+    const damper = ctx.opts.damping * velocity;
+    const acceleration = (spring2 - damper) * ctx.inv_mass;
+    const d = (velocity + acceleration) * ctx.dt;
+    if (Math.abs(d) < ctx.opts.precision && Math.abs(delta) < ctx.opts.precision) {
+      return target_value;
+    } else {
+      ctx.settled = false;
+      return is_date(current_value) ? new Date(current_value.getTime() + d) : current_value + d;
+    }
+  } else if (Array.isArray(current_value)) {
+    return current_value.map(
+      (_, i) => (
+        // @ts-ignore
+        tick_spring(ctx, last_value[i], current_value[i], target_value[i])
+      )
+    );
+  } else if (typeof current_value === "object") {
+    const next_value = {};
+    for (const k in current_value) {
+      next_value[k] = tick_spring(ctx, last_value[k], current_value[k], target_value[k]);
+    }
+    return next_value;
+  } else {
+    throw new Error(`Cannot spring ${typeof current_value} values`);
+  }
+}
+function spring(value, opts = {}) {
+  const store = writable(value);
+  const { stiffness = 0.15, damping = 0.8, precision = 0.01 } = opts;
+  let last_time;
+  let task;
+  let current_token;
+  let last_value = (
+    /** @type {T} */
+    value
+  );
+  let target_value = (
+    /** @type {T | undefined} */
+    value
+  );
+  let inv_mass = 1;
+  let inv_mass_recovery_rate = 0;
+  let cancel_task = false;
+  function set(new_value, opts2 = {}) {
+    target_value = new_value;
+    const token = current_token = {};
+    if (value == null || opts2.hard || spring2.stiffness >= 1 && spring2.damping >= 1) {
+      cancel_task = true;
+      last_time = raf.now();
+      last_value = new_value;
+      store.set(value = target_value);
+      return Promise.resolve();
+    } else if (opts2.soft) {
+      const rate = opts2.soft === true ? 0.5 : +opts2.soft;
+      inv_mass_recovery_rate = 1 / (rate * 60);
+      inv_mass = 0;
+    }
+    if (!task) {
+      last_time = raf.now();
+      cancel_task = false;
+      task = loop((now2) => {
+        if (cancel_task) {
+          cancel_task = false;
+          task = null;
+          return false;
+        }
+        inv_mass = Math.min(inv_mass + inv_mass_recovery_rate, 1);
+        const elapsed = Math.min(now2 - last_time, 1e3 / 30);
+        const ctx = {
+          inv_mass,
+          opts: spring2,
+          settled: true,
+          dt: elapsed * 60 / 1e3
+        };
+        const next_value = tick_spring(ctx, last_value, value, target_value);
+        last_time = now2;
+        last_value = /** @type {T} */
+        value;
+        store.set(value = /** @type {T} */
+        next_value);
+        if (ctx.settled) {
+          task = null;
+        }
+        return !ctx.settled;
+      });
+    }
+    return new Promise((fulfil) => {
+      task.promise.then(() => {
+        if (token === current_token) fulfil();
+      });
+    });
+  }
+  const spring2 = {
+    set,
+    update: (fn, opts2) => set(fn(
+      /** @type {T} */
+      target_value,
+      /** @type {T} */
+      value
+    ), opts2),
+    subscribe: store.subscribe,
+    stiffness,
+    damping,
+    precision
+  };
+  return spring2;
+}
+function get_interpolator(a, b) {
+  if (a === b || a !== a) return () => a;
+  const type = typeof a;
+  if (type !== typeof b || Array.isArray(a) !== Array.isArray(b)) {
+    throw new Error("Cannot interpolate values of different type");
+  }
+  if (Array.isArray(a)) {
+    const arr = (
+      /** @type {Array<any>} */
+      b.map((bi, i) => {
+        return get_interpolator(
+          /** @type {Array<any>} */
+          a[i],
+          bi
+        );
+      })
+    );
+    return (t) => arr.map((fn) => fn(t));
+  }
+  if (type === "object") {
+    if (!a || !b) {
+      throw new Error("Object cannot be null");
+    }
+    if (is_date(a) && is_date(b)) {
+      const an = a.getTime();
+      const bn = b.getTime();
+      const delta = bn - an;
+      return (t) => new Date(an + t * delta);
+    }
+    const keys = Object.keys(b);
+    const interpolators = {};
+    keys.forEach((key) => {
+      interpolators[key] = get_interpolator(a[key], b[key]);
+    });
+    return (t) => {
+      const result = {};
+      keys.forEach((key) => {
+        result[key] = interpolators[key](t);
+      });
+      return result;
+    };
+  }
+  if (type === "number") {
+    const delta = (
+      /** @type {number} */
+      b - /** @type {number} */
+      a
+    );
+    return (t) => a + t * delta;
+  }
+  return () => b;
+}
+function tweened(value, defaults = {}) {
+  const store = writable(value);
+  let task;
+  let target_value = value;
+  function set(new_value, opts) {
+    target_value = new_value;
+    if (value == null) {
+      store.set(value = new_value);
+      return Promise.resolve();
+    }
+    let previous_task = task;
+    let started = false;
+    let {
+      delay = 0,
+      duration = 400,
+      easing = linear$1,
+      interpolate: interpolate2 = get_interpolator
+    } = { ...defaults, ...opts };
+    if (duration === 0) {
+      if (previous_task) {
+        previous_task.abort();
+        previous_task = null;
+      }
+      store.set(value = target_value);
+      return Promise.resolve();
+    }
+    const start = raf.now() + delay;
+    let fn;
+    task = loop((now2) => {
+      if (now2 < start) return true;
+      if (!started) {
+        fn = interpolate2(
+          /** @type {any} */
+          value,
+          new_value
+        );
+        if (typeof duration === "function")
+          duration = duration(
+            /** @type {any} */
+            value,
+            new_value
+          );
+        started = true;
+      }
+      if (previous_task) {
+        previous_task.abort();
+        previous_task = null;
+      }
+      const elapsed = now2 - start;
+      if (elapsed > /** @type {number} */
+      duration) {
+        store.set(value = new_value);
+        return false;
+      }
+      store.set(value = fn(easing(elapsed / duration)));
+      return true;
+    });
+    return task.promise;
+  }
+  return {
+    set,
+    update: (fn, opts) => set(fn(
+      /** @type {any} */
+      target_value,
+      /** @type {any} */
+      value
+    ), opts),
+    subscribe: store.subscribe
+  };
+}
 function Progressbar($$payload, $$props) {
   const $$sanitized_props = sanitize_props($$props);
   const $$restProps = rest_props($$sanitized_props, [
@@ -694,6 +565,120 @@ function Progressbar($$payload, $$props) {
     classLabelOutside
   });
   pop();
+}
+function raise(el) {
+  if (el.nextSibling) el.parentNode.appendChild(el);
+}
+function uniqueStore(initialValues) {
+  const store = writable(new Set(initialValues ?? []));
+  return {
+    ...store,
+    add(value) {
+      store.update((set) => {
+        set.add(value);
+        return set;
+      });
+    },
+    addEach(values) {
+      store.update((set) => {
+        values.forEach((value) => set.add(value));
+        return set;
+      });
+    },
+    delete(value) {
+      store.update((set) => {
+        set.delete(value);
+        return set;
+      });
+    },
+    toggle(value) {
+      store.update((set) => {
+        if (set.has(value)) {
+          set.delete(value);
+        } else {
+          set.add(value);
+        }
+        return set;
+      });
+    }
+  };
+}
+function selectionStore(props = {}) {
+  const selected = uniqueStore(props.initial ?? []);
+  const all = writable(props.all ?? []);
+  const single = props.single ?? false;
+  const max2 = props.max;
+  return derived([selected, all], ([$selected, $all]) => {
+    function setSelected(values) {
+      selected.update(($selected2) => {
+        if (max2 == null || values.length < max2) {
+          return new Set(values);
+        } else {
+          return $selected2;
+        }
+      });
+    }
+    function toggleSelected(value) {
+      selected.update(($selected2) => {
+        if ($selected2.has(value)) {
+          return new Set([...$selected2].filter((v) => v != value));
+        } else if (single) {
+          return /* @__PURE__ */ new Set([value]);
+        } else {
+          if (max2 == null || $selected2.size < max2) {
+            return $selected2.add(value);
+          } else {
+            return $selected2;
+          }
+        }
+      });
+    }
+    function toggleAll() {
+      let values;
+      if (isAllSelected()) {
+        values = [...$selected].filter((v) => !$all.includes(v));
+      } else {
+        values = [...$selected, ...$all];
+      }
+      selected.set(new Set(values));
+    }
+    function isSelected(value) {
+      return $selected.has(value);
+    }
+    function isAllSelected() {
+      return $all.every((v) => $selected.has(v));
+    }
+    function isAnySelected() {
+      return $all.some((v) => $selected.has(v));
+    }
+    function isMaxSelected() {
+      return max2 != null ? $selected.size >= max2 : false;
+    }
+    function isDisabled(value) {
+      return !isSelected(value) && isMaxSelected();
+    }
+    function clear() {
+      selected.set(/* @__PURE__ */ new Set());
+    }
+    function reset() {
+      selected.set(new Set(props.initial ?? []));
+    }
+    const selectedArr = [...$selected.values()];
+    return {
+      selected: single ? selectedArr[0] ?? null : selectedArr,
+      setSelected,
+      toggleSelected,
+      isSelected,
+      isDisabled,
+      toggleAll,
+      isAllSelected,
+      isAnySelected,
+      isMaxSelected,
+      clear,
+      reset,
+      all
+    };
+  });
 }
 function motionStore(value, options) {
   if (options.spring) {
@@ -2716,6 +2701,9 @@ function Voronoi($$payload, $$props) {
     onpointerdown
   });
   pop();
+}
+function degreesToRadians(degrees) {
+  return degrees * Math.PI / 180;
 }
 function cartesianToPolar(x, y) {
   let radians = Math.atan2(y, x);
@@ -7006,6 +6994,671 @@ function AreaChart($$payload, $$props) {
   });
   pop();
 }
+function Arc($$payload, $$props) {
+  const $$sanitized_props = sanitize_props($$props);
+  const $$restProps = rest_props($$sanitized_props, [
+    "spring",
+    "tweened",
+    "value",
+    "initialValue",
+    "domain",
+    "range",
+    "startAngle",
+    "endAngle",
+    "innerRadius",
+    "outerRadius",
+    "cornerRadius",
+    "padAngle",
+    "fill",
+    "fillOpacity",
+    "stroke",
+    "strokeWidth",
+    "class",
+    "track",
+    "onclick",
+    "onpointerenter",
+    "onpointermove",
+    "onpointerleave",
+    "offset",
+    "tooltip",
+    "data"
+  ]);
+  push();
+  var $$store_subs;
+  let scale, _outerRadius, _innerRadius, arc$1, trackArc, trackArcCentroid, boundingBox, angle, xOffset, yOffset;
+  let spring2 = fallback($$props["spring"], void 0);
+  let tweened2 = fallback($$props["tweened"], void 0);
+  let value = fallback($$props["value"], 0);
+  let initialValue = fallback($$props["initialValue"], value);
+  let tweened_value = motionStore(initialValue, { spring: spring2, tweened: tweened2 });
+  let domain = fallback($$props["domain"], () => [0, 100], true);
+  let range2 = fallback($$props["range"], () => [0, 360], true);
+  let startAngle = fallback($$props["startAngle"], void 0);
+  let endAngle = fallback($$props["endAngle"], void 0);
+  let innerRadius = fallback($$props["innerRadius"], void 0);
+  let outerRadius = fallback($$props["outerRadius"], void 0);
+  let cornerRadius = fallback($$props["cornerRadius"], 0);
+  let padAngle = fallback($$props["padAngle"], 0);
+  let fill = fallback($$props["fill"], void 0);
+  let fillOpacity = fallback($$props["fillOpacity"], void 0);
+  let stroke = fallback($$props["stroke"], "none");
+  let strokeWidth = fallback($$props["strokeWidth"], void 0);
+  let className = fallback($$props["class"], void 0);
+  let track = fallback($$props["track"], false);
+  let onclick = fallback($$props["onclick"], void 0);
+  let onpointerenter = fallback($$props["onpointerenter"], void 0);
+  let onpointermove = fallback($$props["onpointermove"], void 0);
+  let onpointerleave = fallback($$props["onpointerleave"], void 0);
+  const { xRange, yRange } = chartContext();
+  function getOuterRadius(outerRadius2, chartRadius) {
+    if (!outerRadius2) {
+      return chartRadius;
+    } else if (outerRadius2 > 1) {
+      return outerRadius2;
+    } else if (outerRadius2 > 0) {
+      return chartRadius * outerRadius2;
+    } else if (outerRadius2 < 0) {
+      return chartRadius + outerRadius2;
+    } else {
+      return outerRadius2;
+    }
+  }
+  function getInnerRadius(innerRadius2, outerRadius2) {
+    if (innerRadius2 == null) {
+      return Math.min(...store_get($$store_subs ??= {}, "$yRange", yRange));
+    } else if (innerRadius2 > 1) {
+      return innerRadius2;
+    } else if (innerRadius2 > 0) {
+      return outerRadius2 * innerRadius2;
+    } else if (innerRadius2 < 0) {
+      return outerRadius2 + innerRadius2;
+    } else {
+      return innerRadius2;
+    }
+  }
+  let trackArcEl = void 0;
+  let offset = fallback($$props["offset"], 0);
+  let tooltip = fallback($$props["tooltip"], void 0);
+  let data = fallback($$props["data"], void 0);
+  function onPointerEnter(e) {
+    onpointerenter?.(e);
+    tooltip?.show(e, data);
+  }
+  function onPointerMove(e) {
+    onpointermove?.(e);
+    tooltip?.show(e, data);
+  }
+  function onPointerLeave(e) {
+    onpointerleave?.(e);
+    tooltip?.hide();
+  }
+  tick().then(() => {
+    tweened_value.set(value);
+  });
+  scale = scaleLinear().domain(domain).range(range2);
+  _outerRadius = getOuterRadius(outerRadius, (Math.min(store_get($$store_subs ??= {}, "$xRange", xRange)[1], store_get($$store_subs ??= {}, "$yRange", yRange)[0]) ?? 0) / 2);
+  _innerRadius = getInnerRadius(innerRadius, _outerRadius);
+  arc$1 = arc().innerRadius(_innerRadius).outerRadius(_outerRadius).startAngle(startAngle ?? degreesToRadians(range2[0])).endAngle(endAngle ?? degreesToRadians(scale(store_get($$store_subs ??= {}, "$tweened_value", tweened_value)))).cornerRadius(cornerRadius).padAngle(padAngle);
+  trackArc = arc().innerRadius(_innerRadius).outerRadius(_outerRadius).startAngle(startAngle ?? degreesToRadians(range2[0])).endAngle(endAngle ?? degreesToRadians(range2[1])).cornerRadius(cornerRadius).padAngle(padAngle);
+  trackArcCentroid = trackArc.centroid();
+  boundingBox = trackArcEl ? trackArcEl.getBBox() : {};
+  angle = ((startAngle ?? 0) + (endAngle ?? 0)) / 2;
+  xOffset = Math.sin(angle) * offset;
+  yOffset = -Math.cos(angle) * offset;
+  let $$settled = true;
+  let $$inner_payload;
+  function $$render_inner($$payload2) {
+    if (track) {
+      $$payload2.out += "<!--[-->";
+      Spline($$payload2, spread_props([
+        {
+          pathData: trackArc(),
+          class: "track",
+          stroke: "none"
+        },
+        typeof track === "object" ? track : null,
+        {
+          get pathEl() {
+            return trackArcEl;
+          },
+          set pathEl($$value) {
+            trackArcEl = $$value;
+            $$settled = false;
+          }
+        }
+      ]));
+    } else {
+      $$payload2.out += "<!--[!-->";
+    }
+    $$payload2.out += `<!--]--> `;
+    Spline($$payload2, spread_props([
+      {
+        pathData: arc$1(),
+        transform: `translate(${stringify(xOffset)}, ${stringify(yOffset)})`,
+        fill,
+        "fill-opacity": fillOpacity,
+        stroke,
+        "stroke-width": strokeWidth,
+        class: className
+      },
+      $$restProps,
+      {
+        onclick,
+        onpointerenter: onPointerEnter,
+        onpointermove: onPointerMove,
+        onpointerleave: onPointerLeave,
+        ontouchmove: (e) => {
+          if (tooltip) {
+            e.preventDefault();
+          }
+        }
+      }
+    ]));
+    $$payload2.out += `<!----> <!---->`;
+    slot(
+      $$payload2,
+      $$props,
+      "default",
+      {
+        value: store_get($$store_subs ??= {}, "$tweened_value", tweened_value),
+        centroid: trackArcCentroid,
+        boundingBox
+      },
+      null
+    );
+    $$payload2.out += `<!---->`;
+  }
+  do {
+    $$settled = true;
+    $$inner_payload = copy_payload($$payload);
+    $$render_inner($$inner_payload);
+  } while (!$$settled);
+  assign_payload($$payload, $$inner_payload);
+  if ($$store_subs) unsubscribe_stores($$store_subs);
+  bind_props($$props, {
+    spring: spring2,
+    tweened: tweened2,
+    value,
+    initialValue,
+    domain,
+    range: range2,
+    startAngle,
+    endAngle,
+    innerRadius,
+    outerRadius,
+    cornerRadius,
+    padAngle,
+    fill,
+    fillOpacity,
+    stroke,
+    strokeWidth,
+    class: className,
+    track,
+    onclick,
+    onpointerenter,
+    onpointermove,
+    onpointerleave,
+    offset,
+    tooltip,
+    data
+  });
+  pop();
+}
+function Pie($$payload, $$props) {
+  push();
+  var $$store_subs;
+  let resolved_endAngle, arcs;
+  let data = fallback($$props["data"], void 0);
+  let range2 = fallback($$props["range"], () => [0, 360], true);
+  let startAngle = fallback($$props["startAngle"], void 0);
+  let endAngle = fallback($$props["endAngle"], void 0);
+  let innerRadius = fallback($$props["innerRadius"], void 0);
+  let outerRadius = fallback($$props["outerRadius"], void 0);
+  let cornerRadius = fallback($$props["cornerRadius"], 0);
+  let padAngle = fallback($$props["padAngle"], 0);
+  let spring2 = fallback($$props["spring"], void 0);
+  let tweened2 = fallback($$props["tweened"], void 0);
+  let offset = fallback($$props["offset"], 0);
+  let tooltip = fallback($$props["tooltip"], void 0);
+  let sort = fallback($$props["sort"], void 0);
+  const {
+    data: contextData,
+    x,
+    y,
+    xRange,
+    c,
+    cScale,
+    config
+  } = chartContext();
+  let tweened_endAngle = motionStore(0, { spring: spring2, tweened: tweened2 });
+  let pie$1;
+  resolved_endAngle = endAngle ?? degreesToRadians(store_get($$store_subs ??= {}, "$config", config).xRange ? max(store_get($$store_subs ??= {}, "$xRange", xRange)) : max(range2));
+  tweened_endAngle.set(resolved_endAngle);
+  {
+    pie$1 = pie().startAngle(startAngle ?? degreesToRadians(store_get($$store_subs ??= {}, "$config", config).xRange ? min(store_get($$store_subs ??= {}, "$xRange", xRange)) : min(range2))).endAngle(store_get($$store_subs ??= {}, "$tweened_endAngle", tweened_endAngle)).padAngle(padAngle).value(store_get($$store_subs ??= {}, "$x", x));
+    if (sort === null) {
+      pie$1 = pie$1.sort(null);
+    } else if (sort) {
+      pie$1 = pie$1.sort(sort);
+    }
+  }
+  arcs = pie$1(data ?? (Array.isArray(store_get($$store_subs ??= {}, "$contextData", contextData)) ? store_get($$store_subs ??= {}, "$contextData", contextData) : []));
+  $$payload.out += `<!---->`;
+  slot($$payload, $$props, "default", { arcs }, () => {
+    const each_array = ensure_array_like(arcs);
+    $$payload.out += `<!--[-->`;
+    for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+      let arc2 = each_array[$$index];
+      Arc($$payload, {
+        startAngle: arc2.startAngle,
+        endAngle: arc2.endAngle,
+        padAngle: arc2.padAngle,
+        innerRadius,
+        outerRadius,
+        cornerRadius,
+        offset,
+        fill: store_get($$store_subs ??= {}, "$config", config).c ? store_get($$store_subs ??= {}, "$cScale", cScale)?.(store_get($$store_subs ??= {}, "$c", c)(arc2.data)) : null,
+        data: arc2.data,
+        tooltip
+      });
+    }
+    $$payload.out += `<!--]-->`;
+  });
+  $$payload.out += `<!---->`;
+  if ($$store_subs) unsubscribe_stores($$store_subs);
+  bind_props($$props, {
+    data,
+    range: range2,
+    startAngle,
+    endAngle,
+    innerRadius,
+    outerRadius,
+    cornerRadius,
+    padAngle,
+    spring: spring2,
+    tweened: tweened2,
+    offset,
+    tooltip,
+    sort
+  });
+  pop();
+}
+function PieChart($$payload, $$props) {
+  const $$sanitized_props = sanitize_props($$props);
+  const $$restProps = rest_props($$sanitized_props, [
+    "data",
+    "key",
+    "label",
+    "value",
+    "c",
+    "maxValue",
+    "series",
+    "legend",
+    "range",
+    "innerRadius",
+    "outerRadius",
+    "cornerRadius",
+    "padAngle",
+    "placement",
+    "center",
+    "tooltipContext",
+    "ontooltipclick",
+    "onarcclick",
+    "props",
+    "renderContext",
+    "profile",
+    "debug"
+  ]);
+  push();
+  var $$store_subs;
+  let keyAccessor, labelAccessor, valueAccessor, cAccessor, allSeriesData, chartData, seriesColors, visibleData;
+  let data = fallback($$props["data"], () => [], true);
+  let key = fallback($$props["key"], "key");
+  let label = fallback($$props["label"], "label");
+  let value = fallback($$props["value"], "value");
+  let c = fallback($$props["c"], key);
+  let maxValue = fallback($$props["maxValue"], void 0);
+  let series = fallback(
+    $$props["series"],
+    () => [
+      {
+        key: "default",
+        value
+        /*, color: 'hsl(var(--color-primary))'*/
+      }
+    ],
+    true
+  );
+  let legend = fallback($$props["legend"], false);
+  let range2 = fallback($$props["range"], () => [0, 360], true);
+  let innerRadius = fallback($$props["innerRadius"], void 0);
+  let outerRadius = fallback($$props["outerRadius"], void 0);
+  let cornerRadius = fallback($$props["cornerRadius"], 0);
+  let padAngle = fallback($$props["padAngle"], 0);
+  let placement = fallback($$props["placement"], "center");
+  let center = fallback($$props["center"], placement === "center");
+  let tooltipContext2 = fallback($$props["tooltipContext"], void 0);
+  let ontooltipclick = fallback($$props["ontooltipclick"], () => {
+  });
+  let onarcclick = fallback($$props["onarcclick"], () => {
+  });
+  let props = fallback($$props["props"], () => ({}), true);
+  let renderContext = fallback($$props["renderContext"], "svg");
+  let profile = fallback($$props["profile"], false);
+  let debug = fallback($$props["debug"], false);
+  let highlightKey = null;
+  function setHighlightKey(key2) {
+    highlightKey = key2 ?? null;
+  }
+  const selectedKeys = selectionStore();
+  if (profile) {
+    console.time("PieChart render");
+  }
+  keyAccessor = accessor(key);
+  labelAccessor = accessor(label);
+  valueAccessor = accessor(value);
+  cAccessor = accessor(c);
+  allSeriesData = series.flatMap((s) => s.data?.map((d) => ({ seriesKey: s.key, ...d }))).filter((d) => d);
+  chartData = allSeriesData.length ? allSeriesData : chartDataArray(data);
+  seriesColors = series.map((s) => s.color).filter((d) => d != null);
+  visibleData = chartData.filter((d) => {
+    const dataKey = keyAccessor(d);
+    return (
+      // @ts-expect-error
+      store_get($$store_subs ??= {}, "$selectedKeys", selectedKeys).selected.length === 0 || store_get($$store_subs ??= {}, "$selectedKeys", selectedKeys).isSelected(dataKey)
+    );
+  });
+  let $$settled = true;
+  let $$inner_payload;
+  function $$render_inner($$payload2) {
+    Chart($$payload2, spread_props([
+      {
+        data: visibleData,
+        x: value,
+        y: key,
+        c,
+        cDomain: chartData.map(keyAccessor),
+        cRange: seriesColors.length ? seriesColors : c !== key ? chartData.map((d) => cAccessor(d)) : [
+          "hsl(var(--color-primary))",
+          "hsl(var(--color-secondary))",
+          "hsl(var(--color-info))",
+          "hsl(var(--color-success))",
+          "hsl(var(--color-warning))",
+          "hsl(var(--color-danger))"
+        ],
+        padding: { bottom: legend === true ? 32 : 0 }
+      },
+      $$restProps,
+      {
+        tooltip: props.tooltip?.context,
+        get tooltipContext() {
+          return tooltipContext2;
+        },
+        set tooltipContext($$value) {
+          tooltipContext2 = $$value;
+          $$settled = false;
+        },
+        children: invalid_default_snippet,
+        $$slots: {
+          default: ($$payload3, {
+            x,
+            xScale,
+            y,
+            c: c2,
+            cScale,
+            yScale,
+            width,
+            height,
+            padding,
+            tooltip
+          }) => {
+            const slotProps = {
+              key,
+              label,
+              value,
+              x,
+              xScale,
+              y,
+              yScale,
+              c: c2,
+              cScale,
+              width,
+              height,
+              padding,
+              tooltip,
+              series,
+              visibleData,
+              setHighlightKey
+            };
+            $$payload3.out += `<!---->`;
+            slot($$payload3, $$props, "default", spread_props([{}, slotProps]), () => {
+              $$payload3.out += `<!---->`;
+              slot($$payload3, $$props, "belowContext", spread_props([{}, slotProps]), null);
+              $$payload3.out += `<!----> <!---->`;
+              (renderContext === "canvas" ? Canvas : Svg)?.($$payload3, spread_props([
+                asAny(renderContext === "canvas" ? props.canvas : props.svg),
+                {
+                  center,
+                  debug,
+                  children: ($$payload4) => {
+                    $$payload4.out += `<!---->`;
+                    slot($$payload4, $$props, "belowMarks", spread_props([{}, slotProps]), null);
+                    $$payload4.out += `<!----> <!---->`;
+                    slot($$payload4, $$props, "marks", spread_props([{}, slotProps]), () => {
+                      Group($$payload4, spread_props([
+                        {
+                          x: placement === "left" ? height / 2 : placement === "right" ? width - height / 2 : void 0,
+                          center: ["left", "right"].includes(placement) ? "y" : void 0
+                        },
+                        props.group,
+                        {
+                          children: ($$payload5) => {
+                            const each_array = ensure_array_like(series);
+                            $$payload5.out += `<!--[-->`;
+                            for (let i = 0, $$length = each_array.length; i < $$length; i++) {
+                              let s = each_array[i];
+                              const singleArc = s.data?.length === 1 || chartData.length === 1;
+                              if (singleArc) {
+                                $$payload5.out += "<!--[-->";
+                                const d = s.data?.[0] || chartData[0];
+                                Arc($$payload5, spread_props([
+                                  {
+                                    value: valueAccessor(d),
+                                    domain: [
+                                      0,
+                                      s.maxValue ?? maxValue ?? sum(chartData, valueAccessor)
+                                    ],
+                                    range: range2,
+                                    innerRadius,
+                                    outerRadius: (outerRadius ?? 0) < 0 ? i * (outerRadius ?? 0) : outerRadius,
+                                    cornerRadius,
+                                    padAngle,
+                                    fill: s.color ?? cScale?.(c2(d)),
+                                    track: {
+                                      fill: s.color ?? cScale?.(c2(d)),
+                                      "fill-opacity": 0.1
+                                    },
+                                    tooltip,
+                                    data: d,
+                                    onclick: (e) => {
+                                      onarcclick(e, { data: d, series: s });
+                                      ontooltipclick(e, { data: d });
+                                    }
+                                  },
+                                  props.arc,
+                                  s.props,
+                                  {
+                                    class: cls("transition-opacity", highlightKey && highlightKey !== keyAccessor(d) && "opacity-50", props.arc?.class, s.props?.class)
+                                  }
+                                ]));
+                              } else {
+                                $$payload5.out += "<!--[!-->";
+                                Pie($$payload5, spread_props([
+                                  {
+                                    data: s.data,
+                                    range: range2,
+                                    innerRadius,
+                                    outerRadius,
+                                    cornerRadius,
+                                    padAngle
+                                  },
+                                  props.pie,
+                                  {
+                                    children: invalid_default_snippet,
+                                    $$slots: {
+                                      default: ($$payload6, { arcs }) => {
+                                        const each_array_1 = ensure_array_like(arcs);
+                                        $$payload6.out += `<!--[-->`;
+                                        for (let $$index = 0, $$length2 = each_array_1.length; $$index < $$length2; $$index++) {
+                                          let arc2 = each_array_1[$$index];
+                                          Arc($$payload6, spread_props([
+                                            {
+                                              startAngle: arc2.startAngle,
+                                              endAngle: arc2.endAngle,
+                                              outerRadius: series.length > 1 ? i * (outerRadius ?? 0) : outerRadius,
+                                              innerRadius,
+                                              cornerRadius,
+                                              padAngle,
+                                              fill: cScale?.(c2(arc2.data)),
+                                              data: arc2.data,
+                                              tooltip,
+                                              onclick: (e) => {
+                                                onarcclick(e, { data: arc2.data, series: s });
+                                                ontooltipclick(e, { data: arc2.data });
+                                              },
+                                              class: cls("transition-opacity", highlightKey && highlightKey !== keyAccessor(arc2.data) && "opacity-50")
+                                            },
+                                            props.arc,
+                                            s.props
+                                          ]));
+                                        }
+                                        $$payload6.out += `<!--]-->`;
+                                      }
+                                    }
+                                  }
+                                ]));
+                              }
+                              $$payload5.out += `<!--]-->`;
+                            }
+                            $$payload5.out += `<!--]-->`;
+                          },
+                          $$slots: { default: true }
+                        }
+                      ]));
+                    });
+                    $$payload4.out += `<!----> <!---->`;
+                    slot($$payload4, $$props, "aboveMarks", spread_props([{}, slotProps]), null);
+                    $$payload4.out += `<!---->`;
+                  },
+                  $$slots: { default: true }
+                }
+              ]));
+              $$payload3.out += `<!----> <!---->`;
+              slot($$payload3, $$props, "aboveContext", spread_props([{}, slotProps]), null);
+              $$payload3.out += `<!----> <!---->`;
+              slot($$payload3, $$props, "legend", spread_props([{}, slotProps]), () => {
+                if (legend) {
+                  $$payload3.out += "<!--[-->";
+                  Legend($$payload3, spread_props([
+                    {
+                      tickFormat: (tick2) => {
+                        const item = chartData.find((d) => keyAccessor(d) === tick2);
+                        return item ? labelAccessor(item) ?? tick2 : tick2;
+                      },
+                      placement: "bottom",
+                      variant: "swatches",
+                      onclick: (e, item) => store_get($$store_subs ??= {}, "$selectedKeys", selectedKeys).toggleSelected(item.value),
+                      onpointerenter: (e, item) => highlightKey = item.value,
+                      onpointerleave: (e) => highlightKey = null
+                    },
+                    props.legend,
+                    typeof legend === "object" ? legend : null,
+                    {
+                      classes: {
+                        item: (item) => visibleData.length && !visibleData.some((d) => keyAccessor(d) === item.value) ? "opacity-50" : "",
+                        ...props.legend?.classes,
+                        ...typeof legend === "object" ? legend.classes : null
+                      }
+                    }
+                  ]));
+                } else {
+                  $$payload3.out += "<!--[!-->";
+                }
+                $$payload3.out += `<!--]-->`;
+              });
+              $$payload3.out += `<!----> <!---->`;
+              slot($$payload3, $$props, "tooltip", spread_props([{}, slotProps]), () => {
+                Tooltip($$payload3, spread_props([
+                  props.tooltip?.root,
+                  {
+                    children: invalid_default_snippet,
+                    $$slots: {
+                      default: ($$payload4, { data: data2 }) => {
+                        TooltipList($$payload4, spread_props([
+                          props.tooltip?.list,
+                          {
+                            children: ($$payload5) => {
+                              TooltipItem($$payload5, spread_props([
+                                {
+                                  label: labelAccessor(data2) || keyAccessor(data2),
+                                  value: valueAccessor(data2),
+                                  color: cScale?.(c2(data2)),
+                                  format,
+                                  onpointerenter: () => highlightKey = keyAccessor(data2),
+                                  onpointerleave: () => highlightKey = null
+                                },
+                                props.tooltip?.item
+                              ]));
+                            },
+                            $$slots: { default: true }
+                          }
+                        ]));
+                      }
+                    }
+                  }
+                ]));
+              });
+              $$payload3.out += `<!---->`;
+            });
+            $$payload3.out += `<!---->`;
+          }
+        }
+      }
+    ]));
+  }
+  do {
+    $$settled = true;
+    $$inner_payload = copy_payload($$payload);
+    $$render_inner($$inner_payload);
+  } while (!$$settled);
+  assign_payload($$payload, $$inner_payload);
+  if ($$store_subs) unsubscribe_stores($$store_subs);
+  bind_props($$props, {
+    data,
+    key,
+    label,
+    value,
+    c,
+    maxValue,
+    series,
+    legend,
+    range: range2,
+    innerRadius,
+    outerRadius,
+    cornerRadius,
+    padAngle,
+    placement,
+    center,
+    tooltipContext: tooltipContext2,
+    ontooltipclick,
+    onarcclick,
+    props,
+    renderContext,
+    profile,
+    debug
+  });
+  pop();
+}
 [
   {
     predicate: (duration) => duration == null,
@@ -7366,6 +8019,18 @@ ${rows}`;
     }
     return days;
   };
+  let dataSummary = () => {
+    const summary = [];
+    summary.push({
+      correctness: "Correct",
+      value: countCorrectInFiltered(filteredHistory)
+    });
+    summary.push({
+      correctness: "Incorrect",
+      value: countIncorrectInFiltered(filteredHistory)
+    });
+    return summary;
+  };
   const each_array = ensure_array_like(filteredHistory);
   $$payload.out += `<main><div id="SourceInput" class="input-container svelte-1gonf4x" style="padding-top: 10px"><label for="source-input">Source:</label> <input id="source-input" type="text"${attr("value", source)} placeholder="Enter source..." class="source-input svelte-1gonf4x"></div> <div class="wrapper svelte-1gonf4x" id="QuestionContainer"><div><h1 style="font-size: 32px; font-weight: bold;">Question: ${escape_html(dailyQuestionCount)}</h1></div></div> <div class="input-container svelte-1gonf4x"><label for="source-input">Notes:</label> <input type="text"${attr("value", currentNotes)} placeholder="Enter notes..." class="source-input svelte-1gonf4x" id="notes-input"></div> <div id="Scoreboard" class="scoreboard svelte-1gonf4x"><button class="counter-box correct svelte-1gonf4x" style="flex-grow: 10"><h2>Correct (Enter)</h2> <p>${escape_html(visibleCorrectCount)}</p></button> <button class="counter-box incorrect svelte-1gonf4x" style="flex-grow: 10"><h2>Incorrect (Shift+Enter)</h2> <p>${escape_html(visibleIncorrectCount)}</p></button> <button class="counter-box undo svelte-1gonf4x" style="flex-grow: 1"><h2>Undo (Cmd+z)</h2></button></div> <div style="display: flex; padding-left: 10px; padding-right: 10px">`;
   Progressbar($$payload, {
@@ -7477,7 +8142,13 @@ ${rows}`;
     points: true,
     labels: { offset: 10 }
   });
-  $$payload.out += `<!----></div></main>`;
+  $$payload.out += `<!----></div> <div class="h-[300px] p-4 border rounded resize overflow-auto">`;
+  PieChart($$payload, {
+    data: dataSummary(),
+    key: "correctness",
+    value: "value"
+  });
+  $$payload.out += `<!----></div> <h1 class="text-3xl font-bold underline">Hello world!</h1></main>`;
   pop();
 }
 export {

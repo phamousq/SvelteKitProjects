@@ -1,4 +1,4 @@
-import { Z as escape_html } from "../../chunks/index.js";
+import { a2 as escape_html } from "../../chunks/index.js";
 import "clsx";
 import _page$1 from "./projects/_page.svelte.js";
 function _page($$payload) {

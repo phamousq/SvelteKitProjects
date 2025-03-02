@@ -1,5 +1,5 @@
 import "clsx";
-import { Q as push, a2 as fallback, a0 as getContext, X as add_styles, Y as attr, a3 as store_get, a4 as slot, Z as escape_html, _ as stringify, a5 as unsubscribe_stores, a6 as bind_props, T as pop, a7 as sanitize_slots, a8 as sanitize_props, a9 as merge_styles, aa as to_class, ab as clsx, V as ensure_array_like, ac as spread_attributes, ad as rest_props, ae as element, af as spread_props } from "../../../chunks/index.js";
+import { Q as push, X as fallback, a1 as getContext, ae as add_styles, a6 as attr, a8 as store_get, _ as slot, a2 as escape_html, af as stringify, a9 as unsubscribe_stores, Z as bind_props, T as pop, a7 as sanitize_slots, V as sanitize_props, ag as merge_styles, ah as to_class, a0 as clsx, ac as ensure_array_like, $ as spread_attributes, W as rest_props, Y as element, a5 as spread_props } from "../../../chunks/index.js";
 import { L as LayerCake } from "../../../chunks/matchMedia.js";
 import { cls } from "@layerstack/tailwind";
 import { uniqueId } from "@layerstack/utils";
@@ -10,16 +10,12 @@ import { browser } from "@layerstack/utils/env";
 import { isLiteralObject } from "@layerstack/utils/object";
 import "@layerstack/utils/serialize";
 import "@layerstack/utils/rollup";
+import { h as html } from "../../../chunks/html.js";
 import "@layerstack/utils/date";
 import "@layerstack/utils/dateRange";
 import "@layerstack/utils/number";
 import "@layerstack/utils/routing";
 import "@layerstack/utils/array";
-function html(value) {
-  var html2 = String(value ?? "");
-  var open = "<!---->";
-  return open + html2 + "<!---->";
-}
 function Svg($$payload, $$props) {
   push();
   var $$store_subs;

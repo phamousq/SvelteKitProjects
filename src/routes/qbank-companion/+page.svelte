@@ -4,6 +4,7 @@
 	import { sineOut } from 'svelte/easing';
 	import { scaleTime, scaleBand } from 'd3-scale';
 	import { format } from 'date-fns';
+	import { Field, Input } from 'svelte-ux';
 
 	import { Chart, Svg, Axis, Bars, LineChart, BarChart, AreaChart, Spline, Highlight, Tooltip, Canvas, Rule, Text, PieChart } from 'layerchart';
 	let renderContext = 'svg'
@@ -467,7 +468,7 @@
 
 </script>
 
-<main>
+<div>
 	<!-- Source input field -->
 	<div id="SourceInput"class="input-container" style="padding-top: 10px">
 		<label for="source-input">Source:</label>
@@ -479,6 +480,7 @@
 			class="source-input"
 		/>
 	</div>
+
 
 	<div class="wrapper" id="QuestionContainer">
 		<div>
@@ -535,7 +537,7 @@
 			&lt; Previous Day
 		</Button>
 		<div class="current-date">
-			<Button color="alternative" onclick={goToToday}>{formatDate(currentDate)}</Button>
+			<button color="alternative" onclick={goToToday}>{formatDate(currentDate)}</button>
 		</div>
 		<Button color="blue" onclick={goToNextDay} disabled={isToday(currentDate)}>
 			Next Day &gt;
@@ -593,14 +595,11 @@
 	<div class="wrapper">
 		{#if history.length > 0}
 			<Button color="red"onclick={resetCounts}>Reset</Button>
-			{#if csvLoaded}
-				<Button color="light" onclick={exportCSV}>Export</Button>
-			{/if}
 		{:else}
 			<Button color="purple" onclick={importCSV}>Import CSV</Button>
-		{/if}		
+		{/if}
 		
-			
+		<Button color="dark" onclick={exportCSV}>Export</Button>		
 	</div>
 	<div class="wrapper">
 		Total Questions Done: {history.length}
@@ -633,8 +632,7 @@
 	  <div class="h-[300px] p-4 border rounded resize overflow-auto">
 		<PieChart data={dataSummary()} key="correctness" value="value" />
 	  </div>
-	  
-</main>
+</div>
 
 <style>
 	.scoreboard {
@@ -805,83 +803,5 @@
 		font-style: italic;
 		color: #6c757d;
 		padding: 20px;
-	}
-
-	/* Dark mode styles for new elements */
-	:global(body.dark-mode) .date-navigation {
-		background-color: #343a40;
-		color: #ffffff;
-		box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
-	}
-	
-	:global(body.dark-mode) .filtered-stats {
-		background-color: #495057;
-		color: #e9ecef;
-	}
-	
-	:global(body.dark-mode) .filtered-stats.empty {
-		background-color: #c82333;
-		color: #ffffff;
-	}
-	
-	:global(body.dark-mode) .correct-stat {
-		color: #8fd19e;
-	}
-	
-	:global(body.dark-mode) .incorrect-stat {
-		color: #f8d7da;
-	}
-	
-	:global(body.dark-mode) .empty-message {
-		color: #adb5bd;
-	}
-
-	:global(body.dark-mode) .counter-box {
-		border-color: #6c757d; /* Darker border for counter boxes */
-		box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1); /* Light shadow for dark mode */
-	}
-
-	:global(body.dark-mode) .correct {
-		background-color: #218838; /* Darker green for correct */
-		border-color: #1e7e34;
-		color: #ffffff;
-	}
-
-	:global(body.dark-mode) .incorrect {
-		background-color: #c82333; /* Darker red for incorrect */
-		border-color: #bd2130;
-		color: #ffffff;
-	}
-
-	:global(body.dark-mode) .history-table tr:nth-child(odd) {
-		background-color: #2c3e50; /* Darker odd rows */
-		color: #bfc2c7;
-	}
-
-	:global(body.dark-mode) .history-table tr:nth-child(even) {
-		background-color: #34495e; /* Darker even rows */
-		color: #bfc2c7;
-	}
-
-	:global(body.dark-mode) th {
-		background-color: #343a40; /* Darker header background */
-		color: #ffffff;
-	}
-
-	:global(body.dark-mode) textarea {
-		background-color: #495057; /* Dark textarea background */
-		color: #ffffff; /* White text in textarea */
-		border-color: #6c757d;
-	}
-	
-	:global(body.dark-mode) .source-input {
-		background-color: #495057;
-		color: #ffffff;
-		border-color: #6c757d;
-	}
-	
-	:global(body.dark-mode) .source-input:focus {
-		border-color: #007bff;
-		box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 	}
 </style>	
