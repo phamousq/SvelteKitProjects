@@ -5,7 +5,7 @@
 	import { scaleTime, scaleBand } from 'd3-scale';
 	import { format } from 'date-fns';
 
-	import { Chart, Svg, Axis, Bars, LineChart, BarChart, AreaChart, Spline, Highlight, Tooltip, Canvas, Rule, Text } from 'layerchart';
+	import { Chart, Svg, Axis, Bars, LineChart, BarChart, AreaChart, Spline, Highlight, Tooltip, Canvas, Rule, Text, PieChart } from 'layerchart';
 	let renderContext = 'svg'
 
 	let correctCount = $state(0);
@@ -432,6 +432,19 @@
 		return days;
 	});
 
+	let dataSummary = $derived(() => {
+		const summary = []
+		summary.push(
+			{correctness: "Correct", 
+			value: countCorrectInFiltered(filteredHistory)
+		})
+		summary.push(
+			{correctness: "Incorrect", 
+			value: countIncorrectInFiltered(filteredHistory)
+		})
+		return summary;
+	});
+
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === 'Enter') {
 			if (event.shiftKey || event.metaKey) {
@@ -451,6 +464,7 @@
 			undoLastAction();
 		}
 	}
+
 </script>
 
 <main>
@@ -615,6 +629,11 @@
 	  <!-- <div class="h-[300px] p-4 border rounded resize overflow-auto">
 		<PieChart {data} key="fruit" value="value" {renderContext} {debug} />
 	  </div> -->
+
+	  <div class="h-[300px] p-4 border rounded resize overflow-auto">
+		<PieChart data={dataSummary()} key="correctness" value="value" />
+	  </div>
+	  
 </main>
 
 <style>
