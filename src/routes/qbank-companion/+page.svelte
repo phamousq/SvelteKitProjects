@@ -17,13 +17,12 @@
 		isNaN(+((correctCount / countComplete) * 100).toFixed(1)) ? 100 : ((correctCount / countComplete) * 100).toFixed(1)
 	);
 	let history = $state([]);
-	let previousTimestamp = new Date();
+	let previousTimestamp: any = new Date();
 	let undoHistory = $state([]);
 	let source = $state(''); 
 	let csvLoaded = $state(false);
 	let currentNotes = $state('');
 	
-	// Date pagination variables
 	let currentDate = $state(new Date());
 	let filteredHistory = $derived(filterHistoryByDate(history, currentDate));
 	let dailyQuestionCount = $derived(filteredHistory.length + 1);
@@ -34,13 +33,14 @@
 		isNaN(+((visibleCorrectCount / visibleCountComplete) * 100).toFixed(1)) ? 100 : ((visibleCorrectCount / visibleCountComplete) * 100).toFixed(1)
 	);
 
+	let NotesInput: HTMLInputElement;
+
 	onMount(() => {
 		const storedCorrect = localStorage.getItem('correctCount');
 		const storedIncorrect = localStorage.getItem('incorrectCount');
 		const storedHistory = localStorage.getItem('history');
 		const storedSource = localStorage.getItem('source');
 		const storedCsvLoaded = localStorage.getItem('csvLoaded');
-		// Add undoHistory to persisted state
 		const storedUndoHistory = localStorage.getItem('undoHistory');
 
 		if (storedUndoHistory) undoHistory = JSON.parse(storedUndoHistory);
@@ -50,14 +50,8 @@
 		if (storedSource) source = storedSource;
 		if (storedCsvLoaded) csvLoaded = storedCsvLoaded === 'true';
 		
-		// Set current date to today by default
 		currentDate = new Date();
 		currentDate.setHours(0, 0, 0, 0);
-		
-		// window.addEventListener('keydown', handleKeyDown);
-		// return () => {
-		// 	window.removeEventListener('keydown', handleKeyDown);
-		// };
 	});
 
 	$effect(() => {
@@ -66,12 +60,11 @@
 		localStorage.setItem('history', JSON.stringify(history));
 		localStorage.setItem('source', source);
 		localStorage.setItem('csvLoaded', csvLoaded.toString());
-		// Add undoHistory to saved items
 		localStorage.setItem('undoHistory', JSON.stringify(undoHistory));
 	});
 
 	// Filter history entries by date
-	function filterHistoryByDate(historyItems, date) {
+	function filterHistoryByDate(historyItems: any, date: any) {
 		// Set time to start of day
 		const startOfDay = new Date(date);
 		startOfDay.setHours(0, 0, 0, 0);
@@ -87,13 +80,13 @@
 	}
 	
 	// Count correct answers in filtered history
-	function countCorrectInFiltered(filteredItems) {
-		return filteredItems.filter(item => item.result === 'Correct').length;
+	function countCorrectInFiltered(filteredItems: any) {
+		return filteredItems.filter((item: any) => item.result === 'Correct').length;
 	}
 	
 	// Count incorrect answers in filtered history
-	function countIncorrectInFiltered(filteredItems) {
-		return filteredItems.filter(item => item.result === 'Incorrect').length;
+	function countIncorrectInFiltered(filteredItems: any) {
+		return filteredItems.filter((item: any) => item.result === 'Incorrect').length;
 	}
 	
 	// Go to previous day
@@ -123,7 +116,7 @@
 	}
 	
 	// Format date as string
-	function formatDate(date) {
+	function formatDate(date: Date) {
 		return date.toLocaleDateString(undefined, { 
 			weekday: 'short', 
 			year: 'numeric', 
@@ -133,35 +126,35 @@
 	}
 	
 	// Check if date is today
-	function isToday(date) {
+	function isToday(date: any) {
 		const today = new Date();
 		return date.getDate() === today.getDate() &&
 			date.getMonth() === today.getMonth() &&
 			date.getFullYear() === today.getFullYear();
 	}
 
-	function incrementCorrect() {
-		const currentTimestamp = new Date();
+	function incrementResult(result: 'Correct' | 'Incorrect') {
+		const currentTimestamp: any = new Date();
 		const timeDifference = formatTimeDifference(currentTimestamp - previousTimestamp);
 
 		const newHistoryItem = {
 			question: dailyQuestionCount,
-			result: 'Correct',
+			result: result,
 			timeDifference: timeDifference,
 			notes: currentNotes,
 			datetime: currentTimestamp.toISOString(),
 			source: source
 		};
-		clearInputField('notes-input');
 
 
 		undoHistory = [
 			...undoHistory,
 			{
-				type: 'correct',
+				type: result,
 				previousCorrect: correctCount,
 				previousIncorrect: incorrectCount,
-				previousHistory: history
+				previousHistory: history,
+				previousNotes: currentNotes
 			}
 		];
 
@@ -173,40 +166,8 @@
 		if (!isToday(currentDate)) {
 			goToToday();
 		}
-	}
-
-	function incrementIncorrect() {
-		const currentTimestamp = new Date();
-		const timeDifference = formatTimeDifference(currentTimestamp - previousTimestamp);
-
-		const newHistoryItem = {
-			question: dailyQuestionCount,
-			result: 'Incorrect',
-			timeDifference: timeDifference,
-			notes: currentNotes,
-			datetime: currentTimestamp.toISOString(),
-			source: source
-		};
-		clearInputField('notes-input');
-
-		undoHistory = [
-			...undoHistory,
-			{
-				type: 'incorrect',
-				previousCorrect: correctCount,
-				previousIncorrect: incorrectCount,
-				previousHistory: history
-			}
-		];
-
-		history = [...history, newHistoryItem];
-		incorrectCount++;
-		previousTimestamp = currentTimestamp;
-		
-		// Make sure we're showing today when adding new entries
-		if (!isToday(currentDate)) {
-			goToToday();
-		}
+		currentNotes = '';
+		NotesInput ? NotesInput.focus() : null;
 	}
 
 	function resetCounts() {
@@ -266,10 +227,6 @@
 		document.body.removeChild(link);
 	}
 
-	function exportAndReset() {
-		exportCSV();
-		resetCounts();
-	}
 
 	function importCSV() {
 		// Create an invisible file input element
@@ -393,7 +350,9 @@
 			incorrectCount = lastUndo.previousIncorrect;
 			history = lastUndo.previousHistory;
 			previousTimestamp = new Date();
+			currentNotes = lastUndo.previousNotes;
 		}
+		NotesInput ? NotesInput.focus() : null;
 	}
 	
 	function resetTimer() {
@@ -456,17 +415,24 @@
 		return days;
 	});
 
-	function clearInputField(inputId: string) {
-	const inputField = document.getElementById(inputId) as HTMLInputElement | null;
-	if (inputField) {
-		inputField.value = '';
-	}
+	function handleKeyDown(event) {
+		if (currentNotes === '') return;
+		if (event.key === 'Enter') {
+		if (event.shiftKey || event.metaKey) {
+			// (Shift or meta) + Enter: 
+			incrementResult('Incorrect');
+		} else {
+			// Enter: Perform the default action
+			incrementResult('Correct');
+		}
+		event.preventDefault(); // Prevent default form submission
+		}
 	}
 	
 </script>
 <main>
 	<!-- Source input field -->
-	<div class="source-input-container" style="padding-top: 10px">
+	<div id="SourceInput"class="input-container" style="padding-top: 10px">
 		<label for="source-input">Source:</label>
 		<input 
 			id="source-input" 
@@ -476,19 +442,34 @@
 			class="source-input"
 		/>
 	</div>
-	<div class="wrapper">
+
+	<div class="wrapper" id="QuestionContainer">
 		<div>
 			<h1 style="font-size: 32px; font-weight: bold;">Question: {dailyQuestionCount}</h1>
 		</div>
 	</div>
 	
-	<div class="scoreboard">
-		<button class="counter-box correct" style="flex-grow: 10" onclick={incrementCorrect}>
+	<!-- NOTES -->
+	<div class="input-container">
+		<label for="source-input">Notes:</label>
+		<input 
+			type="text" 
+			bind:value={currentNotes} 
+			bind:this={NotesInput}
+			onkeydown={handleKeyDown} 
+			placeholder="Enter notes..."
+			class="source-input"
+			id="notes-input"
+		/>
+	</div>
+	
+	<div id="Scoreboard" class="scoreboard">
+		<button class="counter-box correct" style="flex-grow: 10" onclick={() =>incrementResult('Correct')}>
 			<h2>Correct</h2>
 			<p>{visibleCorrectCount}</p>
 		</button>
 	
-		<button class="counter-box incorrect" style="flex-grow: 10" onclick={incrementIncorrect}>
+		<button class="counter-box incorrect" style="flex-grow: 10" onclick={() =>incrementResult('Incorrect')}>
 			<h2>Incorrect</h2>
 			<p>{visibleIncorrectCount}</p>
 		</button>
@@ -496,17 +477,7 @@
 			<h2>Undo</h2>
 		</button>
 	</div>
-	
-	<div class="source-input-container" style="padding-top: 10px">
-		<label for="notes-input">Notes:</label>
-		<input 
-			id="notes-input" 
-			type="text" 
-			bind:value={currentNotes} 
-			placeholder="Enter notes..."
-			class="source-input"
-		/>
-	</div>	
+
 	<div style="display: flex; padding-left: 10px; padding-right: 10px">
 		<Progressbar
 			progress={visiblePercentCorrect}
@@ -703,7 +674,7 @@
 		align-items: center;
 	}
 
-	.source-input-container {
+	.input-container {
 		display: flex;
 		align-items: center;
 		justify-content: center;
