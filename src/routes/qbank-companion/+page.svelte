@@ -521,7 +521,7 @@
 			&lt; Previous Day
 		</Button>
 		<div class="current-date">
-			<Button color="alternative" onclick={goToToday}>{formatDate(currentDate)}</Button>
+			<button onclick={goToToday}>{formatDate(currentDate)}</button>
 		</div>
 		<Button color="blue" onclick={goToNextDay} disabled={isToday(currentDate)}>
 			Next Day &gt;
