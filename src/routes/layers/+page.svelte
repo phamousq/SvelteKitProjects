@@ -15,24 +15,48 @@
     data.forEach(d => {
       d[yKey] = +d[yKey];
     });
+
+    let testData = [
+      { x: 1, y: 10 },
+      { x: 2, y: 20 },
+    ];
+
   </script>
-  
-  <div class="chart-container">
-    <LayerCake
-      padding={{ top: 8, right: 10, bottom: 20, left: 25 }}
-      x={xKey}
-      y={yKey}
-      yDomain={[0, null]}
-      {data}
-    >
-      <Svg>
-        <AxisX />
-        <AxisY ticks={4} />
-        <Line />
-        <Area />
-      </Svg>
-    </LayerCake>
-  </div>
+  <main>
+    <div class="chart-container">
+      <LayerCake
+        padding={{ top: 8, right: 10, bottom: 20, left: 25 }}
+        x={xKey}
+        y={yKey}
+        yDomain={[0, null]}
+        {data}
+      >
+        <Svg>
+          <AxisX />
+          <AxisY ticks={4} />
+          <Line />
+          <Area />
+        </Svg>
+      </LayerCake>
+    </div>
+
+    <div class="chart-container">
+      <LayerCake
+        padding={{ top: 8, right: 10, bottom: 20, left: 25 }}
+        x={xKey}
+        y={yKey}
+        yDomain={[0, null]}
+        {data}
+      >
+        <Svg>
+          <AxisX />
+          <AxisY ticks={4} />
+          <Line />
+          <Area />
+        </Svg>
+      </LayerCake>
+    </div>
+  </main>
   
   <style>
     /*

@@ -344,6 +344,7 @@
 	}
 
 	function undoLastAction() {
+		NotesInput.focus();
 		if (undoHistory.length > 0) {
 			const lastUndo = undoHistory.pop();
 			correctCount = lastUndo.previousCorrect;
@@ -414,7 +415,7 @@
 		return formatTimeDifference(averageMilliseconds);
 	}
 
-	const lastSevenDaysData = $derived(() => {
+	let lastSevenDaysData = $derived(() => {
 		const days = [];
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
@@ -430,8 +431,6 @@
 				label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 			});
 		}
-
-		let dictionary = Object.fromEntries(days.map(x => [x.label, x.count]));
 		return days;
 	});
 
@@ -585,16 +584,16 @@
 	<div class="wrapper">		
 		{#if csvLoaded}
 			<button class="export-button" onclick={exportCSV}>Export</button>
-			<button class="reset-button" onclick={resetCounts}>Reset</button>
-		{:else}
+			{:else}
 			<button class="import-button" onclick={importCSV}>
 				Import CSV
 			</button>
 			{#if history.length > 0}
-				<button class="export-button" onclick={exportCSV}>Export CSV</button>
+			<button class="export-button" onclick={exportCSV}>Export CSV</button>
+			<button class="reset-button" onclick={resetCounts}>Reset</button>
 			{/if}
 		{/if}
-	
+			
 	</div>
 	<div class="wrapper">
 		Total Questions Done: {history.length}
