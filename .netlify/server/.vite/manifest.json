@@ -8,10 +8,6 @@
       "_internal.js"
     ]
   },
-  "_AxisY.svelte_svelte_type_style_lang.js": {
-    "file": "_app/immutable/assets/AxisY.ucpDXZN1.css",
-    "src": "_AxisY.svelte_svelte_type_style_lang.js"
-  },
   "_equality.js": {
     "file": "chunks/equality.js",
     "name": "equality"
@@ -42,6 +38,17 @@
     "imports": [
       "_index.js",
       "_equality.js"
+    ]
+  },
+  "_matchMedia.js": {
+    "file": "chunks/matchMedia.js",
+    "name": "matchMedia",
+    "imports": [
+      "_index.js",
+      "_index3.js"
+    ],
+    "css": [
+      "_app/immutable/assets/matchMedia.gPmmZy0Y.css"
     ]
   },
   "node_modules/@sveltejs/kit/src/runtime/components/svelte-5/error.svelte": {
@@ -148,11 +155,11 @@
     "isEntry": true,
     "imports": [
       "_index.js",
+      "_matchMedia.js",
       "_index3.js"
     ],
     "css": [
-      "_app/immutable/assets/_page.DBiBVi5R.css",
-      "_app/immutable/assets/AxisY.ucpDXZN1.css"
+      "_app/immutable/assets/_page.5T0UqmaN.css"
     ]
   },
   "src/routes/projects/+page.svelte": {
@@ -174,11 +181,11 @@
     "isEntry": true,
     "imports": [
       "_index.js",
-      "_index3.js"
+      "_index3.js",
+      "_matchMedia.js"
     ],
     "css": [
-      "_app/immutable/assets/_page.B1_VP8S1.css",
-      "_app/immutable/assets/AxisY.ucpDXZN1.css"
+      "_app/immutable/assets/_page.DhZu1-Zj.css"
     ]
   },
   "src/routes/qbank/+page.svelte": {

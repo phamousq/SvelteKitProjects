@@ -1,5 +1,5 @@
 import { clsx as clsx$1 } from "clsx";
-const DEV = false;
+const BROWSER = false;
 var is_array = Array.isArray;
 var index_of = Array.prototype.indexOf;
 var array_from = Array.from;
@@ -67,6 +67,11 @@ const HYDRATION_ERROR = {};
 const ELEMENT_IS_NAMESPACED = 1;
 const ELEMENT_PRESERVE_ATTRIBUTE_CASE = 1 << 1;
 const UNINITIALIZED = Symbol();
+function invalid_default_snippet() {
+  {
+    throw new Error(`https://svelte.dev/e/invalid_default_snippet`);
+  }
+}
 function lifecycle_outside_component(name) {
   {
     throw new Error(`https://svelte.dev/e/lifecycle_outside_component`);
@@ -685,8 +690,8 @@ function update_effect(effect2) {
     effect2.wv = write_version;
     var deps = effect2.deps;
     var dep;
-    if (DEV && tracing_mode_flag && (effect2.f & DIRTY) !== 0 && deps !== null) ;
-    if (DEV) ;
+    if (BROWSER && tracing_mode_flag && (effect2.f & DIRTY) !== 0 && deps !== null) ;
+    if (BROWSER) ;
   } catch (error) {
     handle_error(error, effect2, previous_effect, previous_component_context || effect2.ctx);
   } finally {
@@ -875,6 +880,27 @@ const STATUS_MASK = -7169;
 function set_signal_status(signal, status) {
   signal.f = signal.f & STATUS_MASK | status;
 }
+const VOID_ELEMENT_NAMES = [
+  "area",
+  "base",
+  "br",
+  "col",
+  "command",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "keygen",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr"
+];
+function is_void(name) {
+  return VOID_ELEMENT_NAMES.includes(name) || name.toLowerCase() === "!doctype";
+}
 const DOM_BOOLEAN_ATTRIBUTES = [
   "allowfullscreen",
   "async",
@@ -912,6 +938,16 @@ function is_boolean_attribute(name) {
 const PASSIVE_EVENTS = ["touchstart", "touchmove"];
 function is_passive_event(name) {
   return PASSIVE_EVENTS.includes(name);
+}
+const RAW_TEXT_ELEMENTS = (
+  /** @type {const} */
+  ["textarea", "script", "style", "title"]
+);
+function is_raw_text_element(name) {
+  return RAW_TEXT_ELEMENTS.includes(
+    /** @type {RAW_TEXT_ELEMENTS[number]} */
+    name
+  );
 }
 const ATTR_REGEX = /[&"<]/g;
 const CONTENT_REGEX = /[&<]/g;
@@ -1035,7 +1071,42 @@ function get_parent_context(component_context2) {
 }
 const BLOCK_OPEN = `<!--${HYDRATION_START}-->`;
 const BLOCK_CLOSE = `<!--${HYDRATION_END}-->`;
+const EMPTY_COMMENT = `<!---->`;
 const INVALID_ATTR_NAME_CHAR_REGEX = /[\s'">/=\u{FDD0}-\u{FDEF}\u{FFFE}\u{FFFF}\u{1FFFE}\u{1FFFF}\u{2FFFE}\u{2FFFF}\u{3FFFE}\u{3FFFF}\u{4FFFE}\u{4FFFF}\u{5FFFE}\u{5FFFF}\u{6FFFE}\u{6FFFF}\u{7FFFE}\u{7FFFF}\u{8FFFE}\u{8FFFF}\u{9FFFE}\u{9FFFF}\u{AFFFE}\u{AFFFF}\u{BFFFE}\u{BFFFF}\u{CFFFE}\u{CFFFF}\u{DFFFE}\u{DFFFF}\u{EFFFE}\u{EFFFF}\u{FFFFE}\u{FFFFF}\u{10FFFE}\u{10FFFF}]/u;
+function copy_payload({ out, css, head: head2, uid }) {
+  return {
+    out,
+    css: new Set(css),
+    head: {
+      title: head2.title,
+      out: head2.out,
+      css: new Set(head2.css),
+      uid: head2.uid
+    },
+    uid
+  };
+}
+function assign_payload(p1, p2) {
+  p1.out = p2.out;
+  p1.head = p2.head;
+  p1.uid = p2.uid;
+}
+function element(payload, tag, attributes_fn = noop, children_fn = noop) {
+  payload.out += "<!---->";
+  if (tag) {
+    payload.out += `<${tag}`;
+    attributes_fn();
+    payload.out += `>`;
+    if (!is_void(tag)) {
+      children_fn();
+      if (!is_raw_text_element(tag)) {
+        payload.out += EMPTY_COMMENT;
+      }
+      payload.out += `</${tag}>`;
+    }
+  }
+  payload.out += "<!---->";
+}
 let on_destroy = [];
 function props_id_generator() {
   let uid = 1;
@@ -1080,8 +1151,18 @@ function head(payload, fn) {
   head_payload.out += BLOCK_CLOSE;
 }
 function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
+  if (styles) {
+    attrs.style = attrs.style ? style_object_to_string(merge_styles(
+      /** @type {string} */
+      attrs.style,
+      styles
+    )) : style_object_to_string(styles);
+  }
   if (attrs.class) {
     attrs.class = clsx(attrs.class);
+  }
+  if (css_hash || classes) {
+    attrs.class = to_class(attrs.class, css_hash, classes);
   }
   let attr_str = "";
   let name;
@@ -1099,6 +1180,22 @@ function spread_attributes(attrs, css_hash, classes, styles, flags = 0) {
   }
   return attr_str;
 }
+function spread_props(props) {
+  const merged_props = {};
+  let key;
+  for (let i = 0; i < props.length; i++) {
+    const obj = props[i];
+    for (key in obj) {
+      const desc = Object.getOwnPropertyDescriptor(obj, key);
+      if (desc) {
+        Object.defineProperty(merged_props, key, desc);
+      } else {
+        merged_props[key] = obj[key];
+      }
+    }
+  }
+  return merged_props;
+}
 function stringify(value) {
   return typeof value === "string" ? value : value == null ? "" : value + "";
 }
@@ -1114,6 +1211,21 @@ function style_object_to_string(style_object) {
 function add_styles(style_object) {
   const styles = style_object_to_string(style_object);
   return styles ? ` style="${styles}"` : "";
+}
+function merge_styles(attribute, styles) {
+  var merged = {};
+  if (attribute) {
+    for (var declaration of attribute.split(";")) {
+      var i = declaration.indexOf(":");
+      var name = declaration.slice(0, i).trim();
+      var value = declaration.slice(i + 1).trim();
+      if (name !== "") merged[name] = value;
+    }
+  }
+  for (name in styles) {
+    merged[name] = styles[name];
+  }
+  return merged;
 }
 function store_get(store_values, store_name, store) {
   if (store_name in store_values && store_values[store_name][0] === store) {
@@ -1163,6 +1275,14 @@ function sanitize_props(props) {
   const { children, $$slots, ...sanitized } = props;
   return sanitized;
 }
+function sanitize_slots(props) {
+  const sanitized = {};
+  if (props.children) sanitized.default = true;
+  for (const key in props.$$slots) {
+    sanitized[key] = true;
+  }
+  return sanitized;
+}
 function bind_props(props_parent, props_now) {
   for (const key in props_now) {
     const initial_value = props_parent[key];
@@ -1193,9 +1313,9 @@ function once(get_value) {
 export {
   noop as $,
   component_root as A,
-  BLOCK_EFFECT as B,
+  BROWSER as B,
   CLEAN as C,
-  DEV as D,
+  DIRTY as D,
   is_passive_event as E,
   create_text as F,
   branch as G,
@@ -1219,26 +1339,34 @@ export {
   attr as Y,
   escape_html as Z,
   stringify as _,
-  DIRTY as a,
+  DERIVED as a,
   getContext as a0,
   once as a1,
   fallback as a2,
-  store_set as a3,
-  store_get as a4,
-  slot as a5,
-  unsubscribe_stores as a6,
-  bind_props as a7,
-  to_class as a8,
-  sanitize_props as a9,
-  rest_props as aa,
-  spread_attributes as ab,
-  clsx as ac,
-  subscribe_to_store as ad,
-  run_all as ae,
-  DERIVED as b,
-  schedule_effect as c,
-  active_reaction as d,
-  is_runes as e,
+  store_get as a3,
+  slot as a4,
+  unsubscribe_stores as a5,
+  bind_props as a6,
+  sanitize_slots as a7,
+  sanitize_props as a8,
+  merge_styles as a9,
+  to_class as aa,
+  clsx as ab,
+  spread_attributes as ac,
+  rest_props as ad,
+  element as ae,
+  spread_props as af,
+  current_component as ag,
+  store_set as ah,
+  invalid_default_snippet as ai,
+  copy_payload as aj,
+  assign_payload as ak,
+  subscribe_to_store as al,
+  run_all as am,
+  schedule_effect as b,
+  active_reaction as c,
+  is_runes as d,
+  BLOCK_EFFECT as e,
   derived_sources as f,
   state_unsafe_mutation as g,
   active_effect as h,

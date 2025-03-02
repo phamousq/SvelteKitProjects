@@ -1,6 +1,8 @@
 <script>
-    import { LayerCake, Svg } from 'layercake';
   
+    import { LayerCake, Svg } from 'layercake';
+    import { Button } from 'svelte-ux';
+    
     import Line from '../_components/Line.svelte';
     import Area from '../_components/Area.svelte';
     import AxisX from '../_components/AxisX.svelte';
@@ -40,25 +42,11 @@
       </LayerCake>
     </div>
 
-    <div class="chart-container">
-      <LayerCake
-        padding={{ top: 8, right: 10, bottom: 20, left: 25 }}
-        x={xKey}
-        y={yKey}
-        yDomain={[0, null]}
-        {data}
-      >
-        <Svg>
-          <AxisX />
-          <AxisY ticks={4} />
-          <Line />
-          <Area />
-        </Svg>
-      </LayerCake>
-    </div>
+    <Button class="uppercase" variant="outline" color="primary">outline</Button>
+    <Button onclick={() => {console.log('clicked')}}>Click here</Button>
   </main>
   
-  <style>
+<style>
     /*
       The wrapper div needs to have an explicit width and height in CSS.
       It can also be a flexbox child or CSS grid element.

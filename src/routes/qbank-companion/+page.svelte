@@ -2,13 +2,11 @@
 	import { onMount } from 'svelte';
 	import { Progressbar, Button } from 'flowbite-svelte';
 	import { sineOut } from 'svelte/easing';
+	import { scaleTime, scaleBand } from 'd3-scale';
+	import { format } from 'date-fns';
 
-	import { LayerCake, Svg } from 'layercake';
-  
-    import Line from '../_components/Line.svelte';
-    import Area from '../_components/Area.svelte';
-    import AxisX from '../_components/AxisX.svelte';
-    import AxisY from '../_components/AxisY.svelte';
+	import { Chart, Svg, Axis, Bars, LineChart, BarChart, AreaChart, Spline, Highlight, Tooltip, Canvas, Rule, Text } from 'layerchart';
+	let renderContext = 'svg'
 
 	let correctCount = $state(0);
 	let incorrectCount = $state(0);
@@ -427,7 +425,7 @@
 			const dailyHistory = filterHistoryByDate(history, date);
 			days.push({
 				date,
-				count: dailyHistory.length,
+				count: +dailyHistory.length,
 				label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 			});
 		}
@@ -453,8 +451,8 @@
 			undoLastAction();
 		}
 	}
-	
 </script>
+
 <main>
 	<!-- Source input field -->
 	<div id="SourceInput"class="input-container" style="padding-top: 10px">
@@ -519,18 +517,15 @@
 	
 	<!-- Date navigation controls -->
 	<div class="date-navigation">
-		<button class="date-nav-button" onclick={goToPreviousDay}>
+		<Button color="blue" onclick={goToPreviousDay}>
 			&lt; Previous Day
-		</button>
+		</Button>
 		<div class="current-date">
-			<button onclick={goToToday}>{formatDate(currentDate)}</button>
-			<!-- {#if !isToday(currentDate)}
-				<button class="today-button" onclick={goToToday}>Today</button>
-			{/if} -->
+			<Button color="alternative" onclick={goToToday}>{formatDate(currentDate)}</Button>
 		</div>
-		<button class="date-nav-button" onclick={goToNextDay} disabled={isToday(currentDate)}>
+		<Button color="blue" onclick={goToNextDay} disabled={isToday(currentDate)}>
 			Next Day &gt;
-		</button>
+		</Button>
 	</div>
 	
 	<!-- Filtered view statistics -->
@@ -581,18 +576,16 @@
 			</tbody>
 		</table>
 	</div>
-	<div class="wrapper">		
-		{#if csvLoaded}
-			<button class="export-button" onclick={exportCSV}>Export</button>
-			{:else}
-			<button class="import-button" onclick={importCSV}>
-				Import CSV
-			</button>
-			{#if history.length > 0}
-			<button class="export-button" onclick={exportCSV}>Export CSV</button>
-			<button class="reset-button" onclick={resetCounts}>Reset</button>
+	<div class="wrapper">
+		{#if history.length > 0}
+			<Button color="red"onclick={resetCounts}>Reset</Button>
+			{#if csvLoaded}
+				<Button color="light" onclick={exportCSV}>Export</Button>
 			{/if}
-		{/if}
+		{:else}
+			<Button color="purple" onclick={importCSV}>Import CSV</Button>
+		{/if}		
+		
 			
 	</div>
 	<div class="wrapper">
@@ -601,38 +594,30 @@
 	<div class="wrapper">Percent Correct: {percentCorrect}%</div>
 
 
-	<div class="wrapper">
+	<!-- <div class="wrapper">
 		<h3>Last 7 Days:</h3>
 		<ul>
 			{#each lastSevenDaysData().reverse() as day}
 				<li>{day.label}: {day.count}</li>
 			{/each}
 		</ul>
-	</div>
-
-	<!-- ! I DONT KNOW HOW TO PIPE DATA INTO LAYERCAKE -->
-
-	<!-- <div class="chart-container">
-		<LayerCake
-		  padding={{ top: 8, right: 10, bottom: 20, left: 25 }}
-		  x={"x"}
-		  y={"y"}
-		  yDomain={[0, null]}
-		  data={Object.fromEntries(lastSevenDaysData().map(x => [x.label, x.count]))}
-		>
-		  <Svg>
-			<AxisX />
-			<AxisY ticks={4} />
-			<Line />
-			<Area />
-		  </Svg>
-		</LayerCake>
+	</div> -->
+	
+	  <div class="h-[300px] p-4 border rounded">
+		<AreaChart
+			data={lastSevenDaysData()}
+			x="date"	
+			y="count"
+			points
+			labels={{ offset: 10 }}
+		/>
+	  </div>
+	  <!-- <div class="h-[300px] p-4 border rounded resize overflow-auto">
+		<PieChart {data} key="fruit" value="value" {renderContext} {debug} />
 	  </div> -->
-
 </main>
 
 <style>
-	/* Existing styles */
 	.scoreboard {
 		display: flex;
 		flex-direction: row;
@@ -671,25 +656,6 @@
 		background-color: #c8c8c8;
 		border-color: #a0a0a0;
 		color: #4b4b4b;
-	}
-
-	.reset-button, .export-button, .import-button {
-		padding: 10px 20px;
-		color: white;
-		border: none;
-		border-radius: 5px;
-		cursor: pointer;
-		width: 40%;
-		margin-bottom: 10px;
-	}
-	.reset-button {
-		background-color: #007bff;
-	}
-	.export-button {
-		background-color: #28a745;
-	}
-	.import-button {
-		background-color: #6c757d;
 	}
 
 	.wrapper {
@@ -772,22 +738,6 @@
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 	}
 	
-	.date-nav-button {
-		background-color: #007bff;
-		color: white;
-		border: none;
-		border-radius: 4px;
-		padding: 8px 12px;
-		cursor: pointer;
-		font-weight: 500;
-	}
-	
-	.date-nav-button:disabled {
-		background-color: #6c757d;
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
-	
 	.current-date {
 		font-size: 16px;
 		font-weight: bold;
@@ -845,20 +795,6 @@
 		box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
 	}
 	
-	:global(body.dark-mode) .date-nav-button {
-		background-color: #007bff;
-		color: #ffffff;
-	}
-	
-	:global(body.dark-mode) .date-nav-button:disabled {
-		background-color: #495057;
-	}
-/* 	
-	:global(body.dark-mode) .today-button {
-		background-color: #28a745;
-		color: #ffffff;
-	} */
-	
 	:global(body.dark-mode) .filtered-stats {
 		background-color: #495057;
 		color: #e9ecef;
@@ -879,15 +815,6 @@
 	
 	:global(body.dark-mode) .empty-message {
 		color: #adb5bd;
-	}
-
-	/* Existing dark mode styles */
-	:global(body.dark-mode) .reset-button,
-	:global(body.dark-mode) .export-button,
-	:global(body.dark-mode) .import-button {
-		background-color: #343a40; /* Darker button background */
-		color: #ffffff; /* White text on dark buttons */
-		border: 1px solid #6c757d; /* Optional: Add a border for better definition */
 	}
 
 	:global(body.dark-mode) .counter-box {
@@ -938,4 +865,4 @@
 		border-color: #007bff;
 		box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 	}
-</style>
+</style>	
