@@ -352,7 +352,27 @@
 			previousTimestamp = new Date();
 			currentNotes = lastUndo.previousNotes;
 		}
-		NotesInput ? NotesInput.focus() : null;
+		
+		if (NotesInput && currentNotes.length > 0) {
+		// Give the browser a bit more time to ensure the element is ready
+		setTimeout(() => {
+			// Ensure the element is the right type
+			if (NotesInput.setSelectionRange) {
+			NotesInput.focus();
+			// Small delay between focus and setting selection range
+			setTimeout(() => {
+				// Double-check that the element still exists and has content
+				if (NotesInput && NotesInput.value) {
+				try {
+					NotesInput.setSelectionRange(currentNotes.length, currentNotes.length);
+				} catch (err) {
+					console.log('Error setting selection range:', err);
+				}
+				}
+			}, 0);
+			}
+		}, 10);
+		} else console.log('NotesInput or currentNotes is missing');
 	}
 	
 	function resetTimer() {
@@ -415,17 +435,23 @@
 		return days;
 	});
 
-	function handleKeyDown(event) {
-		if (currentNotes === '') return;
+	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === 'Enter') {
-		if (event.shiftKey || event.metaKey) {
-			// (Shift or meta) + Enter: 
-			incrementResult('Incorrect');
-		} else {
-			// Enter: Perform the default action
-			incrementResult('Correct');
-		}
+			if (event.shiftKey || event.metaKey) {
+				// (Shift or meta) + Enter: 
+				if (currentNotes === '') return;
+				incrementResult('Incorrect');
+			} else {
+				// Enter: Perform the default action
+				incrementResult('Correct');
+			}
 		event.preventDefault(); // Prevent default form submission
+		}
+		if (event.key === 'Escape') {
+			resetTimer();
+		}
+		if (event.metaKey && event.key === 'z') {
+			undoLastAction();
 		}
 	}
 	
@@ -465,16 +491,16 @@
 	
 	<div id="Scoreboard" class="scoreboard">
 		<button class="counter-box correct" style="flex-grow: 10" onclick={() =>incrementResult('Correct')}>
-			<h2>Correct</h2>
+			<h2>Correct (Enter)</h2>
 			<p>{visibleCorrectCount}</p>
 		</button>
 	
 		<button class="counter-box incorrect" style="flex-grow: 10" onclick={() =>incrementResult('Incorrect')}>
-			<h2>Incorrect</h2>
+			<h2>Incorrect (Shift+Enter)</h2>
 			<p>{visibleIncorrectCount}</p>
 		</button>
 		<button class="counter-box undo" style="flex-grow: 1" onclick={undoLastAction}>
-			<h2>Undo</h2>
+			<h2>Undo (Cmd+z)</h2>
 		</button>
 	</div>
 
