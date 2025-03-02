@@ -7,7 +7,7 @@
 
 	import { Chart, Svg, Axis, Bars, LineChart, BarChart, AreaChart, Spline, Highlight, Tooltip, Canvas, Rule, Text } from 'layerchart';
 	let renderContext = 'svg'
-
+;
 	let correctCount = $state(0);
 	let incorrectCount = $state(0);
 	let countComplete = $derived(correctCount + incorrectCount);
@@ -451,12 +451,16 @@
 			undoLastAction();
 		}
 	}
+	function handleInput() {
+    NotesInput.style.height = 'auto'; // Reset height to auto to recalculate
+    NotesInput.style.height = NotesInput.scrollHeight + 'px'; // Set height to scrollHeight
+ 	}
 </script>
 
 <main>
 	<!-- Source input field -->
 	<div id="SourceInput"class="input-container" style="padding-top: 10px">
-		<label for="source-input">Source:</label>
+		<label for="source-input" class="p-1">Source:</label>
 		<input 
 			id="source-input" 
 			type="text" 
@@ -474,16 +478,19 @@
 	
 	<!-- NOTES -->
 	<div class="input-container">
-		<label for="source-input">Notes:</label>
-		<input 
-			type="text" 
+		<label for="notes-input" class="p-1">Notes:</label>
+		<textarea 
 			bind:value={currentNotes} 
 			bind:this={NotesInput}
+			oninput={handleInput}
 			onkeydown={handleKeyDown} 
 			placeholder="Enter notes..."
 			class="source-input"
 			id="notes-input"
-		/>
+			contenteditable
+		>
+			{currentNotes}
+		</textarea>
 	</div>
 	
 	<div id="Scoreboard" class="scoreboard">
@@ -674,13 +681,16 @@
 	}
 	
 	.source-input {
-		padding: 8px 12px;
-		border: 1px solid #ccc;
-		border-radius: 5px;
-		font-size: 16px;
-		margin-left: 10px;
-		width: 60%;
-	}
+    width: 100%; /* Or set a specific width */
+    min-height: 50px; /* Set a minimum height */
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical; /* Allow vertical resizing by the user */
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    font-family: inherit; /* Inherit font from parent, or set a specific font */
+    overflow-y: auto; /* Enable vertical scroll if needed */
+  }
 	
 	.source-input:focus {
 		outline: none;
