@@ -434,7 +434,7 @@
 
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === 'Enter') {
-			if (event.shiftKey || event.metaKey) {
+			if (event.metaKey) {
 				// (Shift or meta) + Enter: 
 				if (currentNotes === '') return;
 				incrementResult('Incorrect');
@@ -500,7 +500,7 @@
 		</button>
 	
 		<button class="counter-box incorrect" style="flex-grow: 10" onclick={() =>incrementResult('Incorrect')}>
-			<h2>Incorrect (Shift+Enter)</h2>
+			<h2>Incorrect (Cmd+Enter)</h2>
 			<p>{visibleIncorrectCount}</p>
 		</button>
 		<button class="counter-box undo" style="flex-grow: 1" onclick={undoLastAction}>
