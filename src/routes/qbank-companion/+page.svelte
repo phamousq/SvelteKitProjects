@@ -438,7 +438,9 @@
 				// (Shift or meta) + Enter: 
 				if (currentNotes === '') return;
 				incrementResult('Incorrect');
-			} else {
+				
+			} else if (event.shiftKey) currentNotes += '\n';
+			else {
 				// Enter: Perform the default action
 				incrementResult('Correct');
 			}
