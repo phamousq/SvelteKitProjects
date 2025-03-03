@@ -586,9 +586,7 @@
 	<div class="wrapper">
 		{#if history.length > 0}
 			<Button color="red"onclick={resetCounts}>Reset</Button>
-			{#if csvLoaded}
-				<Button color="light" onclick={exportCSV}>Export</Button>
-			{/if}
+			<Button color="light" onclick={exportCSV}>Export</Button>
 		{:else}
 			<Button color="purple" onclick={importCSV}>Import CSV</Button>
 		{/if}		
