@@ -32,9 +32,7 @@
 	let history = $state([]);
 	let previousTimestamp: any = new Date();
 	let undoHistory = $state([]);
-	let source = $state('');
 	let csvLoaded = $state(false);
-	let currentNotes = $state('');
 
 	let currentDate = $state(new Date());
 	let filteredHistory = $derived(filterHistoryByDate(history, currentDate));
@@ -48,13 +46,12 @@
 			: ((visibleCorrectCount / visibleCountComplete) * 100).toFixed(1)
 	);
 
-	let NotesInput: HTMLInputElement;
+	let NotesInput: HTMLInputElement | null = null;
 
 	onMount(() => {
 		const storedCorrect = localStorage.getItem('correctCount');
 		const storedIncorrect = localStorage.getItem('incorrectCount');
 		const storedHistory = localStorage.getItem('history');
-		const storedSource = localStorage.getItem('source');
 		const storedCsvLoaded = localStorage.getItem('csvLoaded');
 		const storedUndoHistory = localStorage.getItem('undoHistory');
 
@@ -62,7 +59,6 @@
 		if (storedCorrect) correctCount = parseInt(storedCorrect);
 		if (storedIncorrect) incorrectCount = parseInt(storedIncorrect);
 		if (storedHistory) history = JSON.parse(storedHistory);
-		if (storedSource) source = storedSource;
 		if (storedCsvLoaded) csvLoaded = storedCsvLoaded === 'true';
 
 		currentDate = new Date();
@@ -73,7 +69,6 @@
 		localStorage.setItem('correctCount', correctCount.toString());
 		localStorage.setItem('incorrectCount', incorrectCount.toString());
 		localStorage.setItem('history', JSON.stringify(history));
-		localStorage.setItem('source', source);
 		localStorage.setItem('csvLoaded', csvLoaded.toString());
 		localStorage.setItem('undoHistory', JSON.stringify(undoHistory));
 	});
@@ -158,9 +153,9 @@
 			question: dailyQuestionCount,
 			result: result,
 			timeDifference: timeDifference,
-			notes: currentNotes,
+			notes: document.getElementById('notes-input').value,
 			datetime: currentTimestamp.toISOString(),
-			source: source
+			source: document.getElementById('source-input').value
 		};
 
 		undoHistory = [
@@ -170,7 +165,7 @@
 				previousCorrect: correctCount,
 				previousIncorrect: incorrectCount,
 				previousHistory: history,
-				previousNotes: currentNotes
+				previousNotes: document.getElementById('notes-input').value
 			}
 		];
 
@@ -182,7 +177,7 @@
 		if (!isToday(currentDate)) {
 			goToToday();
 		}
-		currentNotes = '';
+		document.getElementById('notes-input')!.value = '';
 		NotesInput ? NotesInput.focus() : null;
 	}
 
@@ -201,6 +196,8 @@
 		history = [];
 		previousTimestamp = new Date();
 		csvLoaded = false;
+		document.getElementById('notes-input')!.value = '';
+		document.getElementById('source-input')!.value = '';
 	}
 
 	function formatTimeDifference(milliseconds) {
@@ -357,18 +354,16 @@
 	}
 
 	function undoLastAction() {
-		NotesInput.focus();
 		if (undoHistory.length > 0) {
-			const lastUndo = undoHistory.pop();
+			const lastUndo: any = undoHistory.pop();
 			correctCount = lastUndo.previousCorrect;
 			incorrectCount = lastUndo.previousIncorrect;
 			history = lastUndo.previousHistory;
 			previousTimestamp = new Date();
-			currentNotes = lastUndo.previousNotes;
-		}
+			document.getElementById('notes-input')!.value = lastUndo.previousNotes;
+			document.getElementById('source-input')!.value = lastUndo.previousSource;
 
-		if (NotesInput && currentNotes.length > 0) {
-			// Give the browser a bit more time to ensure the element is ready
+			NotesInput.focus();
 			setTimeout(() => {
 				// Ensure the element is the right type
 				if (NotesInput.setSelectionRange) {
@@ -376,14 +371,17 @@
 					// Small delay between focus and setting selection range
 					setTimeout(() => {
 						// Double-check that the element still exists and has content
-						if (NotesInput && NotesInput.value) {
+						if (NotesInput && document.getElementById('notes-input').value.length > 0) {
 							try {
-								NotesInput.setSelectionRange(currentNotes.length, currentNotes.length);
+								NotesInput.setSelectionRange(
+									document.getElementById('notes-input').value.length,
+									document.getElementById('notes-input').value.length
+								);
 							} catch (err) {
 								console.log('Error setting selection range:', err);
 							}
 						}
-					}, 0);
+					}, 10);
 				}
 			}, 10);
 		} else console.log('NotesInput or currentNotes is missing');
@@ -451,9 +449,18 @@
 		if (event.key === 'Enter') {
 			if (event.metaKey) {
 				// (Shift or meta) + Enter:
-				if (currentNotes === '') return;
-				incrementResult('Incorrect');
-			} else if (event.shiftKey) currentNotes += '\n';
+					incrementResult('Incorrect');
+				// // prevents blank incorrect from submission
+				// if (document.getElementById('notes-input').value === '') {
+				// 	return;
+				// }else{
+				// 	currentNotes = document.getElementById('notes-input').value;
+				// 	incrementResult('Incorrect');
+				// }
+			} else if (event.shiftKey) {
+				document.getElementById('notes-input').value += '\n';
+				handleInput();
+			}
 			else {
 				// Enter: Perform the default action
 				incrementResult('Correct');
@@ -480,7 +487,6 @@
 		<input
 			id="source-input"
 			type="text"
-			bind:value={source}
 			placeholder="Enter source..."
 			class="source-input"
 		/>
@@ -496,7 +502,6 @@
 	<div class="input-container">
 		<label for="notes-input" class="p-1">Notes:</label>
 		<textarea
-			bind:value={currentNotes}
 			bind:this={NotesInput}
 			oninput={handleInput}
 			onkeydown={handleKeyDown}
@@ -505,7 +510,7 @@
 			id="notes-input"
 			contenteditable
 		>
-			{currentNotes}
+			
 		</textarea>
 	</div>
 
