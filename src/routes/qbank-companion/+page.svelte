@@ -46,7 +46,6 @@
 			: ((visibleCorrectCount / visibleCountComplete) * 100).toFixed(1)
 	);
 
-
 	let NotesInput = document.getElementById('notes-input') as HTMLTextAreaElement;
 	let SourceInput = document.getElementById('source-input') as HTMLInputElement;
 
@@ -374,10 +373,7 @@
 						// Double-check that the element still exists and has content
 						if (NotesInput && NotesInput.value.length > 0) {
 							try {
-								NotesInput.setSelectionRange(
-									NotesInput.value.length,
-									NotesInput.value.length
-								);
+								NotesInput.setSelectionRange(NotesInput.value.length, NotesInput.value.length);
 							} catch (err) {
 								console.log('Error setting selection range:', err);
 							}
@@ -450,7 +446,7 @@
 		if (event.key === 'Enter') {
 			if (event.metaKey) {
 				// (Shift or meta) + Enter:
-					incrementResult('Incorrect');
+				incrementResult('Incorrect');
 				// // prevents blank incorrect from submission
 				// if (document.getElementById('notes-input').value === '') {
 				// 	return;
@@ -461,8 +457,7 @@
 			} else if (event.shiftKey) {
 				NotesInput.value += '\n';
 				handleInput();
-			}
-			else {
+			} else {
 				// Enter: Perform the default action
 				incrementResult('Correct');
 			}
@@ -485,12 +480,7 @@
 	<!-- Source input field -->
 	<div id="SourceInput" class="input-container" style="padding-top: 10px">
 		<label for="source-input" class="p-1">Source:</label>
-		<input
-			id="source-input"
-			type="text"
-			placeholder="Enter source..."
-			class="source-input"
-		/>
+		<input id="source-input" type="text" placeholder="Enter source..." class="source-input" />
 	</div>
 
 	<div class="wrapper" id="QuestionContainer">
@@ -511,7 +501,6 @@
 			id="notes-input"
 			contenteditable
 		>
-			
 		</textarea>
 	</div>
 
