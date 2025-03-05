@@ -1,1 +1,4 @@
-ol.svelte-zqzsig li:where(.svelte-zqzsig){list-style:decimal;list-style-position:inside}
+ol.svelte-zqzsig li:where(.svelte-zqzsig) {
+	list-style: decimal;
+	list-style-position: inside;
+}
