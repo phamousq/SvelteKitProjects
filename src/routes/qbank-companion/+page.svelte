@@ -46,7 +46,9 @@
 			: ((visibleCorrectCount / visibleCountComplete) * 100).toFixed(1)
 	);
 
-	let NotesInput: HTMLInputElement | null = null;
+
+	let NotesInput = document.getElementById('notes-input') as HTMLTextAreaElement;
+	let SourceInput = document.getElementById('source-input') as HTMLInputElement;
 
 	onMount(() => {
 		const storedCorrect = localStorage.getItem('correctCount');
@@ -177,7 +179,6 @@
 		if (!isToday(currentDate)) {
 			goToToday();
 		}
-		document.getElementById('notes-input')!.value = '';
 		NotesInput ? NotesInput.focus() : null;
 	}
 
@@ -360,8 +361,8 @@
 			incorrectCount = lastUndo.previousIncorrect;
 			history = lastUndo.previousHistory;
 			previousTimestamp = new Date();
-			document.getElementById('notes-input')!.value = lastUndo.previousNotes;
-			document.getElementById('source-input')!.value = lastUndo.previousSource;
+			NotesInput!.value = lastUndo.previousNotes;
+			SourceInput!.value = lastUndo.previousSource;
 
 			NotesInput.focus();
 			setTimeout(() => {
@@ -371,11 +372,11 @@
 					// Small delay between focus and setting selection range
 					setTimeout(() => {
 						// Double-check that the element still exists and has content
-						if (NotesInput && document.getElementById('notes-input').value.length > 0) {
+						if (NotesInput && NotesInput.value.length > 0) {
 							try {
 								NotesInput.setSelectionRange(
-									document.getElementById('notes-input').value.length,
-									document.getElementById('notes-input').value.length
+									NotesInput.value.length,
+									NotesInput.value.length
 								);
 							} catch (err) {
 								console.log('Error setting selection range:', err);
@@ -391,7 +392,7 @@
 		previousTimestamp = new Date();
 	}
 
-	function updateNotes(index, notes) {
+	function updateNotes(index: any, notes: any) {
 		// Find the actual history item that corresponds to the filtered item
 		const actualItem = history.find((item) => item === filteredHistory[index]);
 		if (actualItem) {
@@ -458,7 +459,7 @@
 				// 	incrementResult('Incorrect');
 				// }
 			} else if (event.shiftKey) {
-				document.getElementById('notes-input').value += '\n';
+				NotesInput.value += '\n';
 				handleInput();
 			}
 			else {
