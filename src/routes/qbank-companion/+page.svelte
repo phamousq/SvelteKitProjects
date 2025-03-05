@@ -33,6 +33,7 @@
 	let previousTimestamp: any = new Date();
 	let undoHistory = $state([]);
 	let csvLoaded = $state(false);
+	let source = $state(new Date());
 
 	let currentDate = $state(new Date());
 	let filteredHistory = $derived(filterHistoryByDate(history, currentDate));
@@ -46,21 +47,25 @@
 			: ((visibleCorrectCount / visibleCountComplete) * 100).toFixed(1)
 	);
 
-	let NotesInput = document.getElementById('notes-input') as HTMLTextAreaElement;
-	let SourceInput = document.getElementById('source-input') as HTMLInputElement;
-
 	onMount(() => {
 		const storedCorrect = localStorage.getItem('correctCount');
 		const storedIncorrect = localStorage.getItem('incorrectCount');
 		const storedHistory = localStorage.getItem('history');
 		const storedCsvLoaded = localStorage.getItem('csvLoaded');
 		const storedUndoHistory = localStorage.getItem('undoHistory');
+		const storedSourceInput = localStorage.getItem('source');
+		const storedNotesInput = localStorage.getItem('notes-input');
+		let NotesInput = document.getElementById('notes-input') as HTMLTextAreaElement;
+		NotesInput.value = '';
+		NotesInput.focus();
 
 		if (storedUndoHistory) undoHistory = JSON.parse(storedUndoHistory);
 		if (storedCorrect) correctCount = parseInt(storedCorrect);
 		if (storedIncorrect) incorrectCount = parseInt(storedIncorrect);
 		if (storedHistory) history = JSON.parse(storedHistory);
 		if (storedCsvLoaded) csvLoaded = storedCsvLoaded === 'true';
+		if (storedSourceInput) source = JSON.parse(storedSourceInput);
+		if (storedNotesInput) NotesInput.value = storedNotesInput;
 
 		currentDate = new Date();
 		currentDate.setHours(0, 0, 0, 0);
@@ -72,7 +77,12 @@
 		localStorage.setItem('history', JSON.stringify(history));
 		localStorage.setItem('csvLoaded', csvLoaded.toString());
 		localStorage.setItem('undoHistory', JSON.stringify(undoHistory));
+		localStorage.setItem('source', source.toString());
 	});
+
+
+	let NotesInput = document.getElementById('notes-input') as HTMLTextAreaElement;
+	let SourceInput = document.getElementById('source-input') as HTMLInputElement;
 
 	// Filter history entries by date
 	function filterHistoryByDate(historyItems: any, date: any) {
@@ -84,7 +94,7 @@
 		const endOfDay = new Date(date);
 		endOfDay.setHours(23, 59, 59, 999);
 
-		return historyItems.filter((item) => {
+		return historyItems.filter((item: any) => {
 			const itemDate = new Date(item.datetime);
 			return itemDate >= startOfDay && itemDate <= endOfDay;
 		});
@@ -154,9 +164,9 @@
 			question: dailyQuestionCount,
 			result: result,
 			timeDifference: timeDifference,
-			notes: document.getElementById('notes-input').value,
+			notes: NotesInput!.value,
 			datetime: currentTimestamp.toISOString(),
-			source: document.getElementById('source-input').value
+			source: source.toString()
 		};
 
 		undoHistory = [
@@ -178,7 +188,8 @@
 		if (!isToday(currentDate)) {
 			goToToday();
 		}
-		NotesInput ? NotesInput.focus() : null;
+		document.getElementById('notes-input')!.value = '';
+		// NotesInput ? NotesInput.focus() : null;
 	}
 
 	function resetCounts() {
@@ -360,8 +371,12 @@
 			incorrectCount = lastUndo.previousIncorrect;
 			history = lastUndo.previousHistory;
 			previousTimestamp = new Date();
-			NotesInput!.value = lastUndo.previousNotes;
-			SourceInput!.value = lastUndo.previousSource;
+			if (lastUndo.previousNotes) {
+				NotesInput!.value = lastUndo.previousNotes;
+			}
+			if (lastUndo.previousSource) {
+				source = lastUndo.previousSource;
+			}
 
 			NotesInput.focus();
 			setTimeout(() => {
@@ -480,7 +495,7 @@
 	<!-- Source input field -->
 	<div id="SourceInput" class="input-container" style="padding-top: 10px">
 		<label for="source-input" class="p-1">Source:</label>
-		<input id="source-input" type="text" placeholder="Enter source..." class="source-input" />
+		<input id="source-input" type="text" placeholder="Enter source..." class="source-input" bind:value={source} />
 	</div>
 
 	<div class="wrapper" id="QuestionContainer">
