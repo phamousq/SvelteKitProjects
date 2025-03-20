@@ -882,7 +882,7 @@
 			grid-template-columns: none;
 		}
 	}
-	@media only screen and (max-width: 300px) { 
+	@media only screen and (max-width: 500px) { 
 		#ChartContainer { 
 			display:none
 		}
