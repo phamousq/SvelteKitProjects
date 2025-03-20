@@ -31,7 +31,8 @@
 		"svelte-check": "^4.0.0",
 		"tailwindcss": "^4.0.0",
 		"typescript": "^5.0.0",
-		"vite": "^5.0.3"
+		"vite": "^5.0.3",
+		"wrangler": "^4.2.0"
 	},
 	"dependencies": {
 		"@layerstack/tailwind": "^2.0.0-next.2",
