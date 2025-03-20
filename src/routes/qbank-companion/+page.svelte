@@ -606,9 +606,7 @@
 	<!-- Date navigation controls -->
 	<div class="date-navigation">
 		<Button class="max-w-1/3" onclick={goToPreviousDay}>
-			{#if window.matchMedia('(max-width: 768px)').matches}
-				&lt; Previous Day
-			{/if}
+			&lt; Previous Day
 		</Button>
 		<div class="current-date">
 			<button onclick={goToToday}>
