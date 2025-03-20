@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Progressbar, Button } from 'flowbite-svelte';
 	import { sineOut } from 'svelte/easing';
 	import { scaleTime, scaleBand } from 'd3-scale';
 	import { format } from 'date-fns';
-	import { Field, Input } from 'svelte-ux';
+	import { Field, Input, Button, Table } from 'svelte-ux';
 
 	import { Chart, Svg, Axis, Bars, LineChart, BarChart, AreaChart, Spline, Highlight, Tooltip, Canvas, Rule, Text, PieChart } from 'layerchart';
 	let renderContext = 'svg'
@@ -13,7 +12,7 @@
 	let incorrectCount = $state(0);
 	let countComplete = $derived(correctCount + incorrectCount);
 	let percentCorrect = $derived(
-		isNaN(+((correctCount / countComplete) * 100).toFixed(1)) ? 100 : ((correctCount / countComplete) * 100).toFixed(1)
+		+((correctCount / countComplete) * 100).toFixed(1)
 	);
 	let history = $state([]);
 	let previousTimestamp: any = new Date();
@@ -31,6 +30,8 @@
 	let visiblePercentCorrect = $derived(
 		isNaN(+((visibleCorrectCount / visibleCountComplete) * 100).toFixed(1)) ? 100 : ((visibleCorrectCount / visibleCountComplete) * 100).toFixed(1)
 	);
+	let filteredHistoryDict = [];
+	Object.entries(filteredHistory)
 
 	let NotesInput: HTMLInputElement;
 
@@ -517,7 +518,7 @@
 		</button>
 	</div>
 
-	<div style="display: flex; padding-left: 10px; padding-right: 10px">
+	<!-- <div style="display: flex; padding-left: 10px; padding-right: 10px">
 		<Progressbar
 			progress={visiblePercentCorrect}
 			animate
@@ -529,17 +530,19 @@
 			labelInsideClass="bg-green-600 text-green-100 text-base font-medium text-center p-1 leading-none rounded-full"
 			class="mb-8"
 		/>
-	</div>
+	</div> -->
 	
 	<!-- Date navigation controls -->
 	<div class="date-navigation">
-		<Button color="blue" onclick={goToPreviousDay}>
+		<Button class="max-w-1/4" onclick={goToPreviousDay}>
 			&lt; Previous Day
 		</Button>
 		<div class="current-date">
-			<button color="alternative" onclick={goToToday}>{formatDate(currentDate)}</button>
+			<button onclick={goToToday}>
+				{isToday(currentDate) ? 'Today' : formatDate(currentDate)}
+			</button>
 		</div>
-		<Button color="blue" onclick={goToNextDay} disabled={isToday(currentDate)}>
+		<Button class="max-w-1/4"onclick={goToNextDay} disabled={isToday(currentDate)}>
 			Next Day &gt;
 		</Button>
 	</div>
@@ -572,13 +575,13 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each filteredHistory as item, index}
+				{#each filteredHistory.reverse() as item, index}
 					<tr>
-						<td>{index + 1}</td>
+						<td>{filteredHistory.length - index}</td>
 						<td>{item.result}</td>
 						<td>{item.timeDifference}</td>
 						<td>
-							<textarea bind:value={item.notes} oninput={() => updateNotes(index, item.notes)}
+							<textarea bind:value={item.notes} oninput={() => updateNotes(filteredHistory.length - index - 1, item.notes)}
 							></textarea>
 						</td>
 						<td>{item.source || ''}</td>
@@ -592,19 +595,46 @@
 			</tbody>
 		</table>
 	</div>
-	<div class="wrapper">
+	<div class="wrapper pb-4">
 		{#if history.length > 0}
-			<Button color="red"onclick={resetCounts}>Reset</Button>
+			<Button onclick={resetCounts}>Reset</Button>
+			<Button onclick={exportCSV}>Export</Button>		
 		{:else}
-			<Button color="purple" onclick={importCSV}>Import CSV</Button>
+			<Button onclick={importCSV}>Import CSV</Button>
 		{/if}
 		
-		<Button color="dark" onclick={exportCSV}>Export</Button>		
 	</div>
-	<div class="wrapper">
+	<div class="h-[300px] p-4 border rounded resize overflow-auto">
+		<PieChart
+		  data={dataSummary()}
+		  key="correctness"
+		  value="value"
+		  innerRadius={-20}
+		  cornerRadius={5}
+		  padAngle={0.02}
+		>
+		  <svelte:fragment slot="aboveMarks">
+			<Text
+			  value={`${history.length} total`}
+			  textAnchor="middle"
+			  verticalAnchor="middle"
+			  class="text-4xl"
+			  dy={4}
+			/>
+			<Text
+			  value={`${(history.reduce((acc, cur) => cur.result === 'Correct' ? ++acc : acc, 0)/history.length*100).toFixed(0)}%`}
+			  textAnchor="middle"
+			  verticalAnchor="middle"
+			  class="text-sm fill-surface-content/50"
+			  dy={26}
+			/>
+		  </svelte:fragment>
+		</PieChart>
+	  </div>
+	<!-- <div class="wrapper">
 		Total Questions Done: {history.length}
 	</div>
-	<div class="wrapper">Percent Correct: {percentCorrect}%</div>
+	<div class="wrapper">Percent Correct: {percentCorrect}%</div> -->
 
 
 	<!-- <div class="wrapper">
@@ -623,15 +653,9 @@
 			y="count"
 			points
 			labels={{ offset: 10 }}
+			
 		/>
-	  </div>
-	  <!-- <div class="h-[300px] p-4 border rounded resize overflow-auto">
-		<PieChart {data} key="fruit" value="value" {renderContext} {debug} />
-	  </div> -->
-
-	  <div class="h-[300px] p-4 border rounded resize overflow-auto">
-		<PieChart data={dataSummary()} key="correctness" value="value" />
-	  </div>
+	</div>
 </div>
 
 <style>

@@ -1,11 +1,8 @@
-import { X as fallback, aj as store_set, S as setContext, a8 as store_get, ae as add_styles, _ as slot, a9 as unsubscribe_stores, Z as bind_props, T as pop, Q as push } from "./index.js";
-import { w as writable, d as derived, r as readable } from "./index3.js";
+import { X as fallback, ak as store_set, S as setContext, aa as store_get, ag as add_styles, Z as slot, ab as unsubscribe_stores, a0 as bind_props, T as pop, Q as push } from "./index.js";
+import { w as writable, d as derived } from "./index3.js";
 import { InternSet, ascending } from "d3-array";
 import { scaleLinear, scaleSqrt } from "d3-scale";
 import { rgb } from "d3-color";
-import "clsx";
-import { enablePatches, setAutoFreeze } from "immer";
-import { browser } from "@layerstack/utils/env";
 function canBeZero(val) {
   if (val === 0) {
     return true;
@@ -1024,40 +1021,6 @@ function LayerCake($$payload, $$props) {
   });
   pop();
 }
-enablePatches();
-setAutoFreeze(false);
-function matchMedia(queryString) {
-  if (browser) {
-    const query = window.matchMedia(queryString);
-    return readable(query.matches, (set) => {
-      const listener = (e) => set(e.matches);
-      query.addEventListener("change", listener);
-      return () => query.removeEventListener("change", listener);
-    });
-  } else {
-    return writable(true);
-  }
-}
-const matchMediaWidth = (width) => matchMedia(`(min-width: ${width}px)`);
-const breakpoints = {
-  sm: 640,
-  md: 768,
-  lg: 1024,
-  xl: 1280,
-  xxl: 1536
-};
-matchMediaWidth(breakpoints.sm);
-matchMediaWidth(breakpoints.md);
-matchMediaWidth(breakpoints.lg);
-matchMediaWidth(breakpoints.xl);
-matchMediaWidth(breakpoints.xxl);
-matchMedia(`screen`);
-matchMedia(`print`);
-matchMedia(`(prefers-color-scheme: dark)`);
-matchMedia(`(prefers-color-scheme: light)`);
-matchMedia(`(prefers-reduced-motion: reduce)`);
-matchMedia(`(orientation: landscape)`);
-matchMedia(`(orientation: portrait)`);
 export {
   LayerCake as L
 };

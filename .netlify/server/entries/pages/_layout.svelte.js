@@ -1,11 +1,23 @@
-import { V as sanitize_props, W as rest_props, S as setContext, X as fallback, Y as element, Z as bind_props, T as pop, Q as push, _ as slot, $ as spread_attributes, a0 as clsx, a1 as getContext, a2 as escape_html, a3 as copy_payload, a4 as assign_payload, a5 as spread_props, a6 as attr, a7 as sanitize_slots, a8 as store_get, a9 as unsubscribe_stores, aa as invalid_default_snippet } from "../../chunks/index.js";
+import { V as sanitize_props, W as rest_props, Q as push, S as setContext, X as fallback, Y as element, Z as slot, _ as spread_attributes, $ as clsx, a0 as bind_props, T as pop, a1 as copy_payload, a2 as assign_payload, a3 as spread_props, a4 as attr, a5 as sanitize_slots, a6 as getContext, a7 as escape_html, a8 as invalid_default_snippet, a9 as head, aa as store_get, ab as unsubscribe_stores, ac as ensure_array_like, ad as stringify } from "../../chunks/index.js";
 import "clsx";
+import { s as slide, B as Button$1 } from "../../chunks/Button.js";
 import { twMerge, twJoin } from "tailwind-merge";
 import * as dom from "@floating-ui/dom";
 import { w as writable } from "../../chunks/index3.js";
-import { h as html } from "../../chunks/html.js";
-import { s as sineIn } from "../../chunks/index4.js";
-import "../../chunks/client.js";
+import { cls, createHeadSnippet } from "@layerstack/tailwind";
+import { isVisibleInScrollParent, scrollIntoView as scrollIntoView$1, uniqueId } from "@layerstack/utils";
+import { g as getComponentClasses, a as getComponentSettings, s as setButtonGroup, b as settings, c as getSettings, B as Button, h as html, I as Icon } from "../../chunks/Button2.js";
+import "../../chunks/TextField.svelte_svelte_type_style_lang.js";
+import "@layerstack/utils/object";
+import "@layerstack/utils/env";
+import "@layerstack/utils/serialize";
+import "@layerstack/utils/rollup";
+import "@layerstack/utils/date";
+import "@layerstack/utils/dateRange";
+import "@layerstack/utils/number";
+import "@layerstack/utils/routing";
+import "@layerstack/utils/array";
+import { mdiWhiteBalanceSunny, mdiWeatherNight, mdiUndoVariant, mdiMonitor } from "@mdi/js";
 const bgColors = {
   gray: "bg-gray-50 dark:bg-gray-800",
   red: "bg-red-50 dark:bg-gray-800",
@@ -166,94 +178,6 @@ function Frame($$payload, $$props) {
     params,
     open
   });
-  pop();
-}
-function ToolbarButton($$payload, $$props) {
-  const $$sanitized_props = sanitize_props($$props);
-  const $$restProps = rest_props($$sanitized_props, [
-    "color",
-    "name",
-    "ariaLabel",
-    "size",
-    "href"
-  ]);
-  push();
-  let color = fallback($$props["color"], "default");
-  let name = fallback($$props["name"], () => void 0, true);
-  let ariaLabel = fallback($$props["ariaLabel"], () => void 0, true);
-  let size = fallback($$props["size"], "md");
-  let href = fallback($$props["href"], () => void 0, true);
-  const background = getContext("background");
-  const colors = {
-    dark: "text-gray-500 hover:text-gray-900 hover:bg-gray-200 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-600",
-    gray: "text-gray-500 focus:ring-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:text-gray-300",
-    red: "text-red-500 focus:ring-red-400 hover:bg-red-200 dark:hover:bg-red-800 dark:hover:text-red-300",
-    yellow: "text-yellow-500 focus:ring-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-800 dark:hover:text-yellow-300",
-    green: "text-green-500 focus:ring-green-400 hover:bg-green-200 dark:hover:bg-green-800 dark:hover:text-green-300",
-    indigo: "text-indigo-500 focus:ring-indigo-400 hover:bg-indigo-200 dark:hover:bg-indigo-800 dark:hover:text-indigo-300",
-    purple: "text-purple-500 focus:ring-purple-400 hover:bg-purple-200 dark:hover:bg-purple-800 dark:hover:text-purple-300",
-    pink: "text-pink-500 focus:ring-pink-400 hover:bg-pink-200 dark:hover:bg-pink-800 dark:hover:text-pink-300",
-    blue: "text-blue-500 focus:ring-blue-400 hover:bg-blue-200 dark:hover:bg-blue-800 dark:hover:text-blue-300",
-    primary: "text-primary-500 focus:ring-primary-400 hover:bg-primary-200 dark:hover:bg-primary-800 dark:hover:text-primary-300",
-    default: "focus:ring-gray-400 hover:bg-gray-100"
-  };
-  const sizing = {
-    xs: "m-0.5 rounded-xs focus:ring-1 p-0.5",
-    sm: "m-0.5 rounded-sm focus:ring-1 p-0.5",
-    md: "m-0.5 rounded-lg focus:ring-2 p-1.5",
-    lg: "m-0.5 rounded-lg focus:ring-2 p-2.5"
-  };
-  let buttonClass;
-  const svgSizes = {
-    xs: "w-3 h-3",
-    sm: "w-3.5 h-3.5",
-    md: "w-5 h-5",
-    lg: "w-5 h-5"
-  };
-  buttonClass = twMerge("focus:outline-hidden whitespace-normal", sizing[size], colors[color], color === "default" && (background ? "dark:hover:bg-gray-600" : "dark:hover:bg-gray-700"), $$sanitized_props.class);
-  if (href) {
-    $$payload.out += "<!--[-->";
-    $$payload.out += `<a${spread_attributes(
-      {
-        href,
-        ...$$restProps,
-        class: clsx(buttonClass),
-        "aria-label": ariaLabel ?? name
-      },
-      null
-    )}>`;
-    if (name) {
-      $$payload.out += "<!--[-->";
-      $$payload.out += `<span class="sr-only">${escape_html(name)}</span>`;
-    } else {
-      $$payload.out += "<!--[!-->";
-    }
-    $$payload.out += `<!--]--> <!---->`;
-    slot($$payload, $$props, "default", { svgSize: svgSizes[size] }, null);
-    $$payload.out += `<!----></a>`;
-  } else {
-    $$payload.out += "<!--[!-->";
-    $$payload.out += `<button${spread_attributes(
-      {
-        type: "button",
-        ...$$restProps,
-        class: clsx(buttonClass),
-        "aria-label": ariaLabel ?? name
-      },
-      null
-    )}>`;
-    if (name) {
-      $$payload.out += "<!--[-->";
-      $$payload.out += `<span class="sr-only">${escape_html(name)}</span>`;
-    } else {
-      $$payload.out += "<!--[!-->";
-    }
-    $$payload.out += `<!--]--> <!---->`;
-    slot($$payload, $$props, "default", { svgSize: svgSizes[size] }, null);
-    $$payload.out += `<!----></button>`;
-  }
-  $$payload.out += `<!--]-->`;
-  bind_props($$props, { color, name, ariaLabel, size, href });
   pop();
 }
 function Popper($$payload, $$props) {
@@ -607,70 +531,6 @@ function DropdownItem($$payload, $$props) {
   bind_props($$props, { defaultClass, href, activeClass });
   pop();
 }
-function NavContainer($$payload, $$props) {
-  const $$sanitized_props = sanitize_props($$props);
-  const $$restProps = rest_props($$sanitized_props, ["fluid"]);
-  push();
-  let fluid = fallback($$props["fluid"], false);
-  $$payload.out += `<div${spread_attributes(
-    {
-      ...$$restProps,
-      class: clsx(twMerge("mx-auto flex flex-wrap justify-between items-center ", fluid ? "w-full" : "container", $$sanitized_props.class))
-    },
-    null
-  )}><!---->`;
-  slot($$payload, $$props, "default", {}, null);
-  $$payload.out += `<!----></div>`;
-  bind_props($$props, { fluid });
-  pop();
-}
-function Navbar($$payload, $$props) {
-  const $$sanitized_props = sanitize_props($$props);
-  const $$restProps = rest_props($$sanitized_props, ["fluid", "navContainerClass"]);
-  push();
-  var $$store_subs;
-  let fluid = fallback($$props["fluid"], false);
-  let navContainerClass = fallback($$props["navContainerClass"], "");
-  let hidden = writable(true);
-  setContext("navHidden", hidden);
-  let toggle = () => hidden.update((hidden2) => !hidden2);
-  {
-    $$restProps.color = $$restProps.color ?? "navbar";
-  }
-  Frame($$payload, spread_props([
-    { tag: "nav" },
-    $$restProps,
-    {
-      class: twMerge("px-2 sm:px-4 py-2.5 w-full", $$sanitized_props.class),
-      children: ($$payload2) => {
-        NavContainer($$payload2, {
-          fluid,
-          class: navContainerClass,
-          children: ($$payload3) => {
-            $$payload3.out += `<!---->`;
-            slot(
-              $$payload3,
-              $$props,
-              "default",
-              {
-                hidden: store_get($$store_subs ??= {}, "$hidden", hidden),
-                toggle,
-                NavContainer
-              },
-              null
-            );
-            $$payload3.out += `<!---->`;
-          },
-          $$slots: { default: true }
-        });
-      },
-      $$slots: { default: true }
-    }
-  ]));
-  if ($$store_subs) unsubscribe_stores($$store_subs);
-  bind_props($$props, { fluid, navContainerClass });
-  pop();
-}
 function NavBrand($$payload, $$props) {
   const $$sanitized_props = sanitize_props($$props);
   const $$restProps = rest_props($$sanitized_props, ["href"]);
@@ -687,203 +547,6 @@ function NavBrand($$payload, $$props) {
   slot($$payload, $$props, "default", {}, null);
   $$payload.out += `<!----></a>`;
   bind_props($$props, { href });
-  pop();
-}
-function Menu($$payload, $$props) {
-  const $$sanitized_props = sanitize_props($$props);
-  const $$restProps = rest_props($$sanitized_props, ["size", "color", "variation", "ariaLabel"]);
-  push();
-  let size = fallback($$props["size"], "24");
-  let color = fallback($$props["color"], "currentColor");
-  let variation = fallback($$props["variation"], "outline");
-  let ariaLabel = fallback($$props["ariaLabel"], "bars 3");
-  let viewBox;
-  let svgpath;
-  let svgoutline = `<path stroke="${color}" stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path> `;
-  let svgsolid = `<path fill="${color}" clip-rule="evenodd" fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"></path> `;
-  switch (variation) {
-    case "outline":
-      svgpath = svgoutline;
-      viewBox = "0 0 24 24";
-      break;
-    case "solid":
-      svgpath = svgsolid;
-      viewBox = "0 0 24 24";
-      break;
-    default:
-      svgpath = svgoutline;
-      viewBox = "0 0 24 24";
-  }
-  $$payload.out += `<svg${spread_attributes(
-    {
-      xmlns: "http://www.w3.org/2000/svg",
-      role: "button",
-      tabindex: "0",
-      width: size,
-      height: size,
-      class: clsx($$sanitized_props.class),
-      ...$$restProps,
-      "aria-label": ariaLabel,
-      fill: "none",
-      viewBox,
-      "stroke-width": "2"
-    },
-    null,
-    void 0,
-    void 0,
-    3
-  )}>${html(svgpath)}</svg>`;
-  bind_props($$props, { size, color, variation, ariaLabel });
-  pop();
-}
-function NavHamburger($$payload, $$props) {
-  const $$sanitized_props = sanitize_props($$props);
-  const $$restProps = rest_props($$sanitized_props, [
-    "menuClass",
-    "onClick",
-    "classMenu",
-    "title"
-  ]);
-  push();
-  let menuClass = fallback($$props["menuClass"], "h-6 w-6 shrink-0");
-  let onClick = fallback($$props["onClick"], () => void 0, true);
-  let classMenu = fallback($$props["classMenu"], "");
-  let title = fallback($$props["title"], "Open main menu");
-  let btnClass = "ms-3 md:hidden";
-  getContext("navHidden") ?? writable(true);
-  ToolbarButton($$payload, spread_props([
-    { name: title },
-    $$restProps,
-    {
-      class: twMerge(btnClass, $$sanitized_props.class),
-      children: ($$payload2) => {
-        Menu($$payload2, { class: twMerge(menuClass, classMenu) });
-      },
-      $$slots: { default: true }
-    }
-  ]));
-  bind_props($$props, { menuClass, onClick, classMenu, title });
-  pop();
-}
-function NavLi($$payload, $$props) {
-  const $$sanitized_props = sanitize_props($$props);
-  const $$restProps = rest_props($$sanitized_props, ["href", "activeClass", "nonActiveClass"]);
-  push();
-  let active, liClass;
-  let href = fallback($$props["href"], "");
-  let activeClass = fallback($$props["activeClass"], () => void 0, true);
-  let nonActiveClass = fallback($$props["nonActiveClass"], () => void 0, true);
-  const context = getContext("navbarContext") ?? {};
-  const activeUrlStore = getContext("activeUrl");
-  let navUrl = "";
-  activeUrlStore.subscribe((value) => {
-    navUrl = value;
-  });
-  active = navUrl ? href === navUrl : false;
-  liClass = twMerge("block py-2 pe-4 ps-3 md:p-0 rounded-sm md:border-0", active ? activeClass ?? context.activeClass : nonActiveClass ?? context.nonActiveClass, $$sanitized_props.class);
-  $$payload.out += `<li>`;
-  element(
-    $$payload,
-    href ? "a" : "div",
-    () => {
-      $$payload.out += `${spread_attributes(
-        {
-          role: href ? "link" : "presentation",
-          href,
-          ...$$restProps,
-          class: clsx(liClass)
-        },
-        null
-      )}`;
-    },
-    () => {
-      $$payload.out += `<!---->`;
-      slot($$payload, $$props, "default", {}, null);
-      $$payload.out += `<!---->`;
-    }
-  );
-  $$payload.out += `</li>`;
-  bind_props($$props, { href, activeClass, nonActiveClass });
-  pop();
-}
-function NavUl($$payload, $$props) {
-  const $$sanitized_props = sanitize_props($$props);
-  const $$restProps = rest_props($$sanitized_props, [
-    "activeUrl",
-    "divClass",
-    "ulClass",
-    "hidden",
-    "slideParams",
-    "activeClass",
-    "nonActiveClass",
-    "classUl"
-  ]);
-  push();
-  var $$store_subs;
-  let activeUrl = fallback($$props["activeUrl"], "");
-  let divClass = fallback($$props["divClass"], "w-full md:block md:w-auto");
-  let ulClass = fallback($$props["ulClass"], "flex flex-col p-4 mt-4 md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:text-sm md:font-medium");
-  let hidden = fallback($$props["hidden"], () => void 0, true);
-  let slideParams = fallback($$props["slideParams"], () => ({ delay: 250, duration: 500, easing: sineIn }), true);
-  let activeClass = fallback($$props["activeClass"], "text-white bg-primary-700 md:bg-transparent md:text-primary-700 md:dark:text-white dark:bg-primary-600 md:dark:bg-transparent");
-  let nonActiveClass = fallback($$props["nonActiveClass"], "text-gray-700 hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-primary-700 dark:text-gray-400 md:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent");
-  let classUl = fallback($$props["classUl"], "");
-  const activeUrlStore = writable("");
-  setContext("navbarContext", { activeClass, nonActiveClass });
-  setContext("activeUrl", activeUrlStore);
-  let hiddenStore = getContext("navHidden");
-  let _hidden;
-  let _divClass;
-  let _ulClass;
-  {
-    activeUrlStore.set(activeUrl);
-  }
-  _hidden = hidden ?? store_get($$store_subs ??= {}, "$hiddenStore", hiddenStore) ?? true;
-  _divClass = twMerge(divClass, $$sanitized_props.class);
-  _ulClass = twMerge(ulClass, classUl);
-  if (!_hidden) {
-    $$payload.out += "<!--[-->";
-    $$payload.out += `<div${spread_attributes(
-      {
-        ...$$restProps,
-        class: clsx(_divClass),
-        role: "button",
-        tabindex: "0"
-      },
-      null
-    )}>`;
-    Frame($$payload, {
-      tag: "ul",
-      border: true,
-      rounded: true,
-      color: "navbarUl",
-      class: _ulClass,
-      children: ($$payload2) => {
-        $$payload2.out += `<!---->`;
-        slot($$payload2, $$props, "default", {}, null);
-        $$payload2.out += `<!---->`;
-      },
-      $$slots: { default: true }
-    });
-    $$payload.out += `<!----></div>`;
-  } else {
-    $$payload.out += "<!--[!-->";
-    $$payload.out += `<div${spread_attributes({ ...$$restProps, class: clsx(_divClass) }, null, { hidden: _hidden })}><ul${attr("class", clsx(_ulClass))}><!---->`;
-    slot($$payload, $$props, "default", {}, null);
-    $$payload.out += `<!----></ul></div>`;
-  }
-  $$payload.out += `<!--]-->`;
-  if ($$store_subs) unsubscribe_stores($$store_subs);
-  bind_props($$props, {
-    activeUrl,
-    divClass,
-    ulClass,
-    hidden,
-    slideParams,
-    activeClass,
-    nonActiveClass,
-    classUl
-  });
   pop();
 }
 function ChevronDownOutline($$payload, $$props) {
@@ -942,139 +605,637 @@ function ChevronDownOutline($$payload, $$props) {
   $$payload.out += `<!--]--><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"${attr("stroke-width", strokeWidth)} d="m8 10 4 4 4-4"></path></svg>`;
   pop();
 }
-const getStores = () => {
-  const stores$1 = getContext("__svelte__");
-  return {
-    /** @type {typeof page} */
-    page: {
-      subscribe: stores$1.page.subscribe
-    },
-    /** @type {typeof navigating} */
-    navigating: {
-      subscribe: stores$1.navigating.subscribe
-    },
-    /** @type {typeof updated} */
-    updated: stores$1.updated
-  };
-};
-const page = {
-  subscribe(fn) {
-    const store = getStores().page;
-    return store.subscribe(fn);
+const scrollIntoView = (node, options) => {
+  function update(options2) {
+    const condition = typeof options2?.condition === "boolean" ? options2.condition : options2?.condition(node);
+    const needed = options2?.onlyIfNeeded ? !isVisibleInScrollParent(node) : true;
+    if (condition && needed) {
+      setTimeout(() => {
+        scrollIntoView$1(node);
+      }, options2?.delay ?? 0);
+    }
   }
+  if (options?.initial !== false) {
+    update(options);
+  }
+  return { update };
 };
-function _layout($$payload, $$props) {
+function Popover($$payload, $$props) {
   push();
-  var $$store_subs;
-  store_get($$store_subs ??= {}, "$page", page).url.pathname;
-  let { children } = $$props;
-  $$payload.out += `<div class="app"><nav class="svelte-tvktfw">`;
-  Navbar($$payload, {
+  let open = fallback($$props["open"], false);
+  let placement = fallback($$props["placement"], void 0);
+  let className = fallback($$props["class"], void 0);
+  let style = fallback($$props["style"], void 0);
+  let autoPlacement = fallback($$props["autoPlacement"], false);
+  let anchorEl = fallback($$props["anchorEl"], void 0);
+  let offset = fallback($$props["offset"], 0);
+  let padding = fallback($$props["padding"], 4);
+  let matchWidth = fallback($$props["matchWidth"], false);
+  let resize = fallback($$props["resize"], false);
+  const settingsClasses = getComponentClasses("Popover");
+  function close(reason = "unknown") {
+    if (open) {
+      open = false;
+    }
+  }
+  if (open) {
+    $$payload.out += "<!--[-->";
+    $$payload.out += `<div${attr("class", clsx(cls("Popover absolute z-50 outline-none", settingsClasses.root, className)))}${attr("style", style)} tabindex="-1"><!---->`;
+    slot($$payload, $$props, "default", { close: () => close() }, null);
+    $$payload.out += `<!----></div>`;
+  } else {
+    $$payload.out += "<!--[!-->";
+  }
+  $$payload.out += `<!--]-->`;
+  bind_props($$props, {
+    open,
+    placement,
+    class: className,
+    style,
+    autoPlacement,
+    anchorEl,
+    offset,
+    padding,
+    matchWidth,
+    resize
+  });
+  pop();
+}
+function Tooltip($$payload, $$props) {
+  const $$slots = sanitize_slots($$props);
+  const $$sanitized_props = sanitize_props($$props);
+  const $$restProps = rest_props($$sanitized_props, [
+    "title",
+    "open",
+    "offset",
+    "delay",
+    "underline",
+    "cursor",
+    "enabled",
+    "placement",
+    "autoPlacement",
+    "matchWidth",
+    "classes"
+  ]);
+  push();
+  let hasTitle;
+  let title = fallback($$props["title"], "");
+  let open = fallback($$props["open"], false);
+  let offset = fallback($$props["offset"], 0);
+  let delay = fallback($$props["delay"], 500);
+  let underline = fallback($$props["underline"], false);
+  let cursor = fallback($$props["cursor"], false);
+  let enabled = fallback($$props["enabled"], true);
+  let placement = fallback($$props["placement"], "bottom");
+  let autoPlacement = fallback($$props["autoPlacement"], false);
+  let matchWidth = fallback($$props["matchWidth"], false);
+  let classes = fallback($$props["classes"], () => ({}), true);
+  const settingsClasses = getComponentClasses("Tooltip");
+  hasTitle = title || $$slots.title;
+  if (enabled && (title || $$slots.title)) {
+    $$payload.out += "<!--[-->";
+    Popover($$payload, spread_props([
+      {
+        anchorEl: void 0,
+        placement,
+        autoPlacement,
+        offset,
+        matchWidth,
+        open,
+        class: cls("Tooltip pointer-events-none", settingsClasses.popover, classes.popover)
+      },
+      $$restProps,
+      {
+        children: ($$payload2) => {
+          $$payload2.out += `<!---->`;
+          slot($$payload2, $$props, "title", {}, () => {
+            $$payload2.out += `<div${attr("class", clsx(cls("text-xs text-surface-100 bg-surface-content px-2 py-1 rounded whitespace-nowrap", settingsClasses.title, classes.title)))}>${escape_html(title)}</div>`;
+          });
+          $$payload2.out += `<!---->`;
+        },
+        $$slots: { default: true }
+      }
+    ]));
+  } else {
+    $$payload.out += "<!--[!-->";
+  }
+  $$payload.out += `<!--]-->  <div${attr("class", clsx(cls("contents", settingsClasses.content, classes.content)))}>`;
+  if ($$sanitized_props.class || underline || cursor) {
+    $$payload.out += "<!--[-->";
+    $$payload.out += `<span${attr("class", clsx(cls(hasTitle && underline && "border-b border-dotted", hasTitle && cursor && "cursor-help", settingsClasses.root, classes.root, $$sanitized_props.class)))}><!---->`;
+    slot($$payload, $$props, "default", {}, null);
+    $$payload.out += `<!----></span>`;
+  } else {
+    $$payload.out += "<!--[!-->";
+    $$payload.out += `<!---->`;
+    slot($$payload, $$props, "default", {}, null);
+    $$payload.out += `<!---->`;
+  }
+  $$payload.out += `<!--]--></div>`;
+  bind_props($$props, {
+    title,
+    open,
+    offset,
+    delay,
+    underline,
+    cursor,
+    enabled,
+    placement,
+    autoPlacement,
+    matchWidth,
+    classes
+  });
+  pop();
+}
+function Menu($$payload, $$props) {
+  const $$sanitized_props = sanitize_props($$props);
+  push();
+  let open = fallback($$props["open"], false);
+  let offset = fallback($$props["offset"], 4);
+  let matchWidth = fallback($$props["matchWidth"], false);
+  let placement = fallback($$props["placement"], matchWidth ? "bottom-start" : "bottom");
+  let autoPlacement = fallback($$props["autoPlacement"], false);
+  let resize = fallback($$props["resize"], false);
+  let disableTransition = fallback($$props["disableTransition"], false);
+  let transition = fallback($$props["transition"], void 0);
+  let transitionParams = fallback($$props["transitionParams"], void 0);
+  let explicitClose = fallback($$props["explicitClose"], false);
+  let moveFocus = fallback($$props["moveFocus"], true);
+  let classes = fallback($$props["classes"], () => ({}), true);
+  const { classes: settingsClasses, defaults } = getComponentSettings("Menu");
+  let menuItemsEl = fallback($$props["menuItemsEl"], void 0);
+  transition ?? defaults.transition ?? (disableTransition ? (node, params) => ({}) : slide);
+  transitionParams ?? defaults.transitionParams ?? {};
+  Popover($$payload, {
+    placement,
+    autoPlacement,
+    offset,
+    matchWidth,
+    resize,
+    open,
+    class: cls("Menu", "bg-surface-100 rounded shadow border overflow-auto", settingsClasses.root, classes.root, $$sanitized_props.class),
+    style: $$sanitized_props.style,
     children: invalid_default_snippet,
     $$slots: {
-      default: ($$payload2, { hidden, toggle }) => {
-        NavBrand($$payload2, { href: "/" });
-        $$payload2.out += `<!----> `;
-        NavHamburger($$payload2, {});
-        $$payload2.out += `<!----> `;
-        NavUl($$payload2, {
-          hidden,
-          class: "ms-3 pt-6",
-          children: ($$payload3) => {
-            NavLi($$payload3, {
-              href: "/",
-              active: true,
-              children: ($$payload4) => {
-                $$payload4.out += `<!---->Home`;
-              },
-              $$slots: { default: true }
-            });
-            $$payload3.out += `<!----> `;
-            NavLi($$payload3, {
-              class: "cursor-pointer",
-              children: ($$payload4) => {
-                $$payload4.out += `<!---->Dropdown`;
-                ChevronDownOutline($$payload4, {
-                  class: "w-6 h-6 ms-2 text-primary-800 dark:text-white inline"
-                });
-                $$payload4.out += `<!---->`;
-              },
-              $$slots: { default: true }
-            });
-            $$payload3.out += `<!----> `;
-            Dropdown($$payload3, {
-              children: ($$payload4) => {
-                DropdownItem($$payload4, {
-                  children: ($$payload5) => {
-                    $$payload5.out += `<!---->Dashboard`;
-                  },
-                  $$slots: { default: true }
-                });
-                $$payload4.out += `<!----> `;
-                DropdownItem($$payload4, {
-                  children: ($$payload5) => {
-                    $$payload5.out += `<!---->Settings`;
-                  },
-                  $$slots: { default: true }
-                });
-                $$payload4.out += `<!----> `;
-                DropdownItem($$payload4, {
-                  children: ($$payload5) => {
-                    $$payload5.out += `<!---->Earnings`;
-                  },
-                  $$slots: { default: true }
-                });
-                $$payload4.out += `<!---->`;
-              },
-              $$slots: {
-                default: true,
-                footer: ($$payload4) => {
-                  DropdownItem($$payload4, {
-                    slot: "footer",
-                    children: ($$payload5) => {
-                      $$payload5.out += `<!---->Sign out`;
-                    },
-                    $$slots: { default: true }
-                  });
-                }
-              }
-            });
-            $$payload3.out += `<!----> `;
-            NavLi($$payload3, {
-              href: "/services",
-              children: ($$payload4) => {
-                $$payload4.out += `<!---->Services`;
-              },
-              $$slots: { default: true }
-            });
-            $$payload3.out += `<!----> `;
-            NavLi($$payload3, {
-              href: "/pricing",
-              children: ($$payload4) => {
-                $$payload4.out += `<!---->Pricing`;
-              },
-              $$slots: { default: true }
-            });
-            $$payload3.out += `<!----> `;
-            NavLi($$payload3, {
-              href: "/contact",
-              children: ($$payload4) => {
-                $$payload4.out += `<!---->Contact`;
-              },
-              $$slots: { default: true }
-            });
-            $$payload3.out += `<!---->`;
-          },
-          $$slots: { default: true }
-        });
-        $$payload2.out += `<!---->`;
+      default: ($$payload2, { close }) => {
+        $$payload2.out += `<menu${attr("class", clsx(cls("menu-items outline-none max-h-screen", settingsClasses.menu, classes.menu)))}><!---->`;
+        slot($$payload2, $$props, "default", { close }, null);
+        $$payload2.out += `<!----></menu>`;
       }
     }
   });
+  bind_props($$props, {
+    open,
+    offset,
+    matchWidth,
+    placement,
+    autoPlacement,
+    resize,
+    disableTransition,
+    transition,
+    transitionParams,
+    explicitClose,
+    moveFocus,
+    classes,
+    menuItemsEl
+  });
+  pop();
+}
+function MenuItem($$payload, $$props) {
+  const $$sanitized_props = sanitize_props($$props);
+  const $$restProps = rest_props($$sanitized_props, [
+    "icon",
+    "scrollIntoView",
+    "disabled",
+    "selected",
+    "classes"
+  ]);
+  push();
+  let actions;
+  let icon = fallback($$props["icon"], void 0);
+  let scrollIntoView$12 = fallback($$props["scrollIntoView"], false);
+  let disabled = fallback($$props["disabled"], false);
+  let selected = fallback($$props["selected"], false);
+  let classes = fallback(
+    $$props["classes"],
+    () => ({
+      root: "text-sm gap-3",
+      icon: "text-surface-content/50",
+      selected: "font-semibold [:not(.group:hover)>&]:bg-surface-content/5"
+    }),
+    true
+  );
+  const settingsClasses = getComponentClasses("MenuItem");
+  let scrollOptions;
+  setButtonGroup(void 0);
+  settings({ ...getSettings(), components: {} });
+  scrollOptions = typeof scrollIntoView$12 === "boolean" ? { condition: scrollIntoView$12 } : scrollIntoView$12;
+  actions = (node) => [scrollIntoView(node, scrollOptions)];
+  Button($$payload, spread_props([
+    {
+      variant: "none",
+      icon,
+      classes,
+      fullWidth: true,
+      actions,
+      disabled
+    },
+    $$restProps,
+    {
+      class: cls("MenuItem", "text-left items-center p-2 hover:bg-surface-content/5 rounded duration-75", selected && classes?.selected, settingsClasses.root, classes?.root, $$sanitized_props.class),
+      children: ($$payload2) => {
+        $$payload2.out += `<!---->`;
+        slot($$payload2, $$props, "default", {}, null);
+        $$payload2.out += `<!---->`;
+      },
+      $$slots: { default: true }
+    }
+  ]));
+  bind_props($$props, {
+    icon,
+    scrollIntoView: scrollIntoView$12,
+    disabled,
+    selected,
+    classes
+  });
+  pop();
+}
+function Kbd($$payload, $$props) {
+  const $$sanitized_props = sanitize_props($$props);
+  push();
+  let control = fallback($$props["control"], false);
+  let option = fallback($$props["option"], false);
+  let shift = fallback($$props["shift"], false);
+  let command = fallback($$props["command"], false);
+  let variant = fallback($$props["variant"], "filled");
+  $$payload.out += `<kbd${attr("class", clsx(cls("font-sans inline-flex gap-1", variant === "filled" && "border border-b-2 text-surface-content bg-surface-200 rounded py-1 px-1", $$sanitized_props.class)))}>`;
+  if (control) {
+    $$payload.out += "<!--[-->";
+    $$payload.out += `<abbr title="Control" class="no-underline">⌃</abbr>`;
+  } else {
+    $$payload.out += "<!--[!-->";
+  }
+  $$payload.out += `<!--]--> `;
+  if (option) {
+    $$payload.out += "<!--[-->";
+    $$payload.out += `<abbr title="Option" class="no-underline">⌥</abbr>`;
+  } else {
+    $$payload.out += "<!--[!-->";
+  }
+  $$payload.out += `<!--]--> `;
+  if (shift) {
+    $$payload.out += "<!--[-->";
+    $$payload.out += `<abbr title="Shift" class="no-underline">⇧</abbr>`;
+  } else {
+    $$payload.out += "<!--[!-->";
+  }
+  $$payload.out += `<!--]--> `;
+  if (command) {
+    $$payload.out += "<!--[-->";
+    $$payload.out += `<abbr title="Command" class="no-underline">⌘</abbr>`;
+  } else {
+    $$payload.out += "<!--[!-->";
+  }
+  $$payload.out += `<!--]--> <!---->`;
+  slot($$payload, $$props, "default", {}, null);
+  $$payload.out += `<!----></kbd>`;
+  bind_props($$props, { control, option, shift, command, variant });
+  pop();
+}
+function ThemeInit($$payload, $$props) {
+  push();
+  const darkThemes = getSettings().themes?.dark ?? [];
+  let headSnippet = createHeadSnippet(darkThemes);
+  head($$payload, ($$payload2) => {
+    $$payload2.out += `${html(headSnippet)}`;
+  });
+  pop();
+}
+function Switch($$payload, $$props) {
+  const $$sanitized_props = sanitize_props($$props);
+  push();
+  let id = fallback($$props["id"], () => uniqueId("switch-"), true);
+  let name = fallback($$props["name"], "");
+  let value = fallback($$props["value"], void 0);
+  let checked = fallback($$props["checked"], false);
+  let required = fallback($$props["required"], false);
+  let disabled = fallback($$props["disabled"], false);
+  let size = fallback($$props["size"], "lg");
+  let color = fallback($$props["color"], "primary");
+  let classes = fallback($$props["classes"], () => ({}), true);
+  const settingsClasses = getComponentClasses("Switch");
+  $$payload.out += `<div${attr("class", clsx(cls("Switch", "inline-block", settingsClasses.root, classes.root)))}><input${attr("id", id)}${attr("name", name)} type="checkbox"${attr("checked", checked, true)}${attr("value", value)}${attr("class", clsx(cls("peer appearance-none block h-0", settingsClasses.input, classes.input)))}${attr("required", required, true)}${attr("disabled", disabled, true)}> <label${attr("for", id)}${attr("data-checked", checked)}${attr("class", clsx(cls(
+    "switch",
+    "group border rounded-full grid align-items p-[2px] transition-shadow",
+    {
+      "w-6 h-4": size === "sm",
+      "w-8 h-5": size === "md",
+      "w-10 h-6": size === "lg"
+    },
+    checked && {
+      primary: "bg-primary border-primary",
+      secondary: "bg-secondary border-secondary",
+      accent: "bg-accent border-accent",
+      neutral: "bg-neutral border-neutral",
+      info: "bg-info border-info",
+      success: "bg-success border-success",
+      warning: "bg-warning border-warning",
+      danger: "bg-danger border-danger"
+    }[color],
+    {
+      primary: "ring-primary/60",
+      secondary: "ring-secondary/60",
+      accent: "ring-accent/60",
+      neutral: "ring-neutral/60",
+      info: "ring-info/60",
+      success: "ring-success/60",
+      warning: "ring-warning/60",
+      danger: "ring-danger/60"
+    }[color],
+    checked === false && "bg-surface-content/20",
+    disabled ? "opacity-50" : "cursor-pointer peer-focus-visible:ring-2 ring-offset-1",
+    settingsClasses.switch,
+    classes.switch,
+    $$sanitized_props.class
+  )))}><div${attr("data-checked", checked)}${attr("class", clsx(cls("toggle w-1/2 aspect-square h-full rounded-full transition-all duration-200 bg-surface-100 grid items-center justify-center transform", "group-active:w-[60%] aspect-auto", checked && "translate-x-full group-active:translate-x-[65%]", checked === null && "border", settingsClasses.toggle, classes.toggle)))}><!---->`;
+  slot($$payload, $$props, "default", { checked, value }, null);
+  $$payload.out += `<!----></div></label></div>`;
+  bind_props($$props, {
+    id,
+    name,
+    value,
+    checked,
+    required,
+    disabled,
+    size,
+    color,
+    classes
+  });
+  pop();
+}
+function ThemeSelect($$payload, $$props) {
+  push();
+  var $$store_subs;
+  let themes;
+  const { currentTheme, themes: allThemes } = getSettings();
+  let darkThemes = fallback($$props["darkThemes"], () => allThemes?.dark ?? ["dark"], true);
+  let lightThemes = fallback($$props["lightThemes"], () => allThemes?.light ?? ["light"], true);
+  let keyboardShortcuts = fallback($$props["keyboardShortcuts"], false);
+  let open = false;
+  themes = store_get($$store_subs ??= {}, "$currentTheme", currentTheme).dark ? darkThemes : lightThemes;
+  let $$settled = true;
+  let $$inner_payload;
+  function $$render_inner($$payload2) {
+    if (darkThemes.length > 1 || lightThemes.length > 1) {
+      $$payload2.out += "<!--[-->";
+      Button($$payload2, {
+        iconOnly: true,
+        children: ($$payload3) => {
+          $$payload3.out += `<div class="grid grid-cols-1 grid-rows-1 overflow-hidden">`;
+          Icon($$payload3, {
+            data: mdiWhiteBalanceSunny,
+            class: "row-[1] col-[1] translate-x-0 dark:-translate-x-full transition-transform duration-300"
+          });
+          $$payload3.out += `<!----> `;
+          Icon($$payload3, {
+            data: mdiWeatherNight,
+            class: "row-[1] col-[1] translate-x-full dark:translate-x-0 transition-transform duration-300"
+          });
+          $$payload3.out += `<!----></div> `;
+          Menu($$payload3, {
+            explicitClose: true,
+            resize: "height",
+            classes: { root: "w-[400px] max-w-[95vw]" },
+            get open() {
+              return open;
+            },
+            set open($$value) {
+              open = $$value;
+              $$settled = false;
+            },
+            children: ($$payload4) => {
+              const each_array = ensure_array_like(themes);
+              $$payload4.out += `<label for="switch-color-scheme" class="grid grid-cols-[1fr,auto,auto] items-center p-2 border-b border-surface-content/10 mb-1 text-sm font-medium sticky top-0 bg-surface-100">Mode `;
+              if (store_get($$store_subs ??= {}, "$currentTheme", currentTheme).theme) {
+                $$payload4.out += "<!--[-->";
+                $$payload4.out += `<span>`;
+                Tooltip($$payload4, {
+                  title: "Reset to System",
+                  offset: 2,
+                  children: ($$payload5) => {
+                    Button($$payload5, {
+                      icon: mdiUndoVariant,
+                      color: "primary",
+                      size: "sm",
+                      class: "mr-1"
+                    });
+                  },
+                  $$slots: { default: true }
+                });
+                $$payload4.out += `<!----></span>`;
+              } else {
+                $$payload4.out += "<!--[!-->";
+              }
+              $$payload4.out += `<!--]--> `;
+              Switch($$payload4, {
+                id: "switch-color-scheme",
+                checked: store_get($$store_subs ??= {}, "$currentTheme", currentTheme).dark,
+                class: "my-1",
+                children: invalid_default_snippet,
+                $$slots: {
+                  default: ($$payload5, { checked }) => {
+                    if (checked) {
+                      $$payload5.out += "<!--[-->";
+                      Icon($$payload5, {
+                        data: mdiWeatherNight,
+                        size: ".8rem",
+                        class: "text-primary"
+                      });
+                    } else {
+                      $$payload5.out += "<!--[!-->";
+                      Icon($$payload5, {
+                        data: mdiWhiteBalanceSunny,
+                        size: ".8rem",
+                        class: "text-primary"
+                      });
+                    }
+                    $$payload5.out += `<!--]-->`;
+                  }
+                }
+              });
+              $$payload4.out += `<!----></label> <div class="grid grid-cols-2 gap-2 p-2"><!--[-->`;
+              for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+                let themeName = each_array[$$index];
+                MenuItem($$payload4, {
+                  "data-theme": themeName,
+                  class: cls("bg-surface-100 text-surface-content font-semibold border shadow", store_get($$store_subs ??= {}, "$currentTheme", currentTheme).resolvedTheme === themeName && "ring-2 ring-surface-content"),
+                  children: ($$payload5) => {
+                    $$payload5.out += `<div class="grid gap-1"><div class="w-4 h-4 rounded-full bg-primary"></div> <div class="w-4 h-4 rounded-full bg-secondary"></div></div> ${escape_html(themeName)}`;
+                  },
+                  $$slots: { default: true }
+                });
+              }
+              $$payload4.out += `<!--]--></div> `;
+              if (keyboardShortcuts) {
+                $$payload4.out += "<!--[-->";
+                $$payload4.out += `<div class="p-2 grid grid-cols-[auto,1fr] gap-2 items-center text-xs sticky bottom-0 bg-surface-100 border-t border-surface-content/10"><span class="font-medium">Toggle scheme:</span> <span>`;
+                Kbd($$payload4, { control: true });
+                $$payload4.out += `<!----> + `;
+                Kbd($$payload4, {
+                  children: ($$payload5) => {
+                    $$payload5.out += `<!---->T`;
+                  },
+                  $$slots: { default: true }
+                });
+                $$payload4.out += `<!----></span> <span class="font-medium">Next theme:</span> <span>`;
+                Kbd($$payload4, { control: true });
+                $$payload4.out += `<!----> + `;
+                Kbd($$payload4, { shift: true });
+                $$payload4.out += `<!----> + `;
+                Kbd($$payload4, {
+                  children: ($$payload5) => {
+                    $$payload5.out += `<!---->T`;
+                  },
+                  $$slots: { default: true }
+                });
+                $$payload4.out += `<!----></span></div>`;
+              } else {
+                $$payload4.out += "<!--[!-->";
+              }
+              $$payload4.out += `<!--]-->`;
+            },
+            $$slots: { default: true }
+          });
+          $$payload3.out += `<!---->`;
+        },
+        $$slots: { default: true }
+      });
+    } else {
+      $$payload2.out += "<!--[!-->";
+      Button($$payload2, {
+        iconOnly: true,
+        children: ($$payload3) => {
+          $$payload3.out += `<div class="grid grid-stack overflow-hidden">`;
+          Icon($$payload3, {
+            data: mdiWhiteBalanceSunny,
+            class: "translate-x-0 dark:-translate-x-full transition-transform duration-300"
+          });
+          $$payload3.out += `<!----> `;
+          Icon($$payload3, {
+            data: mdiWeatherNight,
+            class: "translate-x-full dark:translate-x-0 transition-transform duration-300"
+          });
+          $$payload3.out += `<!----></div> `;
+          Menu($$payload3, {
+            classes: { menu: "p-1" },
+            get open() {
+              return open;
+            },
+            set open($$value) {
+              open = $$value;
+              $$settled = false;
+            },
+            children: ($$payload4) => {
+              MenuItem($$payload4, {
+                icon: mdiWhiteBalanceSunny,
+                selected: store_get($$store_subs ??= {}, "$currentTheme", currentTheme).theme === "light",
+                children: ($$payload5) => {
+                  $$payload5.out += `<!---->Light`;
+                },
+                $$slots: { default: true }
+              });
+              $$payload4.out += `<!----> `;
+              MenuItem($$payload4, {
+                icon: mdiWeatherNight,
+                selected: store_get($$store_subs ??= {}, "$currentTheme", currentTheme).theme === "dark",
+                children: ($$payload5) => {
+                  $$payload5.out += `<!---->Dark`;
+                },
+                $$slots: { default: true }
+              });
+              $$payload4.out += `<!----> `;
+              MenuItem($$payload4, {
+                icon: mdiMonitor,
+                selected: store_get($$store_subs ??= {}, "$currentTheme", currentTheme).theme == null,
+                children: ($$payload5) => {
+                  $$payload5.out += `<!---->System`;
+                },
+                $$slots: { default: true }
+              });
+              $$payload4.out += `<!---->`;
+            },
+            $$slots: { default: true }
+          });
+          $$payload3.out += `<!---->`;
+        },
+        $$slots: { default: true }
+      });
+    }
+    $$payload2.out += `<!--]-->`;
+  }
+  do {
+    $$settled = true;
+    $$inner_payload = copy_payload($$payload);
+    $$render_inner($$inner_payload);
+  } while (!$$settled);
+  assign_payload($$payload, $$inner_payload);
+  if ($$store_subs) unsubscribe_stores($$store_subs);
+  bind_props($$props, { darkThemes, lightThemes, keyboardShortcuts });
+  pop();
+}
+function _layout($$payload, $$props) {
+  push();
+  settings({
+    themes: {
+      light: ["light", "winter"],
+      dark: ["dark", "black"]
+    }
+  });
+  let { children } = $$props;
+  let routes = [];
+  $$payload.out += `<main class="app">`;
+  ThemeInit($$payload);
+  $$payload.out += `<!----> <nav class="bg-orange-100 h-15 svelte-1ruyfmk">`;
+  NavBrand($$payload, {
+    href: "/",
+    children: ($$payload2) => {
+      $$payload2.out += `<span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white">SvelteKit Projects</span>`;
+    },
+    $$slots: { default: true }
+  });
+  $$payload.out += `<!----> `;
+  ThemeSelect($$payload, {});
+  $$payload.out += `<!----> `;
+  Button$1($$payload, {
+    class: "border-red-100",
+    children: ($$payload2) => {
+      ChevronDownOutline($$payload2, { class: "w-6 h-6 text-black dark:text-white" });
+    },
+    $$slots: { default: true }
+  });
+  $$payload.out += `<!----> `;
+  Dropdown($$payload, {
+    children: ($$payload2) => {
+      const each_array = ensure_array_like(routes);
+      $$payload2.out += `<!--[-->`;
+      for (let $$index = 0, $$length = each_array.length; $$index < $$length; $$index++) {
+        let route = each_array[$$index];
+        DropdownItem($$payload2, {
+          href: `/${stringify(route)}`,
+          class: "text-black dark:text-white",
+          children: ($$payload3) => {
+            $$payload3.out += `<!---->${escape_html(route.charAt(0).toUpperCase() + route.slice(1))}`;
+          },
+          $$slots: { default: true }
+        });
+      }
+      $$payload2.out += `<!--]-->`;
+    },
+    $$slots: { default: true }
+  });
   $$payload.out += `<!----></nav> <main>`;
   children?.($$payload);
-  $$payload.out += `<!----></main></div>`;
-  if ($$store_subs) unsubscribe_stores($$store_subs);
+  $$payload.out += `<!----></main></main>`;
   pop();
 }
 export {

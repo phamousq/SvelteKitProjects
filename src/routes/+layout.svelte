@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Button, Dropdown, DropdownItem, DropdownDivider, Navbar, NavBrand, NavHamburger, NavUl, NavLi } from 'flowbite-svelte';
-	import { ChevronDownOutline } from 'flowbite-svelte-icons';
+	import { Button, MenuButton, NavItem, Dialog, Drawer, Menu, MenuItem, TextField, Toggle } from 'svelte-ux';
 	import '../app.css';
 	import { settings, ThemeInit, ThemeSelect } from 'svelte-ux';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 
 	settings({
 		themes: {
@@ -40,21 +41,25 @@
 
 <main class="app">
 	<ThemeInit />
-	<nav style="background-color: orange;">
-		<NavBrand href="/">
+	<nav class="bg-orange-300 grid grid-cols-3 gap-3 items-center justify-items-start">
+		<NavItem currentUrl={$page.url} path="/">
 		  <span class="self-center whitespace-nowrap text-xl font-semibold dark:text-white">SvelteKit Projects</span>
-		</NavBrand>
-		<div class="grid grid-cols-[auto,1fr] gap-3 items-center justify-items-start">
-			<ThemeSelect />
-		</div>
-		<Button><ChevronDownOutline class="w-6 h-6 text-white dark:text-white" /></Button>
-		<Dropdown>
-			{#each routes as route}
-				<DropdownItem href="/{route}" class="text-white dark:text-white">
-					{route.charAt(0).toUpperCase() + route.slice(1)}
-				</DropdownItem>
-			{/each}
-		</Dropdown>
+		</NavItem>
+		<Toggle let:on={open} let:toggle let:toggleOff>
+			<Button on:click={toggle}>
+				Nav
+			  <Menu {open} matchWidth on:close={toggleOff}>
+				<MenuItem onclick={() => goto('/')}>
+					Home
+				</MenuItem>
+				{#each routes as route}
+					<MenuItem onclick={() => goto(route)}>
+						{route.charAt(0).toUpperCase() + route.slice(1)}
+					</MenuItem>
+				{/each}
+			  </Menu>
+			</Button>
+		  </Toggle>
 	  </nav>
 
 	<main>

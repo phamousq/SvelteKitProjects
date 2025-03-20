@@ -1,4 +1,4 @@
-import { ac as ensure_array_like, a2 as escape_html, a6 as attr, T as pop, Q as push, ad as once } from "../../../chunks/index.js";
+import { ac as ensure_array_like, a7 as escape_html, a4 as attr, T as pop, Q as push, af as once } from "../../../chunks/index.js";
 function _page($$payload, $$props) {
   push();
   class Counter {

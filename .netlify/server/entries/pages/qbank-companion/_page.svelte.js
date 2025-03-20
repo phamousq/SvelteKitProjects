@@ -1,18 +1,25 @@
-import { ab as noop, ai as current_component, V as sanitize_props, W as rest_props, a1 as getContext, X as fallback, $ as spread_attributes, a0 as clsx, _ as slot, Y as element, Z as bind_props, T as pop, Q as push, a2 as escape_html, a6 as attr, af as stringify, a8 as store_get, a9 as unsubscribe_stores, aj as store_set, S as setContext, ae as add_styles, a7 as sanitize_slots, aa as invalid_default_snippet, a5 as spread_props, ac as ensure_array_like, a3 as copy_payload, a4 as assign_payload } from "../../../chunks/index.js";
-import { twMerge } from "tailwind-merge";
-import { l as linear$1, c as cubicOut, a as cubicInOut, b as cubicIn, d as sineOut } from "../../../chunks/index4.js";
-import { w as writable, d as derived } from "../../../chunks/index3.js";
-import "clsx";
-import { L as LayerCake } from "../../../chunks/matchMedia.js";
-import { scaleOrdinal, scaleLinear, scaleBand, scaleTime } from "d3-scale";
-import { curveLinearClosed, lineRadial, line, pointRadial, areaRadial, area, curveBumpX, curveBumpY, link, stack, stackOffsetExpand, stackOffsetDiverging, stackOffsetNone, arc, pie } from "d3-shape";
-import { extent, max, min, bisector, range, quantile, sum } from "d3-array";
-import { unique, uniqueId, Logger, localPoint, sortFunc, isLiteralObject, format, greatestAbs, notNull, formatDate, PeriodType } from "@layerstack/utils";
+import { ae as noop, aj as current_component, Q as push, X as fallback, a6 as getContext, ak as store_set, aa as store_get, Z as slot, ab as unsubscribe_stores, a0 as bind_props, T as pop, S as setContext, V as sanitize_props, ag as add_styles, a4 as attr, $ as clsx, ad as stringify, a7 as escape_html, a5 as sanitize_slots, W as rest_props, _ as spread_attributes, a8 as invalid_default_snippet, a3 as spread_props, ac as ensure_array_like, a1 as copy_payload, a2 as assign_payload } from "../../../chunks/index.js";
+import { f as fade, B as Button } from "../../../chunks/Button.js";
 import { cls } from "@layerstack/tailwind";
+import { unique, uniqueId, Logger, localPoint, sortFunc, isLiteralObject, format, greatestAbs, notNull, formatDate, PeriodType } from "@layerstack/utils";
+import "@layerstack/utils/format";
+import "@layerstack/utils/locale";
+import "../../../chunks/TextField.svelte_svelte_type_style_lang.js";
 import "@layerstack/utils/env";
 import { objectId } from "@layerstack/utils/object";
 import "@layerstack/utils/serialize";
 import "@layerstack/utils/rollup";
+import "@layerstack/utils/date";
+import "@layerstack/utils/dateRange";
+import "@layerstack/utils/number";
+import "@layerstack/utils/routing";
+import "@layerstack/utils/array";
+import { L as LayerCake } from "../../../chunks/ScaledSvg.svelte_svelte_type_style_lang.js";
+import { scaleOrdinal, scaleLinear, scaleBand, scaleTime } from "d3-scale";
+import { curveLinearClosed, lineRadial, line, pointRadial, areaRadial, area, curveBumpX, curveBumpY, link, stack, stackOffsetExpand, stackOffsetDiverging, stackOffsetNone, arc, pie } from "d3-shape";
+import { extent, max, min, bisector, range, quantile, sum } from "d3-array";
+import "clsx";
+import { w as writable, d as derived } from "../../../chunks/index3.js";
 import { interpolatePath } from "d3-interpolate-path";
 import { get, memoize, merge } from "lodash-es";
 import { quadtree } from "d3-quadtree";
@@ -59,192 +66,14 @@ function onDestroy(fn) {
 }
 async function tick() {
 }
-const linear = (x) => x;
-function fade(node, { delay = 0, duration = 400, easing = linear } = {}) {
-  const o = +getComputedStyle(node).opacity;
-  return {
-    delay,
-    duration,
-    easing,
-    css: (t) => `opacity: ${t * o}`
-  };
+function linear(t) {
+  return t;
 }
-function Button($$payload, $$props) {
-  const $$sanitized_props = sanitize_props($$props);
-  const $$restProps = rest_props($$sanitized_props, [
-    "pill",
-    "outline",
-    "size",
-    "href",
-    "type",
-    "color",
-    "shadow",
-    "tag",
-    "checked",
-    "disabled"
-  ]);
-  push();
-  const group = getContext("group");
-  let pill = fallback($$props["pill"], false);
-  let outline = fallback($$props["outline"], false);
-  let size = fallback($$props["size"], group ? "sm" : "md");
-  let href = fallback($$props["href"], () => void 0, true);
-  let type = fallback($$props["type"], "button");
-  let color = fallback($$props["color"], group ? outline ? "dark" : "alternative" : "primary");
-  let shadow = fallback($$props["shadow"], false);
-  let tag = fallback($$props["tag"], "button");
-  let checked = fallback($$props["checked"], () => void 0, true);
-  let disabled = fallback($$props["disabled"], false);
-  const colorClasses = {
-    alternative: "text-gray-900 bg-white border border-gray-200 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-400 hover:text-primary-700 focus-within:text-primary-700 dark:focus-within:text-white dark:hover:text-white dark:hover:bg-gray-700",
-    blue: "text-white bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700",
-    dark: "text-white bg-gray-800 hover:bg-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700",
-    green: "text-white bg-green-700 hover:bg-green-800 dark:bg-green-600 dark:hover:bg-green-700",
-    light: "text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600",
-    primary: "text-white bg-primary-700 hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700",
-    purple: "text-white bg-purple-700 hover:bg-purple-800 dark:bg-purple-600 dark:hover:bg-purple-700",
-    red: "text-white bg-red-700 hover:bg-red-800 dark:bg-red-600 dark:hover:bg-red-700",
-    yellow: "text-white bg-yellow-400 hover:bg-yellow-500 ",
-    none: ""
-  };
-  const colorCheckedClasses = {
-    alternative: "text-primary-700 border dark:text-primary-500 bg-gray-100 dark:bg-gray-700 border-gray-300 shadow-gray-300 dark:shadow-gray-800 shadow-inner",
-    blue: "text-blue-900 bg-blue-400 dark:bg-blue-500 shadow-blue-700 dark:shadow-blue-800 shadow-inner",
-    dark: "text-white bg-gray-500 dark:bg-gray-600 shadow-gray-800 dark:shadow-gray-900 shadow-inner",
-    green: "text-green-900 bg-green-400 dark:bg-green-500 shadow-green-700 dark:shadow-green-800 shadow-inner",
-    light: "text-gray-900 bg-gray-100 border border-gray-300 dark:bg-gray-500 dark:text-gray-900 dark:border-gray-700 shadow-gray-300 dark:shadow-gray-700 shadow-inner",
-    primary: "text-primary-900 bg-primary-400 dark:bg-primary-500 shadow-primary-700 dark:shadow-primary-800 shadow-inner",
-    purple: "text-purple-900 bg-purple-400 dark:bg-purple-500 shadow-purple-700 dark:shadow-purple-800 shadow-inner",
-    red: "text-red-900 bg-red-400 dark:bg-red-500 shadow-red-700 dark:shadow-red-800 shadow-inner",
-    yellow: "text-yellow-900 bg-yellow-300 dark:bg-yellow-400 shadow-yellow-500 dark:shadow-yellow-700 shadow-inner",
-    none: ""
-  };
-  const coloredFocusClasses = {
-    alternative: "focus-within:ring-gray-200 dark:focus-within:ring-gray-700",
-    blue: "focus-within:ring-blue-300 dark:focus-within:ring-blue-800",
-    dark: "focus-within:ring-gray-300 dark:focus-within:ring-gray-700",
-    green: "focus-within:ring-green-300 dark:focus-within:ring-green-800",
-    light: "focus-within:ring-gray-200 dark:focus-within:ring-gray-700",
-    primary: "focus-within:ring-primary-300 dark:focus-within:ring-primary-800",
-    purple: "focus-within:ring-purple-300 dark:focus-within:ring-purple-900",
-    red: "focus-within:ring-red-300 dark:focus-within:ring-red-900",
-    yellow: "focus-within:ring-yellow-300 dark:focus-within:ring-yellow-900",
-    none: ""
-  };
-  const coloredShadowClasses = {
-    alternative: "shadow-gray-500/50 dark:shadow-gray-800/80",
-    blue: "shadow-blue-500/50 dark:shadow-blue-800/80",
-    dark: "shadow-gray-500/50 dark:shadow-gray-800/80",
-    green: "shadow-green-500/50 dark:shadow-green-800/80",
-    light: "shadow-gray-500/50 dark:shadow-gray-800/80",
-    primary: "shadow-primary-500/50 dark:shadow-primary-800/80",
-    purple: "shadow-purple-500/50 dark:shadow-purple-800/80",
-    red: "shadow-red-500/50 dark:shadow-red-800/80 ",
-    yellow: "shadow-yellow-500/50 dark:shadow-yellow-800/80 ",
-    none: ""
-  };
-  const outlineClasses = {
-    alternative: "text-gray-900 dark:text-gray-400 hover:text-white border border-gray-800 hover:bg-gray-900 focus-within:bg-gray-900 focus-within:text-white focus-within:ring-gray-300 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-600 dark:focus-within:ring-gray-800",
-    blue: "text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-600",
-    dark: "text-gray-900 hover:text-white border border-gray-800 hover:bg-gray-900 focus-within:bg-gray-900 focus-within:text-white dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-600",
-    green: "text-green-700 hover:text-white border border-green-700 hover:bg-green-800 dark:border-green-500 dark:text-green-500 dark:hover:text-white dark:hover:bg-green-600",
-    light: "text-gray-500 hover:text-gray-900 bg-white border border-gray-200 dark:border-gray-600 dark:hover:text-white dark:text-gray-400 hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600",
-    primary: "text-primary-700 hover:text-white border border-primary-700 hover:bg-primary-700 dark:border-primary-500 dark:text-primary-500 dark:hover:text-white dark:hover:bg-primary-600",
-    purple: "text-purple-700 hover:text-white border border-purple-700 hover:bg-purple-800 dark:border-purple-400 dark:text-purple-400 dark:hover:text-white dark:hover:bg-purple-500",
-    red: "text-red-700 hover:text-white border border-red-700 hover:bg-red-800 dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600",
-    yellow: "text-yellow-400 hover:text-white border border-yellow-400 hover:bg-yellow-500 dark:border-yellow-300 dark:text-yellow-300 dark:hover:text-white dark:hover:bg-yellow-400",
-    none: ""
-  };
-  const sizeClasses = {
-    xs: "px-3 py-2 text-xs",
-    sm: "px-4 py-2 text-sm",
-    md: "px-5 py-2.5 text-sm",
-    lg: "px-5 py-3 text-base",
-    xl: "px-6 py-3.5 text-base"
-  };
-  const hasBorder = () => outline || color === "alternative" || color === "light";
-  let buttonClass;
-  buttonClass = twMerge("text-center font-medium", group ? "focus-within:ring-2" : "focus-within:ring-4", group && "focus-within:z-10", group || "focus-within:outline-hidden", "inline-flex items-center justify-center " + sizeClasses[size], outline && checked && "border dark:border-gray-900", outline && checked && colorCheckedClasses[color], outline && !checked && outlineClasses[color], !outline && checked && colorCheckedClasses[color], !outline && !checked && colorClasses[color], color === "alternative" && (group && !checked ? "dark:bg-gray-700 dark:text-white dark:border-gray-700 dark:hover:border-gray-600 dark:hover:bg-gray-600" : "dark:bg-transparent dark:border-gray-600 dark:hover:border-gray-600"), outline && color === "dark" && (group ? checked ? "bg-gray-900 border-gray-800 dark:border-white dark:bg-gray-600" : "dark:text-white border-gray-800 dark:border-white" : "dark:text-gray-400 dark:border-gray-700"), coloredFocusClasses[color], hasBorder() && group && "not-first:-ms-px", group ? pill && "first:rounded-s-full last:rounded-e-full" || "first:rounded-s-lg last:rounded-e-lg" : pill && "rounded-full" || "rounded-lg", shadow && "shadow-lg", shadow && coloredShadowClasses[color], disabled && "cursor-not-allowed opacity-50", $$sanitized_props.class);
-  if (href && !disabled) {
-    $$payload.out += "<!--[-->";
-    $$payload.out += `<a${spread_attributes(
-      {
-        href,
-        ...$$restProps,
-        class: clsx(buttonClass),
-        role: "button"
-      },
-      null
-    )}><!---->`;
-    slot($$payload, $$props, "default", {}, null);
-    $$payload.out += `<!----></a>`;
-  } else {
-    $$payload.out += "<!--[!-->";
-    if (tag === "label") {
-      $$payload.out += "<!--[-->";
-      $$payload.out += `<label${spread_attributes(
-        {
-          ...$$restProps,
-          class: clsx(buttonClass)
-        },
-        null
-      )}><!---->`;
-      slot($$payload, $$props, "default", {}, null);
-      $$payload.out += `<!----></label>`;
-    } else {
-      $$payload.out += "<!--[!-->";
-      if (tag === "button") {
-        $$payload.out += "<!--[-->";
-        $$payload.out += `<button${spread_attributes(
-          {
-            type,
-            ...$$restProps,
-            disabled,
-            class: clsx(buttonClass)
-          },
-          null
-        )}><!---->`;
-        slot($$payload, $$props, "default", {}, null);
-        $$payload.out += `<!----></button>`;
-      } else {
-        $$payload.out += "<!--[!-->";
-        element(
-          $$payload,
-          tag,
-          () => {
-            $$payload.out += `${spread_attributes(
-              {
-                ...$$restProps,
-                class: clsx(buttonClass)
-              },
-              null
-            )}`;
-          },
-          () => {
-            $$payload.out += `<!---->`;
-            slot($$payload, $$props, "default", {}, null);
-            $$payload.out += `<!---->`;
-          }
-        );
-      }
-      $$payload.out += `<!--]-->`;
-    }
-    $$payload.out += `<!--]-->`;
-  }
-  $$payload.out += `<!--]-->`;
-  bind_props($$props, {
-    pill,
-    outline,
-    size,
-    href,
-    type,
-    color,
-    shadow,
-    tag,
-    checked,
-    disabled
-  });
-  pop();
+function cubicInOut(t) {
+  return t < 0.5 ? 4 * t * t * t : 0.5 * Math.pow(2 * t - 2, 3) + 1;
+}
+function cubicIn(t) {
+  return t * t * t;
 }
 function is_date(obj) {
   return Object.prototype.toString.call(obj) === "[object Date]";
@@ -428,7 +257,7 @@ function tweened(value, defaults = {}) {
     let {
       delay = 0,
       duration = 400,
-      easing = linear$1,
+      easing = linear,
       interpolate: interpolate2 = get_interpolator
     } = { ...defaults, ...opts };
     if (duration === 0) {
@@ -482,92 +311,6 @@ function tweened(value, defaults = {}) {
     ), opts),
     subscribe: store.subscribe
   };
-}
-function Progressbar($$payload, $$props) {
-  const $$sanitized_props = sanitize_props($$props);
-  const $$restProps = rest_props($$sanitized_props, [
-    "progress",
-    "precision",
-    "tweenDuration",
-    "animate",
-    "size",
-    "labelInside",
-    "labelOutside",
-    "easing",
-    "color",
-    "labelInsideClass",
-    "divClass",
-    "progressClass",
-    "classLabelOutside"
-  ]);
-  push();
-  var $$store_subs;
-  let progress = fallback($$props["progress"], "45");
-  let precision = fallback($$props["precision"], 0);
-  let tweenDuration = fallback($$props["tweenDuration"], 400);
-  let animate = fallback($$props["animate"], false);
-  let size = fallback($$props["size"], "h-2.5");
-  let labelInside = fallback($$props["labelInside"], false);
-  let labelOutside = fallback($$props["labelOutside"], "");
-  let easing = fallback($$props["easing"], cubicOut);
-  let color = fallback($$props["color"], "primary");
-  let labelInsideClass = fallback($$props["labelInsideClass"], "text-primary-100 text-xs font-medium text-center p-0.5 leading-none rounded-full");
-  let divClass = fallback($$props["divClass"], "w-full bg-gray-200 rounded-full dark:bg-gray-700");
-  let progressClass = fallback($$props["progressClass"], "");
-  let classLabelOutside = fallback($$props["classLabelOutside"], "");
-  const _progress = tweened(0, { duration: animate ? tweenDuration : 0, easing });
-  const barColors = {
-    primary: "bg-primary-600",
-    blue: "bg-blue-600",
-    gray: "bg-gray-600 dark:bg-gray-300",
-    red: "bg-red-600 dark:bg-red-500",
-    green: "bg-green-600 dark:bg-green-500",
-    yellow: "bg-yellow-400",
-    purple: "bg-purple-600 dark:bg-purple-500",
-    indigo: "bg-indigo-600 dark:bg-indigo-500"
-  };
-  _progress.set(Number(progress));
-  if (labelOutside) {
-    $$payload.out += "<!--[-->";
-    $$payload.out += `<div${spread_attributes(
-      {
-        ...$$restProps,
-        class: clsx(twMerge("flex justify-between mb-1", classLabelOutside))
-      },
-      null
-    )}><span class="text-base font-medium text-blue-700 dark:text-white">${escape_html(labelOutside)}</span> <span class="text-sm font-medium text-blue-700 dark:text-white">${escape_html(progress)}%</span></div>`;
-  } else {
-    $$payload.out += "<!--[!-->";
-  }
-  $$payload.out += `<!--]--> <div${attr("class", clsx(twMerge(divClass, size, $$sanitized_props.class)))}>`;
-  if (labelInside) {
-    $$payload.out += "<!--[-->";
-    $$payload.out += `<div${attr("class", clsx(twMerge(barColors[color], labelInsideClass)))}${attr("style", `width: ${stringify(store_get($$store_subs ??= {}, "$_progress", _progress))}%`)}>${escape_html(store_get($$store_subs ??= {}, "$_progress", _progress).toFixed(precision))}%</div>`;
-  } else {
-    $$payload.out += "<!--[!-->";
-    $$payload.out += `<div${attr("class", clsx(twMerge(barColors[color], size, "rounded-full", progressClass)))}${attr("style", `width: ${stringify(store_get($$store_subs ??= {}, "$_progress", _progress))}%`)}></div>`;
-  }
-  $$payload.out += `<!--]--></div>`;
-  if ($$store_subs) unsubscribe_stores($$store_subs);
-  bind_props($$props, {
-    progress,
-    precision,
-    tweenDuration,
-    animate,
-    size,
-    labelInside,
-    labelOutside,
-    easing,
-    color,
-    labelInsideClass,
-    divClass,
-    progressClass,
-    classLabelOutside
-  });
-  pop();
-}
-function raise(el) {
-  if (el.nextSibling) el.parentNode.appendChild(el);
 }
 function uniqueStore(initialValues) {
   const store = writable(new Set(initialValues ?? []));
@@ -679,6 +422,9 @@ function selectionStore(props = {}) {
       all
     };
   });
+}
+function raise(el) {
+  if (el.nextSibling) el.parentNode.appendChild(el);
 }
 function motionStore(value, options) {
   if (options.spring) {
@@ -1259,7 +1005,7 @@ function Svg($$payload, $$props) {
   const $$sanitized_props = sanitize_props($$props);
   push();
   var $$store_subs;
-  let element2 = fallback($$props["element"], void 0);
+  let element = fallback($$props["element"], void 0);
   let innerElement = fallback($$props["innerElement"], void 0);
   let zIndex = fallback($$props["zIndex"], void 0);
   let pointerEvents = fallback($$props["pointerEvents"], void 0);
@@ -1301,18 +1047,18 @@ function Svg($$payload, $$props) {
   if (transform) {
     $$payload.out += "<!--[-->";
     $$payload.out += `<g${attr("transform", transform)}><!---->`;
-    slot($$payload, $$props, "default", { element: element2 }, null);
+    slot($$payload, $$props, "default", { element }, null);
     $$payload.out += `<!----></g>`;
   } else {
     $$payload.out += "<!--[!-->";
     $$payload.out += `<!---->`;
-    slot($$payload, $$props, "default", { element: element2 }, null);
+    slot($$payload, $$props, "default", { element }, null);
     $$payload.out += `<!---->`;
   }
   $$payload.out += `<!--]--></g></svg>`;
   if ($$store_subs) unsubscribe_stores($$store_subs);
   bind_props($$props, {
-    element: element2,
+    element,
     innerElement,
     zIndex,
     pointerEvents,
@@ -1514,7 +1260,7 @@ function Canvas($$payload, $$props) {
     containerHeight,
     padding
   } = chartContext();
-  let element2 = fallback($$props["element"], void 0);
+  let element = fallback($$props["element"], void 0);
   let context = fallback($$props["context"], void 0);
   let willReadFrequently = fallback($$props["willReadFrequently"], false);
   let zIndex = fallback($$props["zIndex"], void 0);
@@ -1599,11 +1345,11 @@ function Canvas($$payload, $$props) {
     "border border-danger",
     !debug && "opacity-0"
   )))}></canvas> <!---->`;
-  slot($$payload, $$props, "default", { element: element2, context }, null);
+  slot($$payload, $$props, "default", { element, context }, null);
   $$payload.out += `<!---->`;
   if ($$store_subs) unsubscribe_stores($$store_subs);
   bind_props($$props, {
-    element: element2,
+    element,
     context,
     willReadFrequently,
     zIndex,
@@ -1648,7 +1394,7 @@ function Rect($$payload, $$props) {
   push();
   var $$store_subs;
   let fillKey, strokeKey;
-  let element2 = fallback($$props["element"], void 0);
+  let element = fallback($$props["element"], void 0);
   let x = fallback($$props["x"], 0);
   let initialX = fallback($$props["initialX"], x);
   let y = fallback($$props["y"], 0);
@@ -1751,7 +1497,7 @@ function Rect($$payload, $$props) {
   $$payload.out += `<!--]-->`;
   if ($$store_subs) unsubscribe_stores($$store_subs);
   bind_props($$props, {
-    element: element2,
+    element,
     x,
     initialX,
     y,
@@ -3425,7 +3171,7 @@ function Chart($$payload, $$props) {
             containerWidth,
             height,
             width,
-            element: element2,
+            element,
             x: x2,
             xScale,
             xGet,
@@ -3553,7 +3299,7 @@ function Chart($$payload, $$props) {
                                                         containerWidth,
                                                         height,
                                                         width,
-                                                        element: element2,
+                                                        element,
                                                         projection,
                                                         transform: _transform,
                                                         tooltip: tooltip2,
@@ -7837,10 +7583,6 @@ function _page($$payload, $$props) {
       currentDate = newDate;
     }
   }
-  function goToToday() {
-    currentDate = /* @__PURE__ */ new Date();
-    currentDate.setHours(0, 0, 0, 0);
-  }
   function formatDate2(date) {
     return date.toLocaleDateString(void 0, {
       weekday: "short",
@@ -8031,20 +7773,8 @@ ${rows}`;
     });
     return summary;
   };
-  const each_array = ensure_array_like(filteredHistory);
-  $$payload.out += `<main><div id="SourceInput" class="input-container svelte-1gonf4x" style="padding-top: 10px"><label for="source-input">Source:</label> <input id="source-input" type="text"${attr("value", source)} placeholder="Enter source..." class="source-input svelte-1gonf4x"></div> <div class="wrapper svelte-1gonf4x" id="QuestionContainer"><div><h1 style="font-size: 32px; font-weight: bold;">Question: ${escape_html(dailyQuestionCount)}</h1></div></div> <div class="input-container svelte-1gonf4x"><label for="source-input">Notes:</label> <input type="text"${attr("value", currentNotes)} placeholder="Enter notes..." class="source-input svelte-1gonf4x" id="notes-input"></div> <div id="Scoreboard" class="scoreboard svelte-1gonf4x"><button class="counter-box correct svelte-1gonf4x" style="flex-grow: 10"><h2>Correct (Enter)</h2> <p>${escape_html(visibleCorrectCount)}</p></button> <button class="counter-box incorrect svelte-1gonf4x" style="flex-grow: 10"><h2>Incorrect (Shift+Enter)</h2> <p>${escape_html(visibleIncorrectCount)}</p></button> <button class="counter-box undo svelte-1gonf4x" style="flex-grow: 1"><h2>Undo (Cmd+z)</h2></button></div> <div style="display: flex; padding-left: 10px; padding-right: 10px">`;
-  Progressbar($$payload, {
-    progress: visiblePercentCorrect,
-    animate: true,
-    precision: 0,
-    labelInside: true,
-    tweenDuration: 500,
-    easing: sineOut,
-    size: "h-6",
-    labelInsideClass: "bg-green-600 text-green-100 text-base font-medium text-center p-1 leading-none rounded-full",
-    class: "mb-8"
-  });
-  $$payload.out += `<!----></div> <div class="date-navigation svelte-1gonf4x">`;
+  const each_array = ensure_array_like(filteredHistory.reverse());
+  $$payload.out += `<div><div id="SourceInput" class="input-container svelte-1a9efik" style="padding-top: 10px"><label for="source-input">Source:</label> <input id="source-input" type="text"${attr("value", source)} placeholder="Enter source..." class="source-input svelte-1a9efik"></div> <div class="wrapper svelte-1a9efik" id="QuestionContainer"><div><h1 style="font-size: 32px; font-weight: bold;">Question: ${escape_html(dailyQuestionCount)}</h1></div></div> <div class="input-container svelte-1a9efik"><label for="source-input">Notes:</label> <input type="text"${attr("value", currentNotes)} placeholder="Enter notes..." class="source-input svelte-1a9efik" id="notes-input"></div> <div id="Scoreboard" class="scoreboard svelte-1a9efik"><button class="counter-box correct svelte-1a9efik" style="flex-grow: 10"><h2>Correct (Enter)</h2> <p>${escape_html(visibleCorrectCount)}</p></button> <button class="counter-box incorrect svelte-1a9efik" style="flex-grow: 10"><h2>Incorrect (Shift+Enter)</h2> <p>${escape_html(visibleIncorrectCount)}</p></button> <button class="counter-box undo svelte-1a9efik" style="flex-grow: 1"><h2>Undo (Cmd+z)</h2></button></div>  <div class="date-navigation svelte-1a9efik">`;
   Button($$payload, {
     color: "blue",
     onclick: goToPreviousDay,
@@ -8053,16 +7783,7 @@ ${rows}`;
     },
     $$slots: { default: true }
   });
-  $$payload.out += `<!----> <div class="current-date svelte-1gonf4x">`;
-  Button($$payload, {
-    color: "alternative",
-    onclick: goToToday,
-    children: ($$payload2) => {
-      $$payload2.out += `<!---->${escape_html(formatDate2(currentDate))}`;
-    },
-    $$slots: { default: true }
-  });
-  $$payload.out += `<!----></div> `;
+  $$payload.out += `<!----> <div class="current-date svelte-1a9efik"><button color="alternative">${escape_html(formatDate2(currentDate))}</button></div> `;
   Button($$payload, {
     color: "blue",
     onclick: goToNextDay,
@@ -8075,29 +7796,29 @@ ${rows}`;
   $$payload.out += `<!----></div> `;
   if (filteredHistory.length > 0) {
     $$payload.out += "<!--[-->";
-    $$payload.out += `<div class="filtered-stats svelte-1gonf4x"><p>${escape_html(filteredHistory.length)} questions on ${escape_html(formatDate2(currentDate))}: <span class="correct-stat svelte-1gonf4x">${escape_html(visibleCorrectCount)}</span> / <span class="incorrect-stat svelte-1gonf4x">${escape_html(visibleIncorrectCount)}</span> (${escape_html(visiblePercentCorrect)}%)</p></div>`;
+    $$payload.out += `<div class="filtered-stats svelte-1a9efik"><p>${escape_html(filteredHistory.length)} questions on ${escape_html(formatDate2(currentDate))}: <span class="correct-stat svelte-1a9efik">${escape_html(visibleCorrectCount)}</span> / <span class="incorrect-stat svelte-1a9efik">${escape_html(visibleIncorrectCount)}</span> (${escape_html(visiblePercentCorrect)}%)</p></div>`;
   } else {
     $$payload.out += "<!--[!-->";
-    $$payload.out += `<div class="filtered-stats empty svelte-1gonf4x"><p>No entries found for ${escape_html(formatDate2(currentDate))}</p></div>`;
+    $$payload.out += `<div class="filtered-stats empty svelte-1a9efik"><p>No entries found for ${escape_html(formatDate2(currentDate))}</p></div>`;
   }
-  $$payload.out += `<!--]--> <div class="history-table svelte-1gonf4x"><table class="svelte-1gonf4x"><thead><tr class="svelte-1gonf4x"><th class="svelte-1gonf4x">#</th><th class="svelte-1gonf4x">${escape_html(visiblePercentCorrect)}%</th><th class="svelte-1gonf4x">${escape_html(calculateAverageTimeDifference(filteredHistory))}</th><th class="svelte-1gonf4x">Notes</th><th class="svelte-1gonf4x">Source</th></tr></thead><tbody><!--[-->`;
+  $$payload.out += `<!--]--> <div class="history-table svelte-1a9efik"><table class="svelte-1a9efik"><thead><tr class="svelte-1a9efik"><th class="svelte-1a9efik">#</th><th class="svelte-1a9efik">${escape_html(visiblePercentCorrect)}%</th><th class="svelte-1a9efik">${escape_html(calculateAverageTimeDifference(filteredHistory))}</th><th class="svelte-1a9efik">Notes</th><th class="svelte-1a9efik">Source</th></tr></thead><tbody><!--[-->`;
   for (let index = 0, $$length = each_array.length; index < $$length; index++) {
     let item = each_array[index];
-    $$payload.out += `<tr class="svelte-1gonf4x"><td class="svelte-1gonf4x">${escape_html(index + 1)}</td><td class="svelte-1gonf4x">${escape_html(item.result)}</td><td class="svelte-1gonf4x">${escape_html(item.timeDifference)}</td><td class="svelte-1gonf4x"><textarea class="svelte-1gonf4x">`;
+    $$payload.out += `<tr class="svelte-1a9efik"><td class="svelte-1a9efik">${escape_html(filteredHistory.length - index)}</td><td class="svelte-1a9efik">${escape_html(item.result)}</td><td class="svelte-1a9efik">${escape_html(item.timeDifference)}</td><td class="svelte-1a9efik"><textarea class="svelte-1a9efik">`;
     const $$body = escape_html(item.notes);
     if ($$body) {
       $$payload.out += `${$$body}`;
     }
-    $$payload.out += `</textarea></td><td class="svelte-1gonf4x">${escape_html(item.source || "")}</td></tr>`;
+    $$payload.out += `</textarea></td><td class="svelte-1a9efik">${escape_html(item.source || "")}</td></tr>`;
   }
   $$payload.out += `<!--]-->`;
   if (filteredHistory.length === 0) {
     $$payload.out += "<!--[-->";
-    $$payload.out += `<tr class="svelte-1gonf4x"><td colspan="5" class="empty-message svelte-1gonf4x">No entries for this date.</td></tr>`;
+    $$payload.out += `<tr class="svelte-1a9efik"><td colspan="5" class="empty-message svelte-1a9efik">No entries for this date.</td></tr>`;
   } else {
     $$payload.out += "<!--[!-->";
   }
-  $$payload.out += `<!--]--></tbody></table></div> <div class="wrapper svelte-1gonf4x">`;
+  $$payload.out += `<!--]--></tbody></table></div> <div class="wrapper svelte-1a9efik">`;
   if (history.length > 0) {
     $$payload.out += "<!--[-->";
     Button($$payload, {
@@ -8108,21 +7829,6 @@ ${rows}`;
       },
       $$slots: { default: true }
     });
-    $$payload.out += `<!----> `;
-    if (csvLoaded) {
-      $$payload.out += "<!--[-->";
-      Button($$payload, {
-        color: "light",
-        onclick: exportCSV,
-        children: ($$payload2) => {
-          $$payload2.out += `<!---->Export`;
-        },
-        $$slots: { default: true }
-      });
-    } else {
-      $$payload.out += "<!--[!-->";
-    }
-    $$payload.out += `<!--]-->`;
   } else {
     $$payload.out += "<!--[!-->";
     Button($$payload, {
@@ -8134,7 +7840,16 @@ ${rows}`;
       $$slots: { default: true }
     });
   }
-  $$payload.out += `<!--]--></div> <div class="wrapper svelte-1gonf4x">Total Questions Done: ${escape_html(history.length)}</div> <div class="wrapper svelte-1gonf4x">Percent Correct: ${escape_html(percentCorrect)}%</div> <div class="h-[300px] p-4 border rounded">`;
+  $$payload.out += `<!--]--> `;
+  Button($$payload, {
+    color: "dark",
+    onclick: exportCSV,
+    children: ($$payload2) => {
+      $$payload2.out += `<!---->Export`;
+    },
+    $$slots: { default: true }
+  });
+  $$payload.out += `<!----></div> <div class="wrapper svelte-1a9efik">Total Questions Done: ${escape_html(history.length)}</div> <div class="wrapper svelte-1a9efik">Percent Correct: ${escape_html(percentCorrect)}%</div> <div class="h-[300px] p-4 border rounded">`;
   AreaChart($$payload, {
     data: lastSevenDaysData(),
     x: "date",
@@ -8148,7 +7863,7 @@ ${rows}`;
     key: "correctness",
     value: "value"
   });
-  $$payload.out += `<!----></div> <h1 class="text-3xl font-bold underline">Hello world!</h1></main>`;
+  $$payload.out += `<!----></div></div>`;
   pop();
 }
 export {

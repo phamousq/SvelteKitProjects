@@ -1,14 +1,12 @@
 <script lang="ts">
     import Projects from './projects/+page.svelte';
-    let title = "Welcome to SvelteKit";
 </script>
 
 <div class="home">
-    <h1>{title}</h1>
+    <h1>Welcome to SvelteKit</h1>
     <p>This is a demo application showcasing SvelteKit routing and layouts.</p>
 
     <Projects/>
-
 </div>
 
 <style>
