@@ -9,8 +9,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --color-primary: var(--color-emerald-600);
-  --color-secondary: var(--color-blue-500);
+  --color-primary: #D4EDDA;
+  --color-secondary: #F8D7DA;
   --color-surface-100: #ffffff;
   --color-surface-200: #ffffff;
   --color-surface-300: #5a8bff;

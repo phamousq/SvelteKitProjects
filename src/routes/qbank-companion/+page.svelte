@@ -3,9 +3,10 @@
 	import { sineOut } from 'svelte/easing';
 	import { scaleTime, scaleBand } from 'd3-scale';
 	import { format } from 'date-fns';
-	import { Field, Input, Button, Table } from 'svelte-ux';
+	import { Field, Input, Button, Table, BarStack, TweenedValue } from 'svelte-ux';
 
 	import { Chart, Svg, Axis, Bars, LineChart, BarChart, AreaChart, Spline, Highlight, Tooltip, Canvas, Rule, Text, PieChart } from 'layerchart';
+	import { cls } from '@layerstack/tailwind';
 	let renderContext = 'svg'
 
 	let correctCount = $state(0);
@@ -426,6 +427,8 @@
 			days.push({
 				date,
 				count: +dailyHistory.length,
+				correct: countCorrectInFiltered(dailyHistory),
+				incorrect: countIncorrectInFiltered(dailyHistory),
 				label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 			});
 		}
@@ -468,6 +471,81 @@
 </script>
 
 <div>
+	<div id="ChartContainer" class="grid gap-4 grid-cols-3">
+		<div class="h-[300px] p-4 border rounded col-span-2">
+			<BarChart
+			data={lastSevenDaysData()}
+			x="label"
+			series={[
+				{ key: "correct", color: "#D4EDDA" },
+				{
+				key: "incorrect",
+				color: "#F8D7DA",
+				},
+			]}
+			seriesLayout="stack"
+			props={{
+				xAxis: { format: "none" },
+				yAxis: { format: "metric" },
+				tooltip: {
+				header: { format: "none" },
+				list: { format: "none", item: { format: "none", value: "This is a test" } },
+				},
+			}}
+			legend={false}
+			>
+			<svelte:fragment slot="tooltip" let:x let:y>
+				<Tooltip.Root let:data>
+					<Tooltip.Header>{data.label}</Tooltip.Header>
+					<Tooltip.List>
+						<Tooltip.Item label="Correct" value={data.correct} />
+						<Tooltip.Item label="Incorrect" value={data.incorrect} />
+					</Tooltip.List>
+					<Tooltip.Separator />
+					<Tooltip.List>
+						<Tooltip.Item label="Total" value={data.correct + data.incorrect} />
+						<Tooltip.Item label="% Correct" value={((data.correct / (data.correct + data.incorrect)) * 100).toFixed(0)} />
+
+					</Tooltip.List>
+				</Tooltip.Root>
+			</svelte:fragment>
+
+			</BarChart>
+		</div>
+		<div id="PieChart" class="h-[300px] p-4 border rounded resize overflow-auto">
+			<PieChart
+			  data={dataSummary(history)}
+			  key="correctness"
+			  value="value"
+			  innerRadius={-15}
+			  cornerRadius={10}
+			  padAngle={0.01}
+			>
+			  <svelte:fragment slot="aboveMarks">
+				<Text
+				  value={`${history.length} total`}
+				  textAnchor="middle"
+				  verticalAnchor="middle"
+				  class="text-4xl"
+				  dy={4}
+				/>
+				<Text
+				  value={`${(history.reduce((acc, cur) => cur.result === 'Correct' ? ++acc : acc, 0)/history.length*100).toFixed(0)}%`}
+				  textAnchor="middle"
+				  verticalAnchor="middle"
+				  class="text-sm fill-surface-content/50"
+				  dy={26}
+				/>
+			  </svelte:fragment>
+			</PieChart>
+		  </div>
+	</div>
+
+	<div class="wrapper" id="QuestionContainer">
+		<div>
+			<h1 style="font-size: 32px; font-weight: bold;">Question: {dailyQuestionCount}</h1>
+		</div>
+	</div>
 	<!-- Source input field -->
 	<div id="SourceInput"class="input-container" style="padding-top: 10px">
 		<label for="source-input">Source:</label>
@@ -481,11 +559,6 @@
 	</div>
 
 
-	<div class="wrapper" id="QuestionContainer">
-		<div>
-			<h1 style="font-size: 32px; font-weight: bold;">Question: {dailyQuestionCount}</h1>
-		</div>
-	</div>
 	
 	<!-- NOTES -->
 	<div class="input-container">
@@ -533,7 +606,9 @@
 	<!-- Date navigation controls -->
 	<div class="date-navigation">
 		<Button class="max-w-1/3" onclick={goToPreviousDay}>
-			&lt; Previous Day
+			{#if window.matchMedia('(max-width: 768px)').matches}
+				&lt; Previous Day
+			{/if}
 		</Button>
 		<div class="current-date">
 			<button onclick={goToToday}>
@@ -602,33 +677,7 @@
 		{/if}
 		
 	</div>
-	<div class="h-[300px] p-4 border rounded resize overflow-auto">
-		<PieChart
-		  data={dataSummary(history)}
-		  key="correctness"
-		  value="value"
-		  innerRadius={-20}
-		  cornerRadius={5}
-		  padAngle={0.02}
-		>
-		  <svelte:fragment slot="aboveMarks">
-			<Text
-			  value={`${history.length} total`}
-			  textAnchor="middle"
-			  verticalAnchor="middle"
-			  class="text-4xl"
-			  dy={4}
-			/>
-			<Text
-			  value={`${(history.reduce((acc, cur) => cur.result === 'Correct' ? ++acc : acc, 0)/history.length*100).toFixed(0)}%`}
-			  textAnchor="middle"
-			  verticalAnchor="middle"
-			  class="text-sm fill-surface-content/50"
-			  dy={26}
-			/>
-		  </svelte:fragment>
-		</PieChart>
-	  </div>
+
 	<!-- <div class="wrapper">
 		Total Questions Done: {history.length}
 	</div>
@@ -644,7 +693,7 @@
 		</ul>
 	</div> -->
 	
-	  <div class="h-[300px] p-4 border rounded">
+	  <!-- <div class="h-[300px] p-4 border rounded">
 		<AreaChart
 			data={lastSevenDaysData()}
 			x="date"	
@@ -653,7 +702,8 @@
 			labels={{ offset: 10 }}
 			
 		/>
-	</div>
+	</div> -->
+
 </div>
 
 <style>
@@ -825,5 +875,18 @@
 		font-style: italic;
 		color: #6c757d;
 		padding: 20px;
+	}
+	@media only screen and (max-width: 700px) { 
+  		#PieChart { 
+			display: none; 
+		} 
+		#ChartContainer { 
+			grid-template-columns: none;
+		}
+	}
+	@media only screen and (max-width: 300px) { 
+		#ChartContainer { 
+			display:none
+		}
 	}
 </style>	
