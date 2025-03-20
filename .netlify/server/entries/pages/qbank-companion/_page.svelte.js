@@ -1,11 +1,10 @@
-import { ae as noop, aj as current_component, Q as push, X as fallback, a6 as getContext, ak as store_set, aa as store_get, Z as slot, ab as unsubscribe_stores, a0 as bind_props, T as pop, S as setContext, V as sanitize_props, ag as add_styles, a4 as attr, $ as clsx, ad as stringify, a7 as escape_html, a5 as sanitize_slots, W as rest_props, _ as spread_attributes, a8 as invalid_default_snippet, a3 as spread_props, ac as ensure_array_like, a1 as copy_payload, a2 as assign_payload } from "../../../chunks/index.js";
-import { f as fade, B as Button } from "../../../chunks/Button.js";
+import { aa as noop, af as current_component, a6 as getContext, Q as push, V as fallback, ag as store_set, a7 as store_get, Y as slot, a8 as unsubscribe_stores, Z as bind_props, T as pop, S as setContext, _ as sanitize_props, ac as add_styles, W as attr, X as clsx, a4 as escape_html, ad as stringify, a2 as sanitize_slots, a0 as rest_props, a3 as spread_attributes, $ as invalid_default_snippet, a1 as spread_props, a9 as ensure_array_like, ah as copy_payload, ai as assign_payload } from "../../../chunks/index.js";
+import { B as Button } from "../../../chunks/TextField.svelte_svelte_type_style_lang.js";
 import { cls } from "@layerstack/tailwind";
-import { unique, uniqueId, Logger, localPoint, sortFunc, isLiteralObject, format, greatestAbs, notNull, formatDate, PeriodType } from "@layerstack/utils";
 import "@layerstack/utils/format";
 import "@layerstack/utils/locale";
-import "../../../chunks/TextField.svelte_svelte_type_style_lang.js";
-import "@layerstack/utils/env";
+import { unique, uniqueId, Logger, localPoint, sortFunc, isLiteralObject, format, greatestAbs, notNull, formatDate, PeriodType } from "@layerstack/utils";
+import { browser } from "@layerstack/utils/env";
 import { objectId } from "@layerstack/utils/object";
 import "@layerstack/utils/serialize";
 import "@layerstack/utils/rollup";
@@ -19,7 +18,8 @@ import { scaleOrdinal, scaleLinear, scaleBand, scaleTime } from "d3-scale";
 import { curveLinearClosed, lineRadial, line, pointRadial, areaRadial, area, curveBumpX, curveBumpY, link, stack, stackOffsetExpand, stackOffsetDiverging, stackOffsetNone, arc, pie } from "d3-shape";
 import { extent, max, min, bisector, range, quantile, sum } from "d3-array";
 import "clsx";
-import { w as writable, d as derived } from "../../../chunks/index3.js";
+import { enablePatches, setAutoFreeze } from "immer";
+import { w as writable, r as readable, d as derived } from "../../../chunks/index3.js";
 import { interpolatePath } from "d3-interpolate-path";
 import { get, memoize, merge } from "lodash-es";
 import { quadtree } from "d3-quadtree";
@@ -27,6 +27,7 @@ import { Delaunay } from "d3-delaunay";
 import { geoVoronoi } from "d3-geo-voronoi";
 import { geoPath, geoTransform } from "d3-geo";
 import { path } from "d3-path";
+import { f as fade } from "../../../chunks/index4.js";
 import { quantize, interpolate, interpolateRound } from "d3-interpolate";
 import "@dagrejs/dagre";
 import "d3-tile";
@@ -65,15 +66,6 @@ function onDestroy(fn) {
   (context.d ??= []).push(fn);
 }
 async function tick() {
-}
-function linear(t) {
-  return t;
-}
-function cubicInOut(t) {
-  return t < 0.5 ? 4 * t * t * t : 0.5 * Math.pow(2 * t - 2, 3) + 1;
-}
-function cubicIn(t) {
-  return t * t * t;
 }
 function is_date(obj) {
   return Object.prototype.toString.call(obj) === "[object Date]";
@@ -189,6 +181,15 @@ function spring(value, opts = {}) {
     precision
   };
   return spring2;
+}
+function linear(t) {
+  return t;
+}
+function cubicInOut(t) {
+  return t < 0.5 ? 4 * t * t * t : 0.5 * Math.pow(2 * t - 2, 3) + 1;
+}
+function cubicIn(t) {
+  return t * t * t;
 }
 function get_interpolator(a, b) {
   if (a === b || a !== a) return () => a;
@@ -312,6 +313,43 @@ function tweened(value, defaults = {}) {
     subscribe: store.subscribe
   };
 }
+function raise(el) {
+  if (el.nextSibling) el.parentNode.appendChild(el);
+}
+enablePatches();
+setAutoFreeze(false);
+function matchMedia(queryString) {
+  if (browser) {
+    const query = window.matchMedia(queryString);
+    return readable(query.matches, (set) => {
+      const listener = (e) => set(e.matches);
+      query.addEventListener("change", listener);
+      return () => query.removeEventListener("change", listener);
+    });
+  } else {
+    return writable(true);
+  }
+}
+const matchMediaWidth = (width) => matchMedia(`(min-width: ${width}px)`);
+const breakpoints = {
+  sm: 640,
+  md: 768,
+  lg: 1024,
+  xl: 1280,
+  xxl: 1536
+};
+matchMediaWidth(breakpoints.sm);
+matchMediaWidth(breakpoints.md);
+matchMediaWidth(breakpoints.lg);
+matchMediaWidth(breakpoints.xl);
+matchMediaWidth(breakpoints.xxl);
+matchMedia(`screen`);
+matchMedia(`print`);
+matchMedia(`(prefers-color-scheme: dark)`);
+matchMedia(`(prefers-color-scheme: light)`);
+matchMedia(`(prefers-reduced-motion: reduce)`);
+matchMedia(`(orientation: landscape)`);
+matchMedia(`(orientation: portrait)`);
 function uniqueStore(initialValues) {
   const store = writable(new Set(initialValues ?? []));
   return {
@@ -422,9 +460,6 @@ function selectionStore(props = {}) {
       all
     };
   });
-}
-function raise(el) {
-  if (el.nextSibling) el.parentNode.appendChild(el);
 }
 function motionStore(value, options) {
   if (options.spring) {
@@ -1380,6 +1415,7 @@ function Rect($$payload, $$props) {
     "fillOpacity",
     "stroke",
     "strokeWidth",
+    "opacity",
     "class",
     "onclick",
     "ondblclick",
@@ -1407,6 +1443,7 @@ function Rect($$payload, $$props) {
   let fillOpacity = fallback($$props["fillOpacity"], void 0);
   let stroke = fallback($$props["stroke"], void 0);
   let strokeWidth = fallback($$props["strokeWidth"], void 0);
+  let opacity = fallback($$props["opacity"], void 0);
   let className = fallback($$props["class"], void 0);
   let onclick = fallback($$props["onclick"], void 0);
   let ondblclick = fallback($$props["ondblclick"], void 0);
@@ -1433,7 +1470,13 @@ function Rect($$payload, $$props) {
         height: store_get($$store_subs ??= {}, "$tweened_height", tweened_height)
       },
       styleOverrides ? merge({ styles: { strokeWidth } }, styleOverrides) : {
-        styles: { fill, fillOpacity, stroke, strokeWidth },
+        styles: {
+          fill,
+          fillOpacity,
+          stroke,
+          strokeWidth,
+          opacity
+        },
         classes: className
       }
     );
@@ -1453,7 +1496,7 @@ function Rect($$payload, $$props) {
   fillKey = fill && typeof fill === "object" ? objectId(fill) : fill;
   strokeKey = stroke && typeof stroke === "object" ? objectId(stroke) : stroke;
   if (renderContext === "canvas") {
-    store_get($$store_subs ??= {}, "$tweened_x", tweened_x) && store_get($$store_subs ??= {}, "$tweened_y", tweened_y) && store_get($$store_subs ??= {}, "$tweened_width", tweened_width) && store_get($$store_subs ??= {}, "$tweened_height", tweened_height) && fillKey && strokeKey && strokeWidth && className;
+    store_get($$store_subs ??= {}, "$tweened_x", tweened_x) && store_get($$store_subs ??= {}, "$tweened_y", tweened_y) && store_get($$store_subs ??= {}, "$tweened_width", tweened_width) && store_get($$store_subs ??= {}, "$tweened_height", tweened_height) && fillKey && strokeKey && strokeWidth && opacity && className;
     canvasContext.invalidate();
   }
   if (renderContext === "canvas") {
@@ -1483,6 +1526,7 @@ function Rect($$payload, $$props) {
         "fill-opacity": fillOpacity,
         stroke,
         "stroke-width": strokeWidth,
+        opacity,
         class: clsx(cls(fill == null && "fill-surface-content", className)),
         ...$$restProps
       },
@@ -1510,6 +1554,7 @@ function Rect($$payload, $$props) {
     fillOpacity,
     stroke,
     strokeWidth,
+    opacity,
     class: className,
     onclick,
     ondblclick,
@@ -1652,6 +1697,7 @@ function GeoPath($$payload, $$props) {
     "fill",
     "stroke",
     "strokeWidth",
+    "opacity",
     "tooltip",
     "onclick",
     "onpointerenter",
@@ -1670,6 +1716,7 @@ function GeoPath($$payload, $$props) {
   let fill = fallback($$props["fill"], void 0);
   let stroke = fallback($$props["stroke"], void 0);
   let strokeWidth = fallback($$props["strokeWidth"], void 0);
+  let opacity = fallback($$props["opacity"], void 0);
   let tooltip = fallback($$props["tooltip"], void 0);
   let onclick = fallback($$props["onclick"], void 0);
   let onpointerenter = fallback($$props["onpointerenter"], void 0);
@@ -1687,7 +1734,7 @@ function GeoPath($$payload, $$props) {
     if (geojson) {
       const pathData = geoPath2(geojson);
       renderPathData(ctx, pathData, styleOverrides ? merge({ styles: { strokeWidth } }, styleOverrides) : {
-        styles: { fill, stroke, strokeWidth },
+        styles: { fill, stroke, strokeWidth, opacity },
         classes: className
       });
     }
@@ -1748,6 +1795,7 @@ function GeoPath($$payload, $$props) {
           fill,
           stroke,
           "stroke-width": strokeWidth,
+          opacity,
           class: clsx(cls(fill == null && "fill-transparent", className))
         },
         null,
@@ -1767,6 +1815,7 @@ function GeoPath($$payload, $$props) {
     fill,
     stroke,
     strokeWidth,
+    opacity,
     tooltip,
     onclick,
     onpointerenter,
@@ -2023,6 +2072,7 @@ function Spline($$payload, $$props) {
     "curve",
     "defined",
     "fill",
+    "fillOpacity",
     "stroke",
     "strokeWidth",
     "opacity",
@@ -2062,6 +2112,7 @@ function Spline($$payload, $$props) {
   let curve = fallback($$props["curve"], void 0);
   let defined = fallback($$props["defined"], void 0);
   let fill = fallback($$props["fill"], void 0);
+  let fillOpacity = fallback($$props["fillOpacity"], void 0);
   let stroke = fallback($$props["stroke"], void 0);
   let strokeWidth = fallback($$props["strokeWidth"], void 0);
   let opacity = fallback($$props["opacity"], void 0);
@@ -2110,7 +2161,13 @@ function Spline($$payload, $$props) {
   const canvasContext = getCanvasContext();
   function render2(ctx, styleOverrides) {
     renderPathData(ctx, store_get($$store_subs ??= {}, "$tweened_d", tweened_d), styleOverrides ? merge({ styles: { strokeWidth } }, styleOverrides) : {
-      styles: { fill, stroke, strokeWidth, opacity },
+      styles: {
+        fill,
+        fillOpacity,
+        stroke,
+        strokeWidth,
+        opacity
+      },
       classes: className
     });
   }
@@ -2143,7 +2200,7 @@ function Spline($$payload, $$props) {
   fillKey = fill && typeof fill === "object" ? objectId(fill) : fill;
   strokeKey = stroke && typeof stroke === "object" ? objectId(stroke) : stroke;
   if (renderContext === "canvas") {
-    store_get($$store_subs ??= {}, "$tweened_d", tweened_d) && fillKey && strokeKey && strokeWidth && className;
+    store_get($$store_subs ??= {}, "$tweened_d", tweened_d) && fillKey && fillOpacity && strokeKey && strokeWidth && className;
     canvasContext.invalidate();
   }
   if (renderContext === "canvas") {
@@ -2191,6 +2248,7 @@ function Spline($$payload, $$props) {
           ...$$restProps,
           class: clsx(cls("path-line", !fill && "fill-none", !stroke && "stroke-surface-content", className)),
           fill,
+          "fill-opacity": fillOpacity,
           stroke,
           "stroke-width": strokeWidth,
           opacity,
@@ -2304,6 +2362,7 @@ function Spline($$payload, $$props) {
     curve,
     defined,
     fill,
+    fillOpacity,
     stroke,
     strokeWidth,
     opacity,
@@ -3420,6 +3479,7 @@ function Area($$payload, $$props) {
     "fillOpacity",
     "stroke",
     "strokeWidth",
+    "opacity",
     "class",
     "onclick",
     "onpointerenter",
@@ -3454,16 +3514,23 @@ function Area($$payload, $$props) {
   let fillOpacity = fallback($$props["fillOpacity"], void 0);
   let stroke = fallback($$props["stroke"], void 0);
   let strokeWidth = fallback($$props["strokeWidth"], void 0);
+  let opacity = fallback($$props["opacity"], void 0);
   let className = fallback($$props["class"], void 0);
   let onclick = fallback($$props["onclick"], void 0);
   let onpointerenter = fallback($$props["onpointerenter"], void 0);
   let onpointermove = fallback($$props["onpointermove"], void 0);
   let onpointerleave = fallback($$props["onpointerleave"], void 0);
   function defaultPathData() {
-    const path2 = store_get($$store_subs ??= {}, "$radial", radial) ? areaRadial().angle((d) => store_get($$store_subs ??= {}, "$xScale", xScale)(xAccessor(d))).innerRadius((d) => Math.min(store_get($$store_subs ??= {}, "$yScale", yScale)(0), store_get($$store_subs ??= {}, "$yRange", yRange)[0])).outerRadius((d) => Math.min(store_get($$store_subs ??= {}, "$yScale", yScale)(0), store_get($$store_subs ??= {}, "$yRange", yRange)[0])) : area().x((d) => store_get($$store_subs ??= {}, "$xScale", xScale)(xAccessor(d)) + xOffset).y0((d) => Math.min(store_get($$store_subs ??= {}, "$yScale", yScale)(0), store_get($$store_subs ??= {}, "$yRange", yRange)[0])).y1((d) => Math.min(store_get($$store_subs ??= {}, "$yScale", yScale)(0), store_get($$store_subs ??= {}, "$yRange", yRange)[0]));
-    path2.defined(defined ?? ((d) => xAccessor(d) != null && y1Accessor(d) != null));
-    if (curve) path2.curve(curve);
-    return path2(data ?? store_get($$store_subs ??= {}, "$contextData", contextData));
+    if (!tweenedOptions) {
+      return "";
+    } else if (pathData) {
+      return flattenPathData(pathData, Math.min(store_get($$store_subs ??= {}, "$yScale", yScale)(0), store_get($$store_subs ??= {}, "$yRange", yRange)[0]));
+    } else if (store_get($$store_subs ??= {}, "$config", config).x) {
+      const path2 = store_get($$store_subs ??= {}, "$radial", radial) ? areaRadial().angle((d) => store_get($$store_subs ??= {}, "$xScale", xScale)(xAccessor(d))).innerRadius((d) => Math.min(store_get($$store_subs ??= {}, "$yScale", yScale)(0), store_get($$store_subs ??= {}, "$yRange", yRange)[0])).outerRadius((d) => Math.min(store_get($$store_subs ??= {}, "$yScale", yScale)(0), store_get($$store_subs ??= {}, "$yRange", yRange)[0])) : area().x((d) => store_get($$store_subs ??= {}, "$xScale", xScale)(xAccessor(d)) + xOffset).y0((d) => Math.min(store_get($$store_subs ??= {}, "$yScale", yScale)(0), store_get($$store_subs ??= {}, "$yRange", yRange)[0])).y1((d) => Math.min(store_get($$store_subs ??= {}, "$yScale", yScale)(0), store_get($$store_subs ??= {}, "$yRange", yRange)[0]));
+      path2.defined(defined ?? ((d) => xAccessor(d) != null && y1Accessor(d) != null));
+      if (curve) path2.curve(curve);
+      return path2(data ?? store_get($$store_subs ??= {}, "$contextData", contextData));
+    }
   }
   const tweenedOptions = tweened2 ? {
     interpolate: interpolatePath,
@@ -3473,7 +3540,13 @@ function Area($$payload, $$props) {
   const canvasContext = getCanvasContext();
   function render2(ctx, styleOverrides) {
     renderPathData(ctx, store_get($$store_subs ??= {}, "$tweened_d", tweened_d), styleOverrides ? merge({ styles: { strokeWidth } }, styleOverrides) : {
-      styles: { fill, fillOpacity, stroke, strokeWidth },
+      styles: {
+        fill,
+        fillOpacity,
+        stroke,
+        strokeWidth,
+        opacity
+      },
       classes: className
     });
   }
@@ -3554,6 +3627,7 @@ function Area($$payload, $$props) {
         "fill-opacity": fillOpacity,
         stroke,
         "stroke-width": strokeWidth,
+        opacity,
         ...$$restProps,
         class: clsx(cls("path-area", className))
       },
@@ -3582,6 +3656,7 @@ function Area($$payload, $$props) {
     fillOpacity,
     stroke,
     strokeWidth,
+    opacity,
     class: className,
     onclick,
     onpointerenter,
@@ -3605,6 +3680,7 @@ function Line($$payload, $$props) {
     "fill",
     "stroke",
     "strokeWidth",
+    "opacity",
     "class",
     "onclick",
     "onpointerenter",
@@ -3630,6 +3706,7 @@ function Line($$payload, $$props) {
   let fill = fallback($$props["fill"], void 0);
   let stroke = fallback($$props["stroke"], void 0);
   let strokeWidth = fallback($$props["strokeWidth"], void 0);
+  let opacity = fallback($$props["opacity"], void 0);
   let className = fallback($$props["class"], void 0);
   let onclick = fallback($$props["onclick"], void 0);
   let onpointerenter = fallback($$props["onpointerenter"], void 0);
@@ -3649,7 +3726,7 @@ function Line($$payload, $$props) {
   function render2(ctx, styleOverrides) {
     const pathData = `M ${store_get($$store_subs ??= {}, "$tweened_x1", tweened_x1)},${store_get($$store_subs ??= {}, "$tweened_y1", tweened_y1)} L ${store_get($$store_subs ??= {}, "$tweened_x2", tweened_x2)},${store_get($$store_subs ??= {}, "$tweened_y2", tweened_y2)}`;
     renderPathData(ctx, pathData, styleOverrides ? merge({ styles: { strokeWidth } }, styleOverrides) : {
-      styles: { fill, stroke, strokeWidth },
+      styles: { fill, stroke, strokeWidth, opacity },
       classes: className
     });
   }
@@ -3670,7 +3747,7 @@ function Line($$payload, $$props) {
   fillKey = fill && typeof fill === "object" ? objectId(fill) : fill;
   strokeKey = stroke && typeof stroke === "object" ? objectId(stroke) : stroke;
   if (renderContext === "canvas") {
-    store_get($$store_subs ??= {}, "$tweened_x1", tweened_x1) && store_get($$store_subs ??= {}, "$tweened_y1", tweened_y1) && store_get($$store_subs ??= {}, "$tweened_x2", tweened_x2) && store_get($$store_subs ??= {}, "$tweened_y2", tweened_y2) && fillKey && strokeKey && strokeWidth && className;
+    store_get($$store_subs ??= {}, "$tweened_x1", tweened_x1) && store_get($$store_subs ??= {}, "$tweened_y1", tweened_y1) && store_get($$store_subs ??= {}, "$tweened_x2", tweened_x2) && store_get($$store_subs ??= {}, "$tweened_y2", tweened_y2) && fillKey && strokeKey && strokeWidth && opacity && className;
     canvasContext.invalidate();
   }
   if (renderContext === "canvas") {
@@ -3696,6 +3773,7 @@ function Line($$payload, $$props) {
         fill,
         stroke,
         "stroke-width": strokeWidth,
+        opacity,
         "marker-start": markerStartId ? `url(#${markerStartId})` : void 0,
         "marker-end": markerEndId ? `url(#${markerEndId})` : void 0,
         class: clsx(cls(stroke === void 0 && "stroke-surface-content", className)),
@@ -3749,6 +3827,7 @@ function Line($$payload, $$props) {
     fill,
     stroke,
     strokeWidth,
+    opacity,
     class: className,
     onclick,
     onpointerenter,
@@ -3777,6 +3856,7 @@ function Circle($$payload, $$props) {
     "fillOpacity",
     "stroke",
     "strokeWidth",
+    "opacity",
     "class",
     "onclick",
     "onpointerdown",
@@ -3799,6 +3879,7 @@ function Circle($$payload, $$props) {
   let fillOpacity = fallback($$props["fillOpacity"], void 0);
   let stroke = fallback($$props["stroke"], void 0);
   let strokeWidth = fallback($$props["strokeWidth"], void 0);
+  let opacity = fallback($$props["opacity"], void 0);
   let className = fallback($$props["class"], void 0);
   let onclick = fallback($$props["onclick"], void 0);
   let onpointerdown = fallback($$props["onpointerdown"], void 0);
@@ -3819,7 +3900,13 @@ function Circle($$payload, $$props) {
         r: store_get($$store_subs ??= {}, "$tweened_r", tweened_r)
       },
       styleOverrides ? merge({ styles: { strokeWidth } }, styleOverrides) : {
-        styles: { fill, fillOpacity, stroke, strokeWidth },
+        styles: {
+          fill,
+          fillOpacity,
+          stroke,
+          strokeWidth,
+          opacity
+        },
         classes: className
       }
     );
@@ -3838,7 +3925,7 @@ function Circle($$payload, $$props) {
   fillKey = fill && typeof fill === "object" ? objectId(fill) : fill;
   strokeKey = stroke && typeof stroke === "object" ? objectId(stroke) : stroke;
   if (renderContext === "canvas") {
-    store_get($$store_subs ??= {}, "$tweened_cx", tweened_cx) && store_get($$store_subs ??= {}, "$tweened_cy", tweened_cy) && store_get($$store_subs ??= {}, "$tweened_r", tweened_r) && fillKey && fillOpacity && strokeKey && strokeWidth && className;
+    store_get($$store_subs ??= {}, "$tweened_cx", tweened_cx) && store_get($$store_subs ??= {}, "$tweened_cy", tweened_cy) && store_get($$store_subs ??= {}, "$tweened_r", tweened_r) && fillKey && fillOpacity && strokeKey && strokeWidth && opacity && className;
     canvasContext.invalidate();
   }
   if (renderContext === "canvas") {
@@ -3865,6 +3952,7 @@ function Circle($$payload, $$props) {
         "fill-opacity": fillOpacity,
         stroke,
         "stroke-width": strokeWidth,
+        opacity,
         class: clsx(cls(fill == null && "fill-surface-content", className)),
         ...$$restProps
       },
@@ -3891,6 +3979,7 @@ function Circle($$payload, $$props) {
     fillOpacity,
     stroke,
     strokeWidth,
+    opacity,
     class: className,
     onclick,
     onpointerdown,
@@ -4039,6 +4128,7 @@ function Text($$payload, $$props) {
     "fillOpacity",
     "stroke",
     "strokeWidth",
+    "opacity",
     "class",
     "spring",
     "tweened"
@@ -4064,6 +4154,7 @@ function Text($$payload, $$props) {
   let fillOpacity = fallback($$props["fillOpacity"], void 0);
   let stroke = fallback($$props["stroke"], void 0);
   let strokeWidth = fallback($$props["strokeWidth"], void 0);
+  let opacity = fallback($$props["opacity"], void 0);
   let className = fallback($$props["class"], void 0);
   let wordsByLines = [];
   let wordsWithWidth = [];
@@ -4115,6 +4206,7 @@ function Text($$payload, $$props) {
             fillOpacity,
             stroke,
             strokeWidth,
+            opacity,
             paintOrder: "stroke",
             textAnchor
           },
@@ -4177,7 +4269,7 @@ function Text($$payload, $$props) {
   fillKey = fill && typeof fill === "object" ? objectId(fill) : fill;
   strokeKey = stroke && typeof stroke === "object" ? objectId(stroke) : stroke;
   if (renderContext === "canvas") {
-    value && store_get($$store_subs ??= {}, "$tweened_x", tweened_x) && store_get($$store_subs ??= {}, "$tweened_y", tweened_y) && fillKey && strokeKey && strokeWidth && className;
+    value && store_get($$store_subs ??= {}, "$tweened_x", tweened_x) && store_get($$store_subs ??= {}, "$tweened_y", tweened_y) && fillKey && strokeKey && strokeWidth && opacity && className;
     canvasContext.invalidate();
   }
   if (renderContext === "canvas") {
@@ -4200,6 +4292,7 @@ function Text($$payload, $$props) {
           "fill-opacity": fillOpacity,
           stroke,
           "stroke-width": strokeWidth,
+          opacity,
           class: clsx(cls(fill === void 0 && "fill-surface-content", className))
         },
         null,
@@ -4240,6 +4333,7 @@ function Text($$payload, $$props) {
     fillOpacity,
     stroke,
     strokeWidth,
+    opacity,
     class: className,
     spring: spring2,
     tweened: tweened2
@@ -4784,8 +4878,10 @@ function Bar($$payload, $$props) {
     "x1",
     "y1",
     "fill",
+    "fillOpacity",
     "stroke",
     "strokeWidth",
+    "opacity",
     "radius",
     "rounded",
     "insets",
@@ -4806,8 +4902,10 @@ function Bar($$payload, $$props) {
   let x1 = fallback($$props["x1"], void 0);
   let y1 = fallback($$props["y1"], void 0);
   let fill = fallback($$props["fill"], void 0);
+  let fillOpacity = fallback($$props["fillOpacity"], void 0);
   let stroke = fallback($$props["stroke"], "black");
   let strokeWidth = fallback($$props["strokeWidth"], 0);
+  let opacity = fallback($$props["opacity"], void 0);
   let radius = fallback($$props["radius"], 0);
   let rounded = fallback($$props["rounded"], "all");
   let insets = fallback($$props["insets"], void 0);
@@ -4817,8 +4915,6 @@ function Bar($$payload, $$props) {
   let onpointerleave = fallback($$props["onpointerleave"], void 0);
   let spring2 = fallback($$props["spring"], void 0);
   let tweened2 = fallback($$props["tweened"], void 0);
-  getRenderContext();
-  getCanvasContext();
   if (stroke === null || stroke === void 0) stroke = "black";
   getDimensions = createDimensionGetter(chartContext(), { x, y, x1, y1, insets });
   dimensions = store_get($$store_subs ??= {}, "$getDimensions", getDimensions)(bar) ?? { x: 0, y: 0, width: 0, height: 0 };
@@ -4848,11 +4944,13 @@ function Bar($$payload, $$props) {
     Rect($$payload, spread_props([
       {
         fill,
-        spring: spring2,
-        tweened: tweened2,
+        fillOpacity,
         stroke,
         strokeWidth,
+        opacity,
         rx: _rounded === "none" ? 0 : radius,
+        spring: spring2,
+        tweened: tweened2,
         onclick,
         onpointerenter,
         onpointermove,
@@ -4867,10 +4965,12 @@ function Bar($$payload, $$props) {
       {
         pathData,
         fill,
-        spring: spring2,
-        tweened: tweened2,
+        fillOpacity,
         stroke,
         strokeWidth,
+        opacity,
+        spring: spring2,
+        tweened: tweened2,
         onclick,
         onpointerenter,
         onpointermove,
@@ -4888,8 +4988,10 @@ function Bar($$payload, $$props) {
     x1,
     y1,
     fill,
+    fillOpacity,
     stroke,
     strokeWidth,
+    opacity,
     radius,
     rounded,
     insets,
@@ -5218,7 +5320,7 @@ function Highlight($$payload, $$props) {
             },
             typeof points === "object" ? points : null,
             {
-              class: cls("stroke-white [paint-order:stroke] drop-shadow", !point.fill && (typeof points === "boolean" || !points.fill) && "fill-primary", typeof points === "object" ? points.class : null),
+              class: cls("stroke-white [paint-order:stroke] drop-shadow-sm", !point.fill && (typeof points === "boolean" || !points.fill) && "fill-primary", typeof points === "object" ? points.class : null),
               onpointerdown: onpointclick && ((e) => {
                 e.stopPropagation();
               }),
@@ -5419,6 +5521,7 @@ function Points($$payload, $$props) {
     "fillOpacity",
     "stroke",
     "strokeWidth",
+    "opacity",
     "class"
   ]);
   push();
@@ -5449,6 +5552,7 @@ function Points($$payload, $$props) {
   let fillOpacity = fallback($$props["fillOpacity"], void 0);
   let stroke = fallback($$props["stroke"], void 0);
   let strokeWidth = fallback($$props["strokeWidth"], void 0);
+  let opacity = fallback($$props["opacity"], void 0);
   let className = fallback($$props["class"], void 0);
   function getOffset(value, offset, scale) {
     if (typeof offset === "function") {
@@ -5514,7 +5618,8 @@ function Points($$payload, $$props) {
         target: {
           x: xMax + getOffset(xMax, offsetX, store_get($$store_subs ??= {}, "$xScale", xScale)) - (store_get($$store_subs ??= {}, "$config", config).r ? store_get($$store_subs ??= {}, "$rGet", rGet)(d) : r),
           y: y2
-        }
+        },
+        data: d
       };
     } else if (Array.isArray(yValue)) {
       const x2 = store_get($$store_subs ??= {}, "$xGet", xGet)(d) + getOffset(store_get($$store_subs ??= {}, "$xGet", xGet)(d), offsetX, store_get($$store_subs ??= {}, "$xScale", xScale));
@@ -5527,7 +5632,8 @@ function Points($$payload, $$props) {
         target: {
           x: x2,
           y: yMax + getOffset(yMax, offsetY, store_get($$store_subs ??= {}, "$yScale", yScale))
-        }
+        },
+        data: d
       };
     }
   });
@@ -5543,7 +5649,7 @@ function Points($$payload, $$props) {
         Link($$payload, spread_props([
           {
             data: link2,
-            class: "stroke-surface-content/50"
+            stroke: fill ?? (store_get($$store_subs ??= {}, "$config", config).c ? store_get($$store_subs ??= {}, "$cGet", cGet)(link2.data) : null)
           },
           typeof links === "object" ? links : null
         ]));
@@ -5565,6 +5671,7 @@ function Points($$payload, $$props) {
           fillOpacity,
           stroke,
           strokeWidth,
+          opacity,
           class: className
         },
         $$restProps
@@ -5586,6 +5693,7 @@ function Points($$payload, $$props) {
     fillOpacity,
     stroke,
     strokeWidth,
+    opacity,
     class: className
   });
   pop();
@@ -5843,7 +5951,7 @@ function Legend($$payload, $$props) {
       ...$$restProps,
       class: clsx(cls(
         "inline-block",
-        "z-[1]",
+        "z-1",
         // stack above tooltip context layers (band rects, voronoi, ...)
         placement && [
           "absolute",
@@ -6044,7 +6152,7 @@ function TooltipList($$payload, $$props) {
 function TooltipSeparator($$payload, $$props) {
   const $$sanitized_props = sanitize_props($$props);
   push();
-  $$payload.out += `<div${attr("class", clsx(cls("rounded bg-surface-content/20 my-1 col-span-full h-px", $$sanitized_props.class)))}></div>`;
+  $$payload.out += `<div${attr("class", clsx(cls("rounded-sm bg-surface-content/20 my-1 col-span-full h-px", $$sanitized_props.class)))}></div>`;
   pop();
 }
 function Tooltip($$payload, $$props) {
@@ -6159,7 +6267,9 @@ function Tooltip($$payload, $$props) {
       top: `${stringify(store_get($$store_subs ??= {}, "$yPos", yPos))}px`,
       left: `${stringify(store_get($$store_subs ??= {}, "$xPos", xPos))}px`
     })}${attr("class", clsx(cls("absolute z-50 select-none", !pointerEvents && "pointer-events-none", classes.root)))}><div${attr("class", clsx(cls(
-      variant !== "none" && ["text-sm py-1 px-2 h-full rounded elevation-1"],
+      variant !== "none" && [
+        "text-sm py-1 px-2 h-full rounded-sm elevation-1"
+      ],
       {
         default: [
           "bg-surface-100/90 dark:bg-surface-300/90 backdrop-filter backdrop-blur-[2px] text-surface-content",
@@ -6249,7 +6359,7 @@ function AreaChart($$payload, $$props) {
       {
         key: "default",
         value: y,
-        color: "hsl(var(--color-primary))"
+        color: "var(--color-primary)"
       }
     ],
     true
@@ -6428,6 +6538,7 @@ function AreaChart($$payload, $$props) {
               getAreaProps,
               getLabelsProps,
               getPointsProps,
+              highlightSeriesKey,
               setHighlightSeriesKey
             };
             $$payload3.out += `<!---->`;
@@ -6567,7 +6678,7 @@ function AreaChart($$payload, $$props) {
                               },
                               props.highlight,
                               {
-                                points: {
+                                points: props.highlight?.points == false ? false : {
                                   ...highlightPointsProps,
                                   fill: s.color,
                                   class: cls("transition-opacity", highlightSeriesKey && highlightSeriesKey !== s.key && "opacity-10", highlightPointsProps?.class)
@@ -6759,6 +6870,7 @@ function Arc($$payload, $$props) {
     "fillOpacity",
     "stroke",
     "strokeWidth",
+    "opacity",
     "class",
     "track",
     "onclick",
@@ -6789,6 +6901,7 @@ function Arc($$payload, $$props) {
   let fillOpacity = fallback($$props["fillOpacity"], void 0);
   let stroke = fallback($$props["stroke"], "none");
   let strokeWidth = fallback($$props["strokeWidth"], void 0);
+  let opacity = fallback($$props["opacity"], void 0);
   let className = fallback($$props["class"], void 0);
   let track = fallback($$props["track"], false);
   let onclick = fallback($$props["onclick"], void 0);
@@ -6882,9 +6995,10 @@ function Arc($$payload, $$props) {
         pathData: arc$1(),
         transform: `translate(${stringify(xOffset)}, ${stringify(yOffset)})`,
         fill,
-        "fill-opacity": fillOpacity,
+        fillOpacity,
         stroke,
         "stroke-width": strokeWidth,
+        opacity,
         class: className
       },
       $$restProps,
@@ -6938,6 +7052,7 @@ function Arc($$payload, $$props) {
     fillOpacity,
     stroke,
     strokeWidth,
+    opacity,
     class: className,
     track,
     onclick,
@@ -7070,7 +7185,7 @@ function PieChart($$payload, $$props) {
       {
         key: "default",
         value
-        /*, color: 'hsl(var(--color-primary))'*/
+        /*, color: 'var(--color-primary)'*/
       }
     ],
     true
@@ -7125,12 +7240,12 @@ function PieChart($$payload, $$props) {
         c,
         cDomain: chartData.map(keyAccessor),
         cRange: seriesColors.length ? seriesColors : c !== key ? chartData.map((d) => cAccessor(d)) : [
-          "hsl(var(--color-primary))",
-          "hsl(var(--color-secondary))",
-          "hsl(var(--color-info))",
-          "hsl(var(--color-success))",
-          "hsl(var(--color-warning))",
-          "hsl(var(--color-danger))"
+          "var(--color-primary)",
+          "var(--color-secondary)",
+          "var(--color-info)",
+          "var(--color-success)",
+          "var(--color-warning)",
+          "var(--color-danger)"
         ],
         padding: { bottom: legend === true ? 32 : 0 }
       },
@@ -7174,6 +7289,7 @@ function PieChart($$payload, $$props) {
               tooltip,
               series,
               visibleData,
+              highlightKey,
               setHighlightKey
             };
             $$payload3.out += `<!---->`;
@@ -7222,7 +7338,7 @@ function PieChart($$payload, $$props) {
                                     fill: s.color ?? cScale?.(c2(d)),
                                     track: {
                                       fill: s.color ?? cScale?.(c2(d)),
-                                      "fill-opacity": 0.1
+                                      fillOpacity: 0.1
                                     },
                                     tooltip,
                                     data: d,
@@ -7540,7 +7656,7 @@ function _page($$payload, $$props) {
   let correctCount = 0;
   let incorrectCount = 0;
   let countComplete = correctCount + incorrectCount;
-  let percentCorrect = isNaN(+(correctCount / countComplete * 100).toFixed(1)) ? 100 : (correctCount / countComplete * 100).toFixed(1);
+  +(correctCount / countComplete * 100).toFixed(1);
   let history = [];
   let undoHistory = [];
   let source = "";
@@ -7761,31 +7877,31 @@ ${rows}`;
     }
     return days;
   };
-  let dataSummary = () => {
+  let dataSummary = (obj) => {
     const summary = [];
     summary.push({
       correctness: "Correct",
-      value: countCorrectInFiltered(filteredHistory)
+      value: countCorrectInFiltered(obj)
     });
     summary.push({
       correctness: "Incorrect",
-      value: countIncorrectInFiltered(filteredHistory)
+      value: countIncorrectInFiltered(obj)
     });
     return summary;
   };
   const each_array = ensure_array_like(filteredHistory.reverse());
   $$payload.out += `<div><div id="SourceInput" class="input-container svelte-1a9efik" style="padding-top: 10px"><label for="source-input">Source:</label> <input id="source-input" type="text"${attr("value", source)} placeholder="Enter source..." class="source-input svelte-1a9efik"></div> <div class="wrapper svelte-1a9efik" id="QuestionContainer"><div><h1 style="font-size: 32px; font-weight: bold;">Question: ${escape_html(dailyQuestionCount)}</h1></div></div> <div class="input-container svelte-1a9efik"><label for="source-input">Notes:</label> <input type="text"${attr("value", currentNotes)} placeholder="Enter notes..." class="source-input svelte-1a9efik" id="notes-input"></div> <div id="Scoreboard" class="scoreboard svelte-1a9efik"><button class="counter-box correct svelte-1a9efik" style="flex-grow: 10"><h2>Correct (Enter)</h2> <p>${escape_html(visibleCorrectCount)}</p></button> <button class="counter-box incorrect svelte-1a9efik" style="flex-grow: 10"><h2>Incorrect (Shift+Enter)</h2> <p>${escape_html(visibleIncorrectCount)}</p></button> <button class="counter-box undo svelte-1a9efik" style="flex-grow: 1"><h2>Undo (Cmd+z)</h2></button></div>  <div class="date-navigation svelte-1a9efik">`;
   Button($$payload, {
-    color: "blue",
+    class: "max-w-1/4",
     onclick: goToPreviousDay,
     children: ($$payload2) => {
       $$payload2.out += `<!---->&lt; Previous Day`;
     },
     $$slots: { default: true }
   });
-  $$payload.out += `<!----> <div class="current-date svelte-1a9efik"><button color="alternative">${escape_html(formatDate2(currentDate))}</button></div> `;
+  $$payload.out += `<!----> <div class="current-date svelte-1a9efik"><button>${escape_html(isToday(currentDate) ? "Today" : formatDate2(currentDate))}</button></div> `;
   Button($$payload, {
-    color: "blue",
+    class: "max-w-1/4",
     onclick: goToNextDay,
     disabled: isToday(currentDate),
     children: ($$payload2) => {
@@ -7818,21 +7934,28 @@ ${rows}`;
   } else {
     $$payload.out += "<!--[!-->";
   }
-  $$payload.out += `<!--]--></tbody></table></div> <div class="wrapper svelte-1a9efik">`;
+  $$payload.out += `<!--]--></tbody></table></div> <div class="wrapper pb-4 svelte-1a9efik">`;
   if (history.length > 0) {
     $$payload.out += "<!--[-->";
     Button($$payload, {
-      color: "red",
       onclick: resetCounts,
       children: ($$payload2) => {
         $$payload2.out += `<!---->Reset`;
       },
       $$slots: { default: true }
     });
+    $$payload.out += `<!----> `;
+    Button($$payload, {
+      onclick: exportCSV,
+      children: ($$payload2) => {
+        $$payload2.out += `<!---->Export`;
+      },
+      $$slots: { default: true }
+    });
+    $$payload.out += `<!---->`;
   } else {
     $$payload.out += "<!--[!-->";
     Button($$payload, {
-      color: "purple",
       onclick: importCSV,
       children: ($$payload2) => {
         $$payload2.out += `<!---->Import CSV`;
@@ -7840,28 +7963,44 @@ ${rows}`;
       $$slots: { default: true }
     });
   }
-  $$payload.out += `<!--]--> `;
-  Button($$payload, {
-    color: "dark",
-    onclick: exportCSV,
-    children: ($$payload2) => {
-      $$payload2.out += `<!---->Export`;
-    },
-    $$slots: { default: true }
+  $$payload.out += `<!--]--></div> <div class="h-[300px] p-4 border rounded resize overflow-auto">`;
+  PieChart($$payload, {
+    data: dataSummary(history),
+    key: "correctness",
+    value: "value",
+    innerRadius: -20,
+    cornerRadius: 5,
+    padAngle: 0.02,
+    $$slots: {
+      aboveMarks: ($$payload2) => {
+        {
+          Text($$payload2, {
+            value: `${history.length} total`,
+            textAnchor: "middle",
+            verticalAnchor: "middle",
+            class: "text-4xl",
+            dy: 4
+          });
+          $$payload2.out += `<!----> `;
+          Text($$payload2, {
+            value: `${(history.reduce((acc, cur) => cur.result === "Correct" ? ++acc : acc, 0) / history.length * 100).toFixed(0)}%`,
+            textAnchor: "middle",
+            verticalAnchor: "middle",
+            class: "text-sm fill-surface-content/50",
+            dy: 26
+          });
+          $$payload2.out += `<!---->`;
+        }
+      }
+    }
   });
-  $$payload.out += `<!----></div> <div class="wrapper svelte-1a9efik">Total Questions Done: ${escape_html(history.length)}</div> <div class="wrapper svelte-1a9efik">Percent Correct: ${escape_html(percentCorrect)}%</div> <div class="h-[300px] p-4 border rounded">`;
+  $$payload.out += `<!----></div>  <div class="h-[300px] p-4 border rounded">`;
   AreaChart($$payload, {
     data: lastSevenDaysData(),
     x: "date",
     y: "count",
     points: true,
     labels: { offset: 10 }
-  });
-  $$payload.out += `<!----></div> <div class="h-[300px] p-4 border rounded resize overflow-auto">`;
-  PieChart($$payload, {
-    data: dataSummary(),
-    key: "correctness",
-    value: "value"
   });
   $$payload.out += `<!----></div></div>`;
   pop();

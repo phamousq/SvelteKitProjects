@@ -8,22 +8,6 @@
       "_internal.js"
     ]
   },
-  "_Button.js": {
-    "file": "chunks/Button.js",
-    "name": "Button",
-    "imports": [
-      "_index.js"
-    ]
-  },
-  "_Button2.js": {
-    "file": "chunks/Button2.js",
-    "name": "Button",
-    "imports": [
-      "_index.js",
-      "_index3.js",
-      "_TextField.svelte_svelte_type_style_lang.js"
-    ]
-  },
   "_ScaledSvg.svelte_svelte_type_style_lang.js": {
     "file": "chunks/ScaledSvg.svelte_svelte_type_style_lang.js",
     "name": "ScaledSvg.svelte_svelte_type_style_lang",
@@ -39,10 +23,20 @@
     "file": "chunks/TextField.svelte_svelte_type_style_lang.js",
     "name": "TextField.svelte_svelte_type_style_lang",
     "imports": [
+      "_index.js",
       "_index3.js"
     ],
     "css": [
-      "_app/immutable/assets/TextField.QEPgfr2E.css"
+      "_app/immutable/assets/TextField.BaSrWq7n.css"
+    ]
+  },
+  "_client.js": {
+    "file": "chunks/client.js",
+    "name": "client",
+    "imports": [
+      "_exports.js",
+      "_index3.js",
+      "_index.js"
     ]
   },
   "_equality.js": {
@@ -69,6 +63,10 @@
       "_equality.js"
     ]
   },
+  "_index4.js": {
+    "file": "chunks/index4.js",
+    "name": "index"
+  },
   "_internal.js": {
     "file": "chunks/internal.js",
     "name": "internal",
@@ -84,8 +82,7 @@
     "isEntry": true,
     "imports": [
       "_index.js",
-      "_exports.js",
-      "_index3.js"
+      "_client.js"
     ]
   },
   "node_modules/@sveltejs/kit/src/runtime/server/index.js": {
@@ -108,13 +105,12 @@
     "isEntry": true,
     "imports": [
       "_index.js",
-      "_Button.js",
-      "_index3.js",
-      "_Button2.js",
-      "_TextField.svelte_svelte_type_style_lang.js"
+      "_TextField.svelte_svelte_type_style_lang.js",
+      "_index4.js",
+      "_client.js"
     ],
     "css": [
-      "_app/immutable/assets/_layout.BdhzLk-s.css"
+      "_app/immutable/assets/_layout.BctZf4dL.css"
     ]
   },
   "src/routes/+page.svelte": {
@@ -123,7 +119,6 @@
     "src": "src/routes/+page.svelte",
     "isEntry": true,
     "imports": [
-      "_index.js",
       "src/routes/projects/+page.svelte"
     ],
     "css": [
@@ -186,7 +181,6 @@
     "imports": [
       "_index.js",
       "_ScaledSvg.svelte_svelte_type_style_lang.js",
-      "_Button2.js",
       "_TextField.svelte_svelte_type_style_lang.js"
     ],
     "css": [
@@ -212,10 +206,10 @@
     "isEntry": true,
     "imports": [
       "_index.js",
-      "_Button.js",
       "_TextField.svelte_svelte_type_style_lang.js",
       "_ScaledSvg.svelte_svelte_type_style_lang.js",
-      "_index3.js"
+      "_index3.js",
+      "_index4.js"
     ],
     "css": [
       "_app/immutable/assets/_page.D6d2G0JH.css"
