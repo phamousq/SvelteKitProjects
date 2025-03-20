@@ -135,7 +135,7 @@
 		const currentTimestamp: any = new Date();
 		const timeDifference = formatTimeDifference(currentTimestamp - previousTimestamp);
 
-		const newHistoryItem = {
+		const newHistoryItem: any = {
 			question: dailyQuestionCount,
 			result: result,
 			timeDifference: timeDifference,
@@ -185,7 +185,7 @@
 		csvLoaded = false;
 	}
 
-	function formatTimeDifference(milliseconds) {
+	function formatTimeDifference(milliseconds: number) {
 		const seconds = Math.floor(milliseconds / 1000);
 		const minutes = Math.floor(seconds / 60);
 		const remainingSeconds = seconds % 60;
@@ -253,7 +253,7 @@
 		fileInput.click();
 	}
 
-	function parseAndLoadCSV(content) {
+	function parseAndLoadCSV(content: string) {
 		const lines = content.split('\n');
 		
 		// Skip the header line and process data rows
@@ -532,7 +532,7 @@
 	
 	<!-- Date navigation controls -->
 	<div class="date-navigation">
-		<Button class="max-w-1/4" onclick={goToPreviousDay}>
+		<Button class="max-w-1/3" onclick={goToPreviousDay}>
 			&lt; Previous Day
 		</Button>
 		<div class="current-date">
@@ -540,7 +540,7 @@
 				{isToday(currentDate) ? 'Today' : formatDate(currentDate)}
 			</button>
 		</div>
-		<Button class="max-w-1/4"onclick={goToNextDay} disabled={isToday(currentDate)}>
+		<Button class="max-w-1/3"onclick={goToNextDay} disabled={isToday(currentDate)}>
 			Next Day &gt;
 		</Button>
 	</div>
