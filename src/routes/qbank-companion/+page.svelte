@@ -30,8 +30,6 @@
 	let visiblePercentCorrect = $derived(
 		isNaN(+((visibleCorrectCount / visibleCountComplete) * 100).toFixed(1)) ? 100 : ((visibleCorrectCount / visibleCountComplete) * 100).toFixed(1)
 	);
-	let filteredHistoryDict = [];
-	Object.entries(filteredHistory)
 
 	let NotesInput: HTMLInputElement;
 
@@ -415,7 +413,7 @@
 		return formatTimeDifference(averageMilliseconds);
 	}
 
-	let lastSevenDaysData = $derived(() => {
+	let lastSevenDaysData = () => {
 		const days = [];
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
@@ -432,20 +430,20 @@
 			});
 		}
 		return days;
-	});
+	};
 
-	let dataSummary = $derived(() => {
+	let dataSummary = (obj: object[]) => {
 		const summary = []
 		summary.push(
 			{correctness: "Correct", 
-			value: countCorrectInFiltered(filteredHistory)
+			value: countCorrectInFiltered(obj)
 		})
 		summary.push(
 			{correctness: "Incorrect", 
-			value: countIncorrectInFiltered(filteredHistory)
+			value: countIncorrectInFiltered(obj)
 		})
 		return summary;
-	});
+	};	
 
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === 'Enter') {
@@ -606,7 +604,7 @@
 	</div>
 	<div class="h-[300px] p-4 border rounded resize overflow-auto">
 		<PieChart
-		  data={dataSummary()}
+		  data={dataSummary(history)}
 		  key="correctness"
 		  value="value"
 		  innerRadius={-20}
