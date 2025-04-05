@@ -1,5 +1,5 @@
 <script lang="ts">
-    import questionData from '../../data/questions.json';
+    import questionData from '../../db/questions.json';
 
     let currentQuestionIndex = 0;
     let currentQuestion = questionData[currentQuestionIndex];

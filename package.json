@@ -21,7 +21,7 @@
 		"@tailwindcss/vite": "^4.0.0",
 		"@types/node": "^22.13.7",
 		"autoprefixer": "^10.4.20",
-		"flowbite-svelte-icons": "^2.0.2",
+		"drizzle-kit": "^0.30.6",
 		"postcss": "^8.5.3",
 		"prettier": "^3.3.2",
 		"prettier-plugin-svelte": "^3.2.6",
@@ -34,11 +34,14 @@
 	},
 	"dependencies": {
 		"@layerstack/tailwind": "^2.0.0-next.2",
+		"@neondatabase/serverless": "^1.0.0",
 		"@tailwindcss/cli": "^4.0.9",
 		"@types/d3-scale": "^4.0.9",
 		"chart.js": "^4.4.8",
 		"d3-array": "^3.2.4",
 		"d3-scale": "^4.0.2",
+		"dotenv": "^16.4.7",
+		"drizzle-orm": "^0.41.0",
 		"layercake": "^8.4.2",
 		"layerchart": "^2.0.0-next.1",
 		"svelte-ux": "^2.0.0-next.3"
