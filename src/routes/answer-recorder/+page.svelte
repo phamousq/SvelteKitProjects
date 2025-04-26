@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { fade, fly } from 'svelte/transition';
 
   // --- State Management with Svelte 5 ---
   let answerData = $state([]);
@@ -33,6 +34,31 @@
 
   let currentAnswer = $derived(answerData.find(item => item.question === currentQuestion)?.answer || '');
   let isCorrect = $derived(answerData.find(item => item.question === currentQuestion)?.correct);
+
+  // --- Emoji Animation State ---
+  let emojiAnimations: {x: number, y: number, emoji: string}[] = $state([]);
+
+  function triggerEmojiAnimation(correct: boolean | undefined, event: MouseEvent) {
+    const emojis = correct === true 
+      ? ['🎉', '✅', '🌟', '👏', '🚀'] 
+      : (correct === false 
+        ? ['😱', '❌', '🤯', '😢', '💥']
+        : []);
+
+    const numEmojis = Math.floor(Math.random() * 3) + 3; // 3-5 emojis
+    const newAnimations = Array.from({length: numEmojis}, () => ({
+      x: event.clientX + (Math.random() * 200 - 100), // Spread around cursor
+      y: event.clientY + (Math.random() * 200 - 100),
+      emoji: emojis[Math.floor(Math.random() * emojis.length)]
+    }));
+
+    emojiAnimations = [...emojiAnimations, ...newAnimations];
+
+    // Remove emojis after animation
+    setTimeout(() => {
+      emojiAnimations = [];
+    }, 2000);
+  }
 
   // --- Lifecycle and Side Effects ---
   onMount(() => {
@@ -114,12 +140,14 @@
     }
   }
 
-  function markCorrect(correct: boolean | undefined) {
+  function markCorrect(correct: boolean | undefined, event: MouseEvent) {
     const entryIndex = answerData.findIndex(item => item.question === currentQuestion);
     if (entryIndex !== -1) {
       answerData[entryIndex] = { ...answerData[entryIndex], correct };
     }
     if (correct === true || correct === false) {
+      triggerEmojiAnimation(correct, event);
+      
       // If this is the last question, switch back to test mode
       if (currentQuestion === answerData.length) {
         reviewModeEnabled = false;
@@ -280,7 +308,7 @@
   {#if currentAnswer}
   <div class="flex space-x-4">
     <button 
-      onclick={() => markCorrect(true)} 
+      onclick={(e) => markCorrect(true, e)} 
       class="
         text-4xl w-56 h-24 rounded-full 
         bg-green-200
@@ -294,7 +322,7 @@
       ✅
     </button>
     <button 
-      onclick={() => markCorrect(false)} 
+      onclick={(e) => markCorrect(false, e)} 
       class="
         text-4xl w-56 h-24 rounded-full 
         bg-red-200
@@ -328,6 +356,16 @@
   {/if}
 </div>
 {/if}
+  <!-- Emoji Animation Layer -->
+  {#each emojiAnimations as animation (animation)}
+  <div 
+  class="fixed z-50 text-4xl pointer-events-none" 
+  style="left: {animation.x}px; top: {animation.y}px;"
+  transition:fly|fade={{y: -100, duration: 1500, outDuration: 500}}
+>
+  {animation.emoji}
+</div>
+  {/each}
   <div class="navigation">
     <button 
       disabled={currentQuestion === 1} 
