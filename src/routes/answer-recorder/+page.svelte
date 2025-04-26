@@ -56,6 +56,13 @@
   $: currentAnswer = answerData.find(item => item.question === currentQuestion)?.answer || '';
   $: isCorrect = answerData.find(item => item.question === currentQuestion)?.correct;
 
+  $: totalQuestions = answerData.length;
+  $: correctQuestions = answerData.filter(item => item.correct === true).length;
+  $: incorrectQuestions = answerData.filter(item => item.correct === false).length;
+  $: percentageCorrect = totalQuestions > 0 
+    ? Math.round((correctQuestions / totalQuestions) * 100) 
+    : 0;
+
   // --- Functions ---
 
   function startTimer() {
@@ -224,7 +231,12 @@ disabled={answerData.some(item => item.question === currentQuestion)}
     { reviewModeEnabled ? 'Switch to Answer Mode' : 'Switch to Review Mode' }
   </button>
   </div>
-  <h2 class="text-2xl text-center">Answer Summary</h2>
+  <h2 class="text-2xl text-center">
+    Answer Summary 
+    <span class="text-sm text-gray-600 ml-4">
+      (Correct: {correctQuestions}/{totalQuestions}, {percentageCorrect}%)
+    </span>
+  </h2>
   <table class="w-full border-collapse">
     <thead>
       <tr class="bg-gray-100">
