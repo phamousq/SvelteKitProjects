@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
     export let data;
 </script>
 
@@ -17,4 +17,4 @@
             </tr>
         {/each}
     </tbody>
-</table>
+</table> -->
