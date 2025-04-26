@@ -63,6 +63,8 @@
     ? Math.round((correctQuestions / totalQuestions) * 100) 
     : 0;
 
+  $: maxRecordedQuestion = Math.max(...answerData.map(item => item.question), 0);
+
   // --- Functions ---
 
   function startTimer() {
@@ -187,8 +189,13 @@
 
 </script>
 <main>
+  <div class="flex justify-center p-3">
+    <button onclick={toggleReviewMode}>
+      { reviewModeEnabled ? 'Switch to Answer Mode' : 'Switch to Review Mode' }
+    </button>
+  </div>
   <div class="flex justify-center">
-    <p class="text-2xl">Current Question: {currentQuestion} </p>
+    <p class="text-4xl">Current Question: {currentQuestion} </p>
   </div>
 
   <p class="text-center">{timeElapsed}s</p>
@@ -224,13 +231,9 @@ disabled={answerData.some(item => item.question === currentQuestion)}
 {/if}
   <div class="navigation">
     <button disabled={currentQuestion === 1} onclick={() => currentQuestionStore.update(n => Math.max(1, n - 1))}>Back</button>
-    <button onclick={() => currentQuestionStore.update(n => n + 1)}>Next</button>
+    <button disabled={currentQuestion > maxRecordedQuestion} onclick={() => currentQuestionStore.update(n => n + 1)}>Next</button>
   </div>
-  <div class="flex justify-center p-3">
-  <button onclick={toggleReviewMode}>
-    { reviewModeEnabled ? 'Switch to Answer Mode' : 'Switch to Review Mode' }
-  </button>
-  </div>
+
   <h2 class="text-2xl text-center">
     Answer Summary 
     <span class="text-sm text-gray-600 ml-4">
