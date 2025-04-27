@@ -136,12 +136,17 @@
   function toggleReviewMode() {
     reviewModeEnabled = !reviewModeEnabled;
     if (reviewModeEnabled) {
-      // Find the most recently answered question
-      const mostRecentQuestion = answerData.length > 0 
-        ? Math.max(...answerData.map(item => item.question))
-        : 1;
+      // Find the lowest question that hasn't been graded yet
+      const ungraded = answerData
+        .filter(item => item.correct === undefined)
+        .map(item => item.question);
       
-      currentQuestion = mostRecentQuestion;
+      currentQuestion = ungraded.length > 0 
+        ? Math.min(...ungraded) 
+        : (answerData.length > 0 
+          ? Math.max(...answerData.map(item => item.question)) 
+          : 1);
+      
       stopTimer();
     } else {
       // When switching to test mode, set current question to next question
@@ -156,12 +161,22 @@
     if (entryIndex !== -1) {
       answerData[entryIndex] = { ...answerData[entryIndex], correct };
     }
-    if (correct === 'Correct' || correct === 'Incorrect') {
-      // If this is the last question, switch back to test mode
-      if (currentQuestion === answerData.length) {
-        reviewModeEnabled = false;
-      }
-      currentQuestion += 1;
+    
+    // Find the next ungraded question
+    const ungraded = answerData
+      .filter(item => item.correct === undefined)
+      .map(item => item.question)
+      .filter(q => q > currentQuestion);
+    
+    if (ungraded.length > 0) {
+      // Move to the lowest ungraded question after the current one
+      currentQuestion = Math.min(...ungraded);
+    } else {
+      // If no more ungraded questions, switch back to test mode
+      reviewModeEnabled = false;
+      currentQuestion = Math.max(...answerData.map(item => item.question), 0) + 1;
+      timeElapsed = 0;
+      startTimer();
     }
   }
 
