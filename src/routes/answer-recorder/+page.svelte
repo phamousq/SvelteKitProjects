@@ -7,10 +7,14 @@
   let reviewModeEnabled = $state(false);
   let currentDate = $state(new Date());
 
-  // --- Pagination and Date Filtering ---
+  // --- Date Filtering ---
   let filteredAnswerData = $derived(filterAnswersByDate(answerData, currentDate));
-  let currentPage = $state(1);
-  const itemsPerPage = 10;
+
+  // --- Timer State ---
+  let questionStartTime: number;
+  let timeElapsed = $state(0);
+  let timerInterval: number | null = null;
+  let answerChoices = $state(['a', 'b', 'c', 'd', 'e']);
 
   // --- Derived State ---
   let totalQuestions = $derived(answerData.length);
@@ -23,7 +27,11 @@
 
   let maxRecordedQuestion = $derived(Math.max(...answerData.map(item => item.question), 0));
 
-  // --- Pagination Helpers ---
+  // --- Reactive Derived Values ---
+  let currentAnswer = $derived(answerData.find(item => item.question === currentQuestion)?.answer || '');
+  let isCorrect = $derived(answerData.find(item => item.question === currentQuestion)?.correct);
+
+  // --- Date Filtering ---
   function filterAnswersByDate(items: any[], date: Date) {
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
@@ -37,77 +45,6 @@
     });
   }
 
-  function getPaginatedAnswers() {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredAnswerData.slice(startIndex, startIndex + itemsPerPage);
-  }
-
-  function goToNextPage() {
-    if (currentPage * itemsPerPage < filteredTotalQuestions) {
-      currentPage += 1;
-    }
-  }
-
-  function goToPreviousPage() {
-    if (currentPage > 1) {
-      currentPage -= 1;
-    }
-  }
-
-  // --- Date Navigation ---
-  function goToPreviousDay() {
-    const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() - 1);
-    currentDate = newDate;
-    currentPage = 1; // Reset to first page when changing date
-  }
-  
-  function goToNextDay() {
-    const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() + 1);
-    
-    // Don't allow going to future dates
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (newDate <= today) {
-      currentDate = newDate;
-      currentPage = 1; // Reset to first page when changing date
-    }
-  }
-  
-  function goToToday() {
-    currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-    currentPage = 1; // Reset to first page when changing date
-  }
-
-  function formatDate(date: Date) {
-    return date.toLocaleDateString(undefined, { 
-      weekday: 'short', 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  }
-
-  // --- Local Storage Management ---
-  function saveToLocalStorage() {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('answerData', JSON.stringify(answerData));
-      localStorage.setItem('currentQuestion', currentQuestion.toString());
-      localStorage.setItem('reviewModeEnabled', reviewModeEnabled.toString());
-    }
-  }
-
-  // --- Reactive Derived Values ---
-  let answerChoices = $state(['a', 'b', 'c', 'd', 'e']);
-  let questionStartTime: number;
-  let timeElapsed = $state(0);
-  let timerInterval: number | null = null;
-
-  let currentAnswer = $derived(answerData.find(item => item.question === currentQuestion)?.answer || '');
-  let isCorrect = $derived(answerData.find(item => item.question === currentQuestion)?.correct);
-
   // --- Lifecycle and Side Effects ---
   onMount(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -119,8 +56,8 @@
       if (storedCurrentQuestion) currentQuestion = parseInt(storedCurrentQuestion, 10);
       if (storedReviewMode) reviewModeEnabled = storedReviewMode === 'true';
     }
-    startTimer();
     currentDate.setHours(0, 0, 0, 0);
+    startTimer(); // Start timer on mount
 
     // Reactive save to local storage
     $effect(() => {
@@ -189,23 +126,19 @@
 
   function toggleReviewMode() {
     reviewModeEnabled = !reviewModeEnabled;
-    if (reviewModeEnabled) { // Switching TO review mode
-      // Find the first question *in the answered data* that hasn't been marked (correct is undefined)
-      const firstUnmarkedEntry = answerData
-                                  .slice() // Create a copy to avoid modifying the original store order during sort
-                                  .sort((a, b) => a.question - b.question)
-                                  .find(item => item.correct === undefined);
-
-      // If an unmarked question exists, go to it. Otherwise, default to question 1.
-      currentQuestion = firstUnmarkedEntry ? firstUnmarkedEntry.question : 1;
-      stopTimer(); // Stop timer in review mode
-      timeElapsed = answerData.find(item => item.question === currentQuestion)?.time || 0; // Load time for review
-    } else { // Switching FROM review mode (back to test mode)
-       // Find the highest numbered question answered + 1, or 1 if no answers yet
-       const highestAnswered = answerData.reduce((max, item) => Math.max(max, item.question), 0);
-       currentQuestion = highestAnswered + 1;
-       timeElapsed = 0; // Reset timer for new test session
-       startTimer();
+    if (reviewModeEnabled) {
+      // Find the most recently answered question
+      const mostRecentQuestion = answerData.length > 0 
+        ? Math.max(...answerData.map(item => item.question))
+        : 1;
+      
+      currentQuestion = mostRecentQuestion;
+      stopTimer();
+    } else {
+      // When switching to test mode, set current question to next question
+      currentQuestion = Math.max(...answerData.map(item => item.question), 0) + 1;
+      timeElapsed = 0;
+      startTimer();
     }
   }
 
@@ -319,6 +252,48 @@
       }
     }
   });
+
+  // --- Date Navigation ---
+  function goToPreviousDay() {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() - 1);
+    currentDate = newDate;
+  }
+  
+  function goToNextDay() {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + 1);
+    
+    // Don't allow going to future dates
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (newDate <= today) {
+      currentDate = newDate;
+    }
+  }
+  
+  function goToToday() {
+    currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+  }
+
+  function formatDate(date: Date) {
+    return date.toLocaleDateString(undefined, { 
+      weekday: 'short', 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  }
+
+  // --- Local Storage Management ---
+  function saveToLocalStorage() {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('answerData', JSON.stringify(answerData));
+      localStorage.setItem('currentQuestion', currentQuestion.toString());
+      localStorage.setItem('reviewModeEnabled', reviewModeEnabled.toString());
+    }
+  }
 </script>
 <main>
   <!-- Existing content -->
@@ -338,24 +313,6 @@
       <span class="text-sm text-gray-600 ml-4">{timeElapsed}s</span>
     </p>
   </div>
-  <!-- Pagination for filtered answers
-  <div class="pagination flex justify-between items-center p-3">
-    <button 
-      disabled={currentPage === 1} 
-      onclick={goToPreviousPage}
-    >
-      Previous
-    </button>
-    <span>Page {currentPage} of {Math.ceil(filteredTotalQuestions / itemsPerPage)}</span>
-    <button 
-      disabled={currentPage * itemsPerPage >= filteredTotalQuestions} 
-      onclick={goToNextPage}
-    >
-      Next
-    </button>
-  </div> -->
-
-  <!-- Modify the table to show paginated, date-filtered results -->
 
   {#if !reviewModeEnabled}
   <div class="answer-choices flex flex-col items-center">
@@ -547,10 +504,12 @@
       </tr>
     </thead>
     <tbody>
-      {#each getPaginatedAnswers() as item}
+      {#each filteredAnswerData.slice().sort((a, b) => b.question - a.question) as item}
         <tr 
           class:bg-yellow-100={item.question === currentQuestion} 
           class="hover:bg-gray-50 transition-colors"
+          class:correct={item.correct === true}
+          class:incorrect={item.correct === false}
         >
           <td class="border p-2 text-center">{item.question}</td>
           <td class="border p-2 text-center">{item.answer?.toUpperCase() || 'N/A'}</td>
