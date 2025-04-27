@@ -1,14 +1,20 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fade, fly } from 'svelte/transition';
 
   // --- State Management with Svelte 5 ---
   let answerData = $state([]);
   let currentQuestion = $state(1);
   let reviewModeEnabled = $state(false);
+  let currentDate = $state(new Date());
+
+  // --- Pagination and Date Filtering ---
+  let filteredAnswerData = $derived(filterAnswersByDate(answerData, currentDate));
+  let currentPage = $state(1);
+  const itemsPerPage = 10;
 
   // --- Derived State ---
   let totalQuestions = $derived(answerData.length);
+  let filteredTotalQuestions = $derived(filteredAnswerData.length);
   let correctQuestions = $derived(answerData.filter(item => item.correct === true).length);
   let incorrectQuestions = $derived(answerData.filter(item => item.correct === false).length);
   let percentageCorrect = $derived(totalQuestions > 0 
@@ -16,6 +22,73 @@
     : 0);
 
   let maxRecordedQuestion = $derived(Math.max(...answerData.map(item => item.question), 0));
+
+  // --- Pagination Helpers ---
+  function filterAnswersByDate(items: any[], date: Date) {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    return items.filter(item => {
+      const itemDate = new Date(item.datetime);
+      return itemDate >= startOfDay && itemDate <= endOfDay;
+    });
+  }
+
+  function getPaginatedAnswers() {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAnswerData.slice(startIndex, startIndex + itemsPerPage);
+  }
+
+  function goToNextPage() {
+    if (currentPage * itemsPerPage < filteredTotalQuestions) {
+      currentPage += 1;
+    }
+  }
+
+  function goToPreviousPage() {
+    if (currentPage > 1) {
+      currentPage -= 1;
+    }
+  }
+
+  // --- Date Navigation ---
+  function goToPreviousDay() {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() - 1);
+    currentDate = newDate;
+    currentPage = 1; // Reset to first page when changing date
+  }
+  
+  function goToNextDay() {
+    const newDate = new Date(currentDate);
+    newDate.setDate(newDate.getDate() + 1);
+    
+    // Don't allow going to future dates
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (newDate <= today) {
+      currentDate = newDate;
+      currentPage = 1; // Reset to first page when changing date
+    }
+  }
+  
+  function goToToday() {
+    currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+    currentPage = 1; // Reset to first page when changing date
+  }
+
+  function formatDate(date: Date) {
+    return date.toLocaleDateString(undefined, { 
+      weekday: 'short', 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  }
 
   // --- Local Storage Management ---
   function saveToLocalStorage() {
@@ -35,31 +108,6 @@
   let currentAnswer = $derived(answerData.find(item => item.question === currentQuestion)?.answer || '');
   let isCorrect = $derived(answerData.find(item => item.question === currentQuestion)?.correct);
 
-  // --- Emoji Animation State ---
-  let emojiAnimations: {x: number, y: number, emoji: string}[] = $state([]);
-
-  function triggerEmojiAnimation(correct: boolean | undefined, event: MouseEvent) {
-    const emojis = correct === true 
-      ? ['🎉', '✅', '🌟', '👏', '🚀'] 
-      : (correct === false 
-        ? ['😱', '❌', '🤯', '😢', '💥']
-        : []);
-
-    const numEmojis = Math.floor(Math.random() * 3) + 3; // 3-5 emojis
-    const newAnimations = Array.from({length: numEmojis}, () => ({
-      x: event.clientX + (Math.random() * 200 - 100), // Spread around cursor
-      y: event.clientY + (Math.random() * 200 - 100),
-      emoji: emojis[Math.floor(Math.random() * emojis.length)]
-    }));
-
-    emojiAnimations = [...emojiAnimations, ...newAnimations];
-
-    // Remove emojis after animation
-    setTimeout(() => {
-      emojiAnimations = [];
-    }, 2000);
-  }
-
   // --- Lifecycle and Side Effects ---
   onMount(() => {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -72,6 +120,7 @@
       if (storedReviewMode) reviewModeEnabled = storedReviewMode === 'true';
     }
     startTimer();
+    currentDate.setHours(0, 0, 0, 0);
 
     // Reactive save to local storage
     $effect(() => {
@@ -97,14 +146,34 @@
   // --- Answer Recording Functions ---
   function recordAnswer(answer: string) {
     stopTimer();
+    const currentTimestamp = new Date();
     const existingEntryIndex = answerData.findIndex(item => item.question === currentQuestion);
+    
     if (existingEntryIndex !== -1) {
-      // Preserve existing 'correct' status if it exists
-      answerData[existingEntryIndex] = { ...answerData[existingEntryIndex], answer, time: timeElapsed };
+      // Replace existing entry
+      answerData[existingEntryIndex] = { 
+        ...answerData[existingEntryIndex], 
+        answer, 
+        time: timeElapsed,
+        datetime: currentTimestamp.toISOString(),
+        correct: undefined // Reset correctness when re-answering
+      };
     } else {
-      answerData = [...answerData, { question: currentQuestion, answer, time: timeElapsed, correct: undefined }];
+      // Add new entry
+      answerData = [...answerData, { 
+        question: currentQuestion, 
+        answer, 
+        time: timeElapsed, 
+        correct: undefined,
+        datetime: currentTimestamp.toISOString() 
+      }];
     }
-    currentQuestion += 1;
+
+    // In test mode, always move to next question
+    if (!reviewModeEnabled) {
+      currentQuestion += 1;
+    }
+
     answerChoices = ['a', 'b', 'c', 'd', 'e'];
     // Reset timeElapsed immediately AFTER recording, before starting new timer
     timeElapsed = 0;
@@ -140,14 +209,12 @@
     }
   }
 
-  function markCorrect(correct: boolean | undefined, event: MouseEvent) {
+  function markCorrect(correct: boolean | undefined) {
     const entryIndex = answerData.findIndex(item => item.question === currentQuestion);
     if (entryIndex !== -1) {
       answerData[entryIndex] = { ...answerData[entryIndex], correct };
     }
     if (correct === true || correct === false) {
-      triggerEmojiAnimation(correct, event);
-      
       // If this is the last question, switch back to test mode
       if (currentQuestion === answerData.length) {
         reviewModeEnabled = false;
@@ -216,13 +283,51 @@
       currentQuestion = answerData.length;
     }
   });
+
+  // Add a function to get navigable questions in test mode
+  function getNavigableQuestions() {
+    const sortedQuestions = answerData
+      .slice()
+      .sort((a, b) => a.question - b.question)
+      .map(item => item.question);
+    
+    // Add the next question after the last answered question
+    const maxQuestion = Math.max(...sortedQuestions, 0);
+    if (maxQuestion > 0) {
+      sortedQuestions.push(maxQuestion + 1);
+    }
+    
+    return sortedQuestions;
+  }
+
+  // Modify the existing navigation effect to handle test mode navigation
+  $effect(() => {
+    if (!reviewModeEnabled) {
+      const navigableQuestions = getNavigableQuestions();
+      
+      // Ensure current question is within navigable questions
+      if (currentQuestion > navigableQuestions[navigableQuestions.length - 1]) {
+        currentQuestion = navigableQuestions[navigableQuestions.length - 1];
+      }
+      
+      // If current question is not in navigable questions, find the closest
+      if (!navigableQuestions.includes(currentQuestion)) {
+        const closestQuestion = navigableQuestions.reduce((prev, curr) => 
+          Math.abs(curr - currentQuestion) < Math.abs(prev - currentQuestion) ? curr : prev
+        );
+        currentQuestion = closestQuestion;
+      }
+    }
+  });
 </script>
 <main>
+  <!-- Existing content -->
   <div class="flex justify-center p-3">
     <button onclick={toggleReviewMode}>
       { reviewModeEnabled ? 'Switch to Test Mode' : 'Switch to Review Mode' }
     </button>
   </div>
+
   <div class="flex justify-center">
     <p class="text-4xl pb-2">
       Question:
@@ -233,149 +338,191 @@
       <span class="text-sm text-gray-600 ml-4">{timeElapsed}s</span>
     </p>
   </div>
-{#if !reviewModeEnabled}
-<div class="answer-choices flex flex-col items-center">
-  <div class="flex space-x-2 mb-2">
-    {#each answerChoices as choice}
-    <button
-      onclick={() => recordAnswer(choice)}
-      class="
-        px-4 py-2 
-        {currentAnswer === choice 
-          ? 'bg-blue-500 text-white' 
-          : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}
-        rounded 
-        transition-colors 
-        duration-200
-      "
-      disabled={answerData.some(item => item.question === currentQuestion)}
-    >
-      {choice.toUpperCase()}
-    </button>
-    {/each}
-  </div>
-  <div class="flex space-x-2">
-    <button
-      onclick={recordGuessAnswer}
-      class="
-        px-4 py-2 
-        {currentAnswer === '?' 
-          ? 'bg-yellow-500 text-white' 
-          : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}
-        rounded 
-        transition-colors 
-        duration-200
-      "
-      disabled={answerData.some(item => item.question === currentQuestion)}
-    >
-      ❓ Guess
-    </button>
-    <button
-      onclick={undoLastAnswer}
-      class="
-        px-4 py-2 
-        bg-gray-200 text-gray-800 
-        hover:bg-gray-300 
-        rounded 
-        transition-colors 
-        duration-200
-      "
-      disabled={answerData.length === 0}
-    >
-      ↩️ Undo
-    </button>
-  </div>
-  {#if answerChoices.length < 26}
-  <div class="flex justify-center pb-3 mt-2">
+  <!-- Pagination for filtered answers
+  <div class="pagination flex justify-between items-center p-3">
     <button 
-      onclick={addAnswerChoice}
-      class="
-        px-4 py-2 
-        hover:bg-green-300 
-        rounded 
-        transition-colors 
-        duration-200
-      "
+      disabled={currentPage === 1} 
+      onclick={goToPreviousPage}
     >
-      Add Choice
+      Previous
     </button>
+    <span>Page {currentPage} of {Math.ceil(filteredTotalQuestions / itemsPerPage)}</span>
+    <button 
+      disabled={currentPage * itemsPerPage >= filteredTotalQuestions} 
+      onclick={goToNextPage}
+    >
+      Next
+    </button>
+  </div> -->
+
+  <!-- Modify the table to show paginated, date-filtered results -->
+
+  {#if !reviewModeEnabled}
+  <div class="answer-choices flex flex-col items-center">
+    <div class="flex space-x-2 mb-2">
+      {#each answerChoices as choice}
+      <button
+        onclick={() => recordAnswer(choice)}
+        class="
+          px-4 py-2 
+          {currentAnswer === choice 
+            ? 'bg-blue-500 text-white' 
+            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}
+          rounded 
+          transition-colors 
+          duration-200
+        "
+      >
+        {choice.toUpperCase()}
+      </button>
+      {/each}
+    </div>
+    <div class="flex space-x-2">
+      <button
+        onclick={recordGuessAnswer}
+        class="
+          px-4 py-2 
+          {currentAnswer === '?' 
+            ? 'bg-yellow-500 text-white' 
+            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}
+          rounded 
+          transition-colors 
+          duration-200
+        "
+      >
+        ❓ Guess
+      </button>
+      <button
+        onclick={undoLastAnswer}
+        class="
+          px-4 py-2 
+          bg-gray-200 text-gray-800 
+          hover:bg-gray-300 
+          rounded 
+          transition-colors 
+          duration-200
+        "
+        disabled={answerData.length === 0}
+      >
+        ↩️ Undo
+      </button>
+    </div>
+    {#if answerChoices.length < 26}
+    <div class="flex justify-center pb-3 mt-2">
+      <button 
+        onclick={addAnswerChoice}
+        class="
+          px-4 py-2 
+          hover:bg-green-300 
+          rounded 
+          transition-colors 
+          duration-200
+        "
+      >
+        Add Choice
+      </button>
+    </div>
+    {/if}
   </div>
-  {/if}
-</div>
-{:else}
-<div class="review-controls flex flex-col items-center space-y-4">
+  {:else}
+  <div class="review-controls flex flex-col items-center space-y-4">
   
-  {#if currentAnswer}
-  <div class="flex space-x-4">
-    <button 
-      onclick={(e) => markCorrect(true, e)} 
-      class="
-        text-4xl w-56 h-24 rounded-full 
-        bg-green-200
-        hover:bg-green-300 
-        focus:outline-none focus:ring-4 focus:ring-green-300 
-        transition-all duration-200 
-        flex items-center justify-center
-        {isCorrect === true ? 'ring-4 ring-green-700' : ''}
-      "
-    >
-      ✅
-    </button>
-    <button 
-      onclick={(e) => markCorrect(false, e)} 
-      class="
-        text-4xl w-56 h-24 rounded-full 
-        bg-red-200
-        hover:bg-red-300 
-        focus:outline-none focus:ring-4 focus:ring-red-300 
-        transition-all duration-200 
-        flex items-center justify-center
-        {isCorrect === false ? 'ring-4 ring-red-700' : ''}
-      "
-    >
-      ❌
-    </button>
-    <!-- <button 
-      onclick={() => markCorrect(undefined)} 
-      class="
-        text-2xl w-24 h-24 rounded-full 
-        bg-gray-300 text-gray-700 
-        hover:bg-gray-400 
-        focus:outline-none focus:ring-4 focus:ring-gray-200 
-        transition-all duration-200 
-        flex items-center justify-center
-        {isCorrect === undefined ? 'ring-4 ring-gray-500' : ''}
-      "
-    >
-      Unmarked
-    </button> -->
+    {#if currentAnswer}
+    <div class="flex space-x-4">
+      <button 
+        onclick={() => markCorrect(true)} 
+        class="
+          text-4xl w-56 h-24 rounded-full 
+          bg-green-200
+          hover:bg-green-300 
+          focus:outline-none focus:ring-4 focus:ring-green-300 
+          transition-all duration-200 
+          flex items-center justify-center
+          {isCorrect === true ? 'ring-4 ring-green-700' : ''}
+        "
+      >
+        ✅
+      </button>
+      <button 
+        onclick={() => markCorrect(false)} 
+        class="
+          text-4xl w-56 h-24 rounded-full 
+          bg-red-200
+          hover:bg-red-300 
+          focus:outline-none focus:ring-4 focus:ring-red-300 
+          transition-all duration-200 
+          flex items-center justify-center
+          {isCorrect === false ? 'ring-4 ring-red-700' : ''}
+        "
+      >
+        ❌
+      </button>
+      <!-- <button 
+        onclick={() => markCorrect(undefined)} 
+        class="
+          text-2xl w-24 h-24 rounded-full 
+          bg-gray-300 text-gray-700 
+          hover:bg-gray-400 
+          focus:outline-none focus:ring-4 focus:ring-gray-200 
+          transition-all duration-200 
+          flex items-center justify-center
+          {isCorrect === undefined ? 'ring-4 ring-gray-500' : ''}
+        "
+      >
+        Unmarked
+      </button> -->
+    </div>
+    {/if}
+    {#if !currentAnswer}
+    <p class="text-gray-500 text-xl">(No answer recorded for this question)</p>
+    {/if}
   </div>
   {/if}
-  {#if !currentAnswer}
-  <p class="text-gray-500 text-xl">(No answer recorded for this question)</p>
-  {/if}
-</div>
-{/if}
-  <!-- Emoji Animation Layer -->
-  {#each emojiAnimations as animation (animation)}
-  <div 
-  class="fixed z-50 text-4xl pointer-events-none" 
-  style="left: {animation.x}px; top: {animation.y}px;"
-  transition:fly|fade={{y: -100, duration: 1500, outDuration: 500}}
->
-  {animation.emoji}
-</div>
-  {/each}
+
   <div class="navigation">
     <button 
       disabled={currentQuestion === 1} 
-      onclick={() => currentQuestion -= 1}
+      onclick={() => {
+        if (reviewModeEnabled) {
+          // In review mode, navigate through filtered data
+          const currentIndex = filteredAnswerData.findIndex(item => item.question === currentQuestion);
+          if (currentIndex !== -1 && currentIndex > 0) {
+            currentQuestion = filteredAnswerData[currentIndex - 1].question;
+          }
+        } else {
+          // In test mode, navigate through answered questions and next question
+          const navigableQuestions = getNavigableQuestions();
+          const currentIndex = navigableQuestions.indexOf(currentQuestion);
+          if (currentIndex > 0) {
+            currentQuestion = navigableQuestions[currentIndex - 1];
+          }
+        }
+      }}
     >
       Back
     </button>
     <button 
-      disabled={!reviewModeEnabled || currentQuestion >= answerData.length} 
-      onclick={() => currentQuestion += 1}
+      disabled={
+        reviewModeEnabled 
+          ? currentQuestion >= filteredAnswerData[filteredAnswerData.length - 1]?.question 
+          : currentQuestion >= getNavigableQuestions()[getNavigableQuestions().length - 1]
+      }
+      onclick={() => {
+        if (reviewModeEnabled) {
+          // In review mode, navigate through filtered data
+          const currentIndex = filteredAnswerData.findIndex(item => item.question === currentQuestion);
+          if (currentIndex !== -1 && currentIndex < filteredAnswerData.length - 1) {
+            currentQuestion = filteredAnswerData[currentIndex + 1].question;
+          }
+        } else {
+          // In test mode, navigate through answered questions and next question
+          const navigableQuestions = getNavigableQuestions();
+          const currentIndex = navigableQuestions.indexOf(currentQuestion);
+          if (currentIndex < navigableQuestions.length - 1) {
+            currentQuestion = navigableQuestions[currentIndex + 1];
+          }
+        }
+      }}
     >
       Next
     </button>
@@ -395,23 +542,23 @@
       <tr class="bg-gray-200">
         <th class="border p-2">Question</th>
         <th class="border p-2">Answer</th>
-        <th class="border p-2">Time (s)</th>
+        <th class="border p-2">Time</th>
         <th class="border p-2">Status</th>
       </tr>
     </thead>
     <tbody>
-      {#each answerData.slice().sort((a, b) => b.question - a.question) as entry (entry.question)}
+      {#each getPaginatedAnswers() as item}
         <tr 
-          class:bg-yellow-100={entry.question === currentQuestion} 
+          class:bg-yellow-100={item.question === currentQuestion} 
           class="hover:bg-gray-50 transition-colors"
         >
-          <td class="border p-2 text-center">{entry.question}</td>
-          <td class="border p-2 text-center">{entry.answer?.toUpperCase() || 'N/A'}</td>
-          <td class="border p-2 text-center">{entry.time || 0}</td>
+          <td class="border p-2 text-center">{item.question}</td>
+          <td class="border p-2 text-center">{item.answer?.toUpperCase() || 'N/A'}</td>
+          <td class="border p-2 text-center">{item.time}s</td>
           <td class="border p-2 text-center">
-            {#if entry.correct === true}
+            {#if item.correct === true}
               <span class="text-green-600">✅ Correct</span>
-            {:else if entry.correct === false}
+            {:else if item.correct === false}
               <span class="text-red-600">❌ Incorrect</span>
             {:else}
               <span class="text-gray-500">Unmarked</span>
@@ -437,8 +584,16 @@
       {/if}
     </tbody>
   </table>
-<button onclick={resetData} class="reset-button">Reset All Data</button>
+  <!-- Date Navigation -->
+  <div class="flex justify-between items-center p-3">
+    <button onclick={goToPreviousDay}>Previous Day</button>
+    <button onclick={goToToday}>{formatDate(currentDate)}</button>
+    <button onclick={goToNextDay}>Next Day</button>
+    <!-- <button onclick={goToToday}>Today</button> -->
+  </div>
+  <button onclick={resetData} class="reset-button">Reset All Data</button>
 </main>
+
 <style>
   main {
     font-family: sans-serif;
