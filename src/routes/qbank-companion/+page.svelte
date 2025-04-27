@@ -256,11 +256,20 @@
 
 					const [datetime, correctness, timeTaken, notes, source] = cells;
 
-					// Normalize correctness
+					// Normalize correctness to handle both string and boolean inputs
 					const normalizedCorrectness = 
-						correctness.toLowerCase() === 'correct' ? true : 
-						correctness.toLowerCase() === 'incorrect' ? false : 
+						(correctness === 'true' || 
+						 correctness === 'correct' || 
+						 correctness.toUpperCase() === 'CORRECT') ? 'Correct' :
+						(correctness === 'false' || 
+						 correctness === 'incorrect' || 
+						 correctness.toUpperCase() === 'INCORRECT') ? 'Incorrect' :
 						undefined;
+
+					// console.log('CSV Import Debug:', {
+					// 	originalCorrectness: correctness,
+					// 	normalizedCorrectness: normalizedCorrectness
+					// });
 
 					// Parse time, handling various formats
 					let parsedTime = 0;
@@ -272,11 +281,10 @@
 
 					return {
 						datetime: new Date(datetime).toISOString(),
-						correct: normalizedCorrectness,
+						result: normalizedCorrectness,
 						time: parsedTime,
 						notes: notes || '',
 						source: source || '',
-						question: history.length + 1 // Assign incremental question number
 					};
 				});
 
@@ -293,8 +301,8 @@
 
 			// Update history and related counts
 			history = mergedHistory;
-			correctCount = mergedHistory.filter(entry => entry.correct === true).length;
-			incorrectCount = mergedHistory.filter(entry => entry.correct === false).length;
+			correctCount = mergedHistory.filter(entry => entry.result === 'Correct').length;
+			incorrectCount = mergedHistory.filter(entry => entry.result === 'Incorrect').length;
 
 			// Update local storage
 			localStorage.setItem('history', JSON.stringify(history));
@@ -629,16 +637,16 @@
 			<tbody>
 				{#each filteredHistory.slice().sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime()) as item, index}
 					<tr 
-						class:bg-green-100={item.correct === true}
-						class:bg-red-100={item.correct === false}
+						class:bg-green-100={item.result === 'Correct'}
+						class:bg-red-100={item.result === 'Incorrect'}
 						class="hover:bg-gray-50 transition-colors"
 					>
 						<td class="border p-2 text-center">{filteredHistory.length - index}</td>
 						<td class="border p-2 text-center">{item.time || 0}s</td>
 						<td class="border p-2 text-center">
-							{#if item.correct === true}
+							{#if item.result === 'Correct'}
 								<span class="text-green-600">✅ Correct</span>
-							{:else if item.correct === false}
+							{:else if item.result === 'Incorrect'}
 								<span class="text-red-600">❌ Incorrect</span>
 							{:else}
 								<span class="text-gray-500">Unmarked</span>

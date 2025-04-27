@@ -22,8 +22,8 @@
   // --- Derived State ---
   let totalQuestions = $derived(answerData.length);
   let filteredTotalQuestions = $derived(filteredAnswerData.length);
-  let correctQuestions = $derived(answerData.filter(item => item.correct === true).length);
-  let incorrectQuestions = $derived(answerData.filter(item => item.correct === false).length);
+  let correctQuestions = $derived(answerData.filter(item => item.correct === 'Correct').length);
+  let incorrectQuestions = $derived(answerData.filter(item => item.correct === 'Incorrect').length);
   let percentageCorrect = $derived(totalQuestions > 0 
     ? Math.round((correctQuestions / totalQuestions) * 100) 
     : 0);
@@ -151,12 +151,12 @@
     }
   }
 
-  function markCorrect(correct: boolean | undefined) {
+  function markCorrect(correct: string | undefined) {
     const entryIndex = answerData.findIndex(item => item.question === currentQuestion);
     if (entryIndex !== -1) {
       answerData[entryIndex] = { ...answerData[entryIndex], correct };
     }
-    if (correct === true || correct === false) {
+    if (correct === 'Correct' || correct === 'Incorrect') {
       // If this is the last question, switch back to test mode
       if (currentQuestion === answerData.length) {
         reviewModeEnabled = false;
@@ -355,7 +355,7 @@
     const csvRows = answerData.map(item => [
       item.datetime ? new Date(item.datetime).toLocaleString() : '',
       // Mark undefined or null as 'Incorrect'
-      item.correct === true ? 'Correct' : 'Incorrect',
+      item.correct === 'Correct' ? 'Correct' : item.correct === 'Incorrect' ? 'Incorrect' : 'Unmarked',
       `${item.time || 0}s`,
       item.notes || '',
       item.source || ''
@@ -519,7 +519,7 @@
     {#if currentAnswer}
     <div class="flex space-x-4">
       <button 
-        onclick={() => markCorrect(true)} 
+        onclick={() => markCorrect('Correct')} 
         class="
           text-4xl w-56 h-24 rounded-full 
           bg-green-200
@@ -527,13 +527,13 @@
           focus:outline-none focus:ring-4 focus:ring-green-300 
           transition-all duration-200 
           flex items-center justify-center
-          {isCorrect === true ? 'ring-4 ring-green-700' : ''}
+          {isCorrect === 'Correct' ? 'ring-4 ring-green-700' : ''}
         "
       >
         ✅
       </button>
       <button 
-        onclick={() => markCorrect(false)} 
+        onclick={() => markCorrect('Incorrect')} 
         class="
           text-4xl w-56 h-24 rounded-full 
           bg-red-200
@@ -541,7 +541,7 @@
           focus:outline-none focus:ring-4 focus:ring-red-300 
           transition-all duration-200 
           flex items-center justify-center
-          {isCorrect === false ? 'ring-4 ring-red-700' : ''}
+          {isCorrect === 'Incorrect' ? 'ring-4 ring-red-700' : ''}
         "
       >
         ❌
@@ -623,8 +623,8 @@
         <tr 
           class:bg-yellow-100={item.question === currentQuestion} 
           class="hover:bg-gray-50 transition-colors"
-          class:correct={item.correct === true}
-          class:incorrect={item.correct === false}
+          class:correct={item.correct === 'Correct'}
+          class:incorrect={item.correct === 'Incorrect'}
         >
           <td class="border p-2 text-center">{item.question}</td>
           <td class="border p-2 text-center">{item.answer?.toUpperCase() || 'N/A'}</td>
@@ -632,9 +632,9 @@
           <td class="border p-2 text-center">{item.notes || ''}</td>
           <td class="border p-2 text-center">{item.source || ''}</td>
           <td class="border p-2 text-center">
-            {#if item.correct === true}
+            {#if item.correct === 'Correct'}
               <span class="text-green-600">✅ Correct</span>
-            {:else if item.correct === false}
+            {:else if item.correct === 'Incorrect'}
               <span class="text-red-600">❌ Incorrect</span>
             {:else}
               <span class="text-gray-500">Unmarked</span>
