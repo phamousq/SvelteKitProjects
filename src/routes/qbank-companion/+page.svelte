@@ -455,9 +455,39 @@
 		}
 }
 
+import { browser } from '$app/environment';
+import type { HistoryItem } from '$lib/store';
 
+function getLocalStorageHistory(): HistoryItem[] {
+	if (!browser) return history;
+	try {
+		const storedHistory = localStorage.getItem('qbankHistory');
+		return storedHistory ? JSON.parse(storedHistory) : history;
+	} catch {
+		return history;
+	}
+}
 
+let localStorageHistory = $state(getLocalStorageHistory());
 
+let localStorageStats = $derived({
+	total: localStorageHistory.length,
+	correct: localStorageHistory.filter(item => item.result === 'Correct').length,
+	correctPercentage: localStorageHistory.length > 0 
+		? ((localStorageHistory.filter(item => item.result === 'Correct').length / localStorageHistory.length) * 100).toFixed(0)
+		: '0'
+});
+
+$effect(() => {
+	if (!browser) return;
+	
+	try {
+		localStorage.setItem('qbankHistory', JSON.stringify(history));
+		localStorageHistory = history;
+	} catch {
+		console.error('Failed to update local storage');
+	}
+});
 </script>
 
 <div>
@@ -513,14 +543,14 @@
 			>
 			  <svelte:fragment slot="aboveMarks">
 				<Text
-				  value={`${history.length} total`}
+				  value={`${localStorageStats.total} total`}
 				  textAnchor="middle"
 				  verticalAnchor="middle"
 				  class="text-4xl"
 				  dy={4}
 				/>
 				<Text
-				  value={`${(history.reduce((acc, cur) => cur.result === 'Correct' ? ++acc : acc, 0)/history.length*100).toFixed(0)}%`}
+				  value={`${localStorageStats.correctPercentage}%`}
 				  textAnchor="middle"
 				  verticalAnchor="middle"
 				  class="text-sm fill-surface-content/50"
