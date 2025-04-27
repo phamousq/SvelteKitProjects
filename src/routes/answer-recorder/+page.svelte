@@ -8,6 +8,8 @@
   let currentDate = $state(new Date());
   let source = $state('');
   let currentNotes = $state('');
+  let answerInput = $state('');
+  let AnswerInput: HTMLInputElement;
 
   // --- Date Filtering ---
   let filteredAnswerData = $derived(filterAnswersByDate(answerData, currentDate));
@@ -116,13 +118,15 @@
     // In test mode, always move to next question
     if (!reviewModeEnabled) {
       currentQuestion += 1;
+      AnswerInput?.focus();
+    }else{
+      NotesInput?.focus();
     }
 
     answerChoices = ['a', 'b', 'c', 'd', 'e'];
     // Reset timeElapsed immediately AFTER recording, before starting new timer
     timeElapsed = 0;
     currentNotes = '';
-    NotesInput ? NotesInput.focus() : null;
     startTimer(); // Start timer for the *new* question
   }
 
@@ -133,8 +137,18 @@
     }
   }
 
+  $effect(() => {
+    if (!reviewModeEnabled) {
+      // When switching out of review mode, focus on answer input
+      queueMicrotask(() => {
+        AnswerInput?.focus();
+      });
+    }
+  });
+
   function toggleReviewMode() {
     reviewModeEnabled = !reviewModeEnabled;
+    // switching to review mode
     if (reviewModeEnabled) {
       // Find the lowest question that hasn't been graded yet
       const ungraded = answerData
@@ -147,11 +161,17 @@
           ? Math.max(...answerData.map(item => item.question)) 
           : 1);
       
+      queueMicrotask(() => {
+        NotesInput?.focus();
+      });
       stopTimer();
     } else {
       // When switching to test mode, set current question to next question
       currentQuestion = Math.max(...answerData.map(item => item.question), 0) + 1;
       timeElapsed = 0;
+      queueMicrotask(() => {
+        AnswerInput?.focus();
+      });
       startTimer();
     }
   }
@@ -432,6 +452,66 @@
       }
     }
   }
+
+  // --- Keyboard Event Handling ---
+  function incrementResult(result: 'Correct' | 'Incorrect') {
+    if (currentNotes === '') return;
+    markCorrect(result);
+  }
+
+  function resetTimer() {
+    timeElapsed = 0;
+    startTimer();
+  }
+
+  function undoLastAction() {
+    undoLastAnswer();
+  }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      if (event.shiftKey || event.metaKey) {
+        // (Shift or meta) + Enter: 
+        if (currentNotes === '') return;
+        incrementResult('Incorrect');
+      } else {
+        // Enter: Perform the default action
+        incrementResult('Correct');
+      }
+      event.preventDefault(); // Prevent default form submission
+    }
+    if (event.key === 'Escape') {
+      resetTimer();
+    }
+    if (event.metaKey && event.key === 'z') {
+      undoLastAction();
+    }
+  }
+
+  function handleAnswerInput(event: KeyboardEvent) {
+    if (event.key === 'Enter') {
+      // Trim and convert to lowercase for case-insensitive matching
+      const inputAnswer = answerInput.trim().toLowerCase();
+      
+      // Find the first answer choice that matches the input
+      const matchedChoice = answerChoices.find(choice => 
+        choice.toLowerCase() === inputAnswer
+      );
+
+      if (matchedChoice) {
+        // If a matching choice is found, record the answer
+        recordAnswer(matchedChoice);
+        
+        // Clear the input after recording
+        answerInput = '';
+
+        // Focus back on the answer input
+        AnswerInput?.focus();
+      }
+
+      event.preventDefault();
+    }
+  }
 </script>
 <main>
   <!-- Existing content -->
@@ -462,7 +542,7 @@
   </div>
 
   {#if !reviewModeEnabled}
-  <div class="answer-choices flex flex-col items-center">
+    <div class="answer-choices flex flex-col items-center">
     <div class="flex space-x-2 mb-2">
       {#each answerChoices as choice}
       <button
@@ -526,6 +606,16 @@
         Add Choice
       </button>
     </div>
+    <div class="answer-input-section pb-3">
+      <input
+        bind:this={AnswerInput}
+        bind:value={answerInput}
+        type="text"
+        placeholder="Type answer (a, b, c, etc.)"
+        class="w-full p-2 border rounded mt-2"
+        onkeydown={handleAnswerInput}
+      />
+    </div>
     {/if}
   </div>
   {:else}
@@ -575,6 +665,7 @@
       >
         Unmarked
       </button> -->
+      
     </div>
     {/if}
     {#if !currentAnswer}
@@ -583,14 +674,17 @@
   </div>
   {/if}
 
+ 
+
   <div class="notes-input-section pb-3">
-    <input 
+    <input
       bind:this={NotesInput}
-      type="text" 
-      bind:value={currentNotes} 
+      bind:value={currentNotes}
+      type="text"
       placeholder="Enter notes"
       class="w-full p-2 border rounded mt-2"
       onblur={handleNotesBlur}
+      onkeydown={handleKeyDown}
     />
   </div>
 
