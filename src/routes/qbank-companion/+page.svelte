@@ -34,6 +34,9 @@
 
 	let NotesInput: HTMLInputElement;
 
+	let importConfirmation = $state('');
+  let importedEntriesCount = $state(0);
+
 	onMount(() => {
 		const storedCorrect = localStorage.getItem('correctCount');
 		const storedIncorrect = localStorage.getItem('incorrectCount');
@@ -227,119 +230,95 @@
 	}
 
 
-	function importCSV() {
-		// Create an invisible file input element
-		const fileInput = document.createElement('input');
-		fileInput.type = 'file';
-		fileInput.accept = '.csv';
-		fileInput.style.display = 'none';
-		document.body.appendChild(fileInput);
+	function importCSV(event: Event) {
+		const file = (event.target as HTMLInputElement).files?.[0];
+		if (!file) return;
 
-		fileInput.onchange = (e) => {
-			const file = e.target.files[0];
-			if (!file) {
-				document.body.removeChild(fileInput);
-				return;
-			}
+		// Reset previous confirmation
+		importConfirmation = '';
+		importedEntriesCount = 0;
 
-			const reader = new FileReader();
-			reader.onload = (event) => {
-				const content = event.target.result;
-				parseAndLoadCSV(content);
-				document.body.removeChild(fileInput);
-			};
-			reader.readAsText(file);
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			const csvText = e.target?.result as string;
+			const rows = csvText.split('\n').slice(1); // Skip header row
+
+			const importedEntries = rows
+				.filter(row => row.trim() !== '') // Remove empty rows
+				.map(row => {
+					// More robust parsing to handle potential CSV variations
+					const cells = row.split(',').map(cell => cell.replace(/^"|"$/g, '').trim());
+					
+					// Ensure we have enough columns
+					while (cells.length < 5) {
+						cells.push(''); // Pad with empty strings if needed
+					}
+
+					const [datetime, correctness, timeTaken, notes, source] = cells;
+
+					// Normalize correctness
+					const normalizedCorrectness = 
+						correctness.toLowerCase() === 'correct' ? true : 
+						correctness.toLowerCase() === 'incorrect' ? false : 
+						undefined;
+
+					// Parse time, handling various formats
+					let parsedTime = 0;
+					if (timeTaken) {
+						// Remove 's' and any other non-numeric characters
+						const timeStr = timeTaken.replace(/[^\d.]/g, '');
+						parsedTime = parseFloat(timeStr) || 0;
+					}
+
+					return {
+						datetime: new Date(datetime).toISOString(),
+						correct: normalizedCorrectness,
+						time: parsedTime,
+						notes: notes || '',
+						source: source || '',
+						question: history.length + 1 // Assign incremental question number
+					};
+				});
+
+			// Merge imported entries with existing history
+			const mergedHistory = [
+				...history,
+				...importedEntries.filter(newEntry => 
+					!history.some(existingEntry => 
+						existingEntry.datetime === newEntry.datetime && 
+						existingEntry.question === newEntry.question
+					)
+				)
+			];
+
+			// Update history and related counts
+			history = mergedHistory;
+			correctCount = mergedHistory.filter(entry => entry.correct === true).length;
+			incorrectCount = mergedHistory.filter(entry => entry.correct === false).length;
+
+			// Update local storage
+			localStorage.setItem('history', JSON.stringify(history));
+			localStorage.setItem('correctCount', correctCount.toString());
+			localStorage.setItem('incorrectCount', incorrectCount.toString());
+
+			// Set CSV loaded flag
+			csvLoaded = true;
+			localStorage.setItem('csvLoaded', 'true');
+
+			// Set import confirmation and count
+			importedEntriesCount = importedEntries.length;
+			importConfirmation = `Successfully imported ${importedEntriesCount} records.`;
+
+			// Clear file input
+			(event.target as HTMLInputElement).value = '';
 		};
 
-		fileInput.click();
-	}
+		reader.onerror = () => {
+			importConfirmation = 'Error reading file. Please try again.';
+			importedEntriesCount = 0;
+		};
 
-	function parseAndLoadCSV(content: string) {
-		const lines = content.split('\n');
-		
-		// Skip the header line and process data rows
-		if (lines.length > 1) {
-			// Store current history to restore if parsing fails
-			const previousHistory = [...history];
-			
-			try {
-				// Extract data from CSV
-				const newItems = [];
-				
-				// Start from index 1 to skip header
-				for (let i = 1; i < lines.length; i++) {
-					if (!lines[i].trim()) continue; // Skip empty lines
-					
-					// Handle CSV parsing with potential quoted fields
-					let fields = [];
-					let currentField = '';
-					let inQuotes = false;
-					
-					for (let j = 0; j < lines[i].length; j++) {
-						const char = lines[i][j];
-						
-						if (char === '"') {
-							if (inQuotes && j + 1 < lines[i].length && lines[i][j + 1] === '"') {
-								// Escaped quote within a quoted field
-								currentField += '"';
-								j++; // Skip the next quote
-							} else {
-								// Toggle quote state
-								inQuotes = !inQuotes;
-							}
-						} else if (char === ',' && !inQuotes) {
-							// End of field
-							fields.push(currentField);
-							currentField = '';
-						} else {
-							currentField += char;
-						}
-					}
-					
-					// Add the last field
-					fields.push(currentField);
-					
-					// Create history item from CSV data
-					if (fields.length >= 5) {
-						const newItem = {
-							datetime: fields[0] || new Date().toISOString(),
-							result: fields[1] || '',
-							timeDifference: fields[2] || '',
-							notes: fields[3] || '',
-							source: fields[4] || '',
-							question: history.length + newItems.length + 1
-						};
-						
-						newItems.push(newItem);
-					}
-				}
-				
-				// Add new items to history
-				history = [...history, ...newItems];
-				
-				// Update counts based on imported data
-				let newCorrect = 0;
-				let newIncorrect = 0;
-				
-				newItems.forEach(item => {
-					if (item.result === 'Correct') {
-						newCorrect++;
-					} else if (item.result === 'Incorrect') {
-						newIncorrect++;
-					}
-				});
-				
-				correctCount += newCorrect;
-				incorrectCount += newIncorrect;
-				csvLoaded = true;
-				
-				alert(`Successfully imported ${newItems.length} records.`);
-			} catch (error) {
-				console.error("Error parsing CSV:", error);
-				history = previousHistory;
-				alert("Error importing CSV. Please check the file format.");
-			}
-		}
+		reader.readAsText(file);
 	}
 
 	function undoLastAction() {
@@ -466,7 +445,7 @@
 		if (event.metaKey && event.key === 'z') {
 			undoLastAction();
 		}
-	}
+}
 
 
 
@@ -560,8 +539,6 @@
 			class="source-input"
 		/>
 	</div>
-
-
 	
 	<!-- NOTES -->
 	<div class="input-container">
@@ -638,32 +615,50 @@
 	{/if}
 	
 	<div class="history-table">
-		<table>
+		<table class="w-full border-collapse">
 			<thead>
 				<tr>
-					<th>#</th>
-					<th>{visiblePercentCorrect}%</th>
-					<th>{calculateAverageTimeDifference(filteredHistory)}</th>
-					<th>Notes</th>
-					<th>Source</th>
+					<th class="border p-2">Question</th>
+					<th class="border p-2">Time</th>
+					<th class="border p-2">Status</th>
+					<th class="border p-2">Notes</th>
+					<th class="border p-2">Source</th>
+					<th class="border p-2">Datetime</th>
 				</tr>
 			</thead>
 			<tbody>
-				{#each filteredHistory.reverse() as item, index}
-					<tr>
-						<td>{filteredHistory.length - index}</td>
-						<td>{item.result}</td>
-						<td>{item.timeDifference}</td>
-						<td>
-							<textarea bind:value={item.notes} oninput={() => updateNotes(filteredHistory.length - index - 1, item.notes)}
+				{#each filteredHistory.slice().sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime()) as item, index}
+					<tr 
+						class:bg-green-100={item.correct === true}
+						class:bg-red-100={item.correct === false}
+						class="hover:bg-gray-50 transition-colors"
+					>
+						<td class="border p-2 text-center">{filteredHistory.length - index}</td>
+						<td class="border p-2 text-center">{item.time || 0}s</td>
+						<td class="border p-2 text-center">
+							{#if item.correct === true}
+								<span class="text-green-600">✅ Correct</span>
+							{:else if item.correct === false}
+								<span class="text-red-600">❌ Incorrect</span>
+							{:else}
+								<span class="text-gray-500">Unmarked</span>
+							{/if}
+						</td>
+						<td class="border p-2 text-center">
+							<textarea 
+								bind:value={item.notes} 
+								oninput={() => updateNotes(filteredHistory.length - index - 1, item.notes)}
 							></textarea>
 						</td>
-						<td>{item.source || ''}</td>
+						<td class="border p-2 text-center">{item.source || ''}</td>
+						<td class="border p-2 text-center">
+							{new Date(item.datetime).toLocaleString()}
+						</td>
 					</tr>
 				{/each}
 				{#if filteredHistory.length === 0}
 					<tr>
-						<td colspan="5" class="empty-message">No entries for this date.</td>
+						<td colspan="6" class="empty-message">No entries for this date.</td>
 					</tr>
 				{/if}
 			</tbody>
@@ -673,10 +668,30 @@
 		{#if history.length > 0}
 			<Button onclick={resetCounts}>Reset</Button>
 			<Button onclick={exportCSV}>Export</Button>		
-		{:else}
-			<Button onclick={importCSV}>Import CSV</Button>
 		{/if}
-		
+			<!-- CSV import section -->
+	<div class="csv-import-section">
+		<label 
+			for="csvImport" 
+			class="block text-sm font-medium text-gray-700"
+		>
+			Import CSV
+		</label>
+		<input 
+			id="csvImport"
+			type="file" 
+			accept=".csv"
+			onchange={importCSV}
+			class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+		/>
+		{#if importConfirmation}
+			<div 
+				class="import-confirmation mt-2 p-2 rounded {importedEntriesCount > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}"
+			>
+				{importConfirmation}
+			</div>
+		{/if}
+	</div>
 	</div>
 
 	<!-- <div class="wrapper">

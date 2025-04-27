@@ -6,6 +6,8 @@
   let currentQuestion = $state(1);
   let reviewModeEnabled = $state(false);
   let currentDate = $state(new Date());
+  let source = $state('');
+  let currentNotes = $state('');
 
   // --- Date Filtering ---
   let filteredAnswerData = $derived(filterAnswersByDate(answerData, currentDate));
@@ -15,6 +17,7 @@
   let timeElapsed = $state(0);
   let timerInterval: number | null = null;
   let answerChoices = $state(['a', 'b', 'c', 'd', 'e']);
+  let NotesInput: HTMLInputElement;
 
   // --- Derived State ---
   let totalQuestions = $derived(answerData.length);
@@ -51,10 +54,12 @@
       const storedAnswerData = localStorage.getItem('answerData');
       const storedCurrentQuestion = localStorage.getItem('currentQuestion');
       const storedReviewMode = localStorage.getItem('reviewModeEnabled');
+      const storedSource = localStorage.getItem('source');
 
       if (storedAnswerData) answerData = JSON.parse(storedAnswerData);
       if (storedCurrentQuestion) currentQuestion = parseInt(storedCurrentQuestion, 10);
       if (storedReviewMode) reviewModeEnabled = storedReviewMode === 'true';
+      if (storedSource) source = storedSource;
     }
     currentDate.setHours(0, 0, 0, 0);
     startTimer(); // Start timer on mount
@@ -102,7 +107,9 @@
         answer, 
         time: timeElapsed, 
         correct: undefined,
-        datetime: currentTimestamp.toISOString() 
+        datetime: currentTimestamp.toISOString(), 
+        source: source,
+        notes: currentNotes
       }];
     }
 
@@ -114,6 +121,8 @@
     answerChoices = ['a', 'b', 'c', 'd', 'e'];
     // Reset timeElapsed immediately AFTER recording, before starting new timer
     timeElapsed = 0;
+    currentNotes = '';
+    NotesInput ? NotesInput.focus() : null;
     startTimer(); // Start timer for the *new* question
   }
 
@@ -164,10 +173,13 @@
       reviewModeEnabled = false;
       answerChoices = ['a', 'b', 'c', 'd', 'e'];
       timeElapsed = 0;
+      source = '';
+      currentNotes = '';
       if (typeof window !== 'undefined' && window.localStorage) {
         localStorage.removeItem('answerData');
         localStorage.removeItem('currentQuestion');
         localStorage.removeItem('reviewModeEnabled');
+        localStorage.removeItem('source');
       }
       startTimer(); // Restart timer for the fresh question 1
     }
@@ -253,6 +265,45 @@
     }
   });
 
+  // Reactive effect to update notes when current question changes
+  $effect(() => {
+    // Find the current question's entry in answerData
+    const currentQuestionEntry = answerData.find(item => item.question === currentQuestion);
+    
+    // Update currentNotes if an entry exists
+    currentNotes = currentQuestionEntry?.notes || '';
+  });
+
+  // Function to update notes for a specific question
+  function updateQuestionNotes() {
+    // Find the index of the current question in answerData
+    const questionIndex = answerData.findIndex(item => item.question === currentQuestion);
+    
+    if (questionIndex !== -1) {
+      // Create a copy of the existing answer data
+      const updatedAnswerData = [...answerData];
+      
+      // Update the notes for the current question
+      updatedAnswerData[questionIndex] = {
+        ...updatedAnswerData[questionIndex],
+        notes: currentNotes
+      };
+      
+      // Update the answerData
+      answerData = updatedAnswerData;
+
+      // Persist to localStorage
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('answerData', JSON.stringify(answerData));
+      }
+    }
+  }
+
+  // Add an event listener to update notes when input loses focus
+  function handleNotesBlur() {
+    updateQuestionNotes();
+  }
+
   // --- Date Navigation ---
   function goToPreviousDay() {
     const newDate = new Date(currentDate);
@@ -292,6 +343,78 @@
       localStorage.setItem('answerData', JSON.stringify(answerData));
       localStorage.setItem('currentQuestion', currentQuestion.toString());
       localStorage.setItem('reviewModeEnabled', reviewModeEnabled.toString());
+      localStorage.setItem('source', source);
+    }
+  }
+
+  function exportToCsv() {
+    // Prepare CSV headers
+    const headers = ['Datetime', 'Correctness', 'Time Taken', 'Notes', 'Source'];
+    
+    // Convert answer data to CSV rows
+    const csvRows = answerData.map(item => [
+      item.datetime ? new Date(item.datetime).toLocaleString() : '',
+      // Mark undefined or null as 'Incorrect'
+      item.correct === true ? 'Correct' : 'Incorrect',
+      `${item.time || 0}s`,
+      item.notes || '',
+      item.source || ''
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...csvRows.map(row => row.map(cell => 
+        // Escape commas and quotes
+        `"${cell.toString().replace(/"/g, '""')}"`
+      ).join(','))
+    ].join('\n');
+
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `answer_data_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // Modify navigation functions to ensure notes are updated
+  function navigateBack() {
+    if (reviewModeEnabled) {
+      // In review mode, navigate through filtered data
+      const currentIndex = filteredAnswerData.findIndex(item => item.question === currentQuestion);
+      if (currentIndex !== -1 && currentIndex > 0) {
+        currentQuestion = filteredAnswerData[currentIndex - 1].question;
+      }
+    } else {
+      // In test mode, navigate through answered questions and next question
+      const navigableQuestions = getNavigableQuestions();
+      const currentIndex = navigableQuestions.indexOf(currentQuestion);
+      if (currentIndex > 0) {
+        currentQuestion = navigableQuestions[currentIndex - 1];
+      }
+    }
+  }
+
+  function navigateNext() {
+    if (reviewModeEnabled) {
+      // In review mode, navigate through filtered data
+      const currentIndex = filteredAnswerData.findIndex(item => item.question === currentQuestion);
+      if (currentIndex !== -1 && currentIndex < filteredAnswerData.length - 1) {
+        currentQuestion = filteredAnswerData[currentIndex + 1].question;
+      }
+    } else {
+      // In test mode, navigate through answered questions and next question
+      const navigableQuestions = getNavigableQuestions();
+      const currentIndex = navigableQuestions.indexOf(currentQuestion);
+      if (currentIndex < navigableQuestions.length - 1) {
+        currentQuestion = navigableQuestions[currentIndex + 1];
+      }
     }
   }
 </script>
@@ -301,6 +424,15 @@
     <button onclick={toggleReviewMode}>
       { reviewModeEnabled ? 'Switch to Test Mode' : 'Switch to Review Mode' }
     </button>
+  </div>
+  <div class="source-input-section pb-3">
+    <input 
+      id="sourceInput" 
+      type="text" 
+      bind:value={source} 
+      placeholder="Enter source for this session"
+      class="w-full p-2 border rounded mt-2"
+    />
   </div>
 
   <div class="flex justify-center">
@@ -365,11 +497,11 @@
       </button>
     </div>
     {#if answerChoices.length < 26}
-    <div class="flex justify-center pb-3 mt-2">
+    <div class="flex justify-center mt-2">
       <button 
         onclick={addAnswerChoice}
         class="
-          px-4 py-2 
+          px-4
           hover:bg-green-300 
           rounded 
           transition-colors 
@@ -436,25 +568,21 @@
   </div>
   {/if}
 
+  <div class="notes-input-section pb-3">
+    <input 
+      bind:this={NotesInput}
+      type="text" 
+      bind:value={currentNotes} 
+      placeholder="Enter notes"
+      class="w-full p-2 border rounded mt-2"
+      onblur={handleNotesBlur}
+    />
+  </div>
+
   <div class="navigation">
     <button 
       disabled={currentQuestion === 1} 
-      onclick={() => {
-        if (reviewModeEnabled) {
-          // In review mode, navigate through filtered data
-          const currentIndex = filteredAnswerData.findIndex(item => item.question === currentQuestion);
-          if (currentIndex !== -1 && currentIndex > 0) {
-            currentQuestion = filteredAnswerData[currentIndex - 1].question;
-          }
-        } else {
-          // In test mode, navigate through answered questions and next question
-          const navigableQuestions = getNavigableQuestions();
-          const currentIndex = navigableQuestions.indexOf(currentQuestion);
-          if (currentIndex > 0) {
-            currentQuestion = navigableQuestions[currentIndex - 1];
-          }
-        }
-      }}
+      onclick={navigateBack}
     >
       Back
     </button>
@@ -464,22 +592,7 @@
           ? currentQuestion >= filteredAnswerData[filteredAnswerData.length - 1]?.question 
           : currentQuestion >= getNavigableQuestions()[getNavigableQuestions().length - 1]
       }
-      onclick={() => {
-        if (reviewModeEnabled) {
-          // In review mode, navigate through filtered data
-          const currentIndex = filteredAnswerData.findIndex(item => item.question === currentQuestion);
-          if (currentIndex !== -1 && currentIndex < filteredAnswerData.length - 1) {
-            currentQuestion = filteredAnswerData[currentIndex + 1].question;
-          }
-        } else {
-          // In test mode, navigate through answered questions and next question
-          const navigableQuestions = getNavigableQuestions();
-          const currentIndex = navigableQuestions.indexOf(currentQuestion);
-          if (currentIndex < navigableQuestions.length - 1) {
-            currentQuestion = navigableQuestions[currentIndex + 1];
-          }
-        }
-      }}
+      onclick={navigateNext}
     >
       Next
     </button>
@@ -500,6 +613,8 @@
         <th class="border p-2">Question</th>
         <th class="border p-2">Answer</th>
         <th class="border p-2">Time</th>
+        <th class="border p-2">Notes</th>
+        <th class="border p-2">Source</th>
         <th class="border p-2">Status</th>
       </tr>
     </thead>
@@ -513,7 +628,9 @@
         >
           <td class="border p-2 text-center">{item.question}</td>
           <td class="border p-2 text-center">{item.answer?.toUpperCase() || 'N/A'}</td>
-          <td class="border p-2 text-center">{item.time}s</td>
+          <td class="border p-2 text-center">{item.time || 0}s</td>
+          <td class="border p-2 text-center">{item.notes || ''}</td>
+          <td class="border p-2 text-center">{item.source || ''}</td>
           <td class="border p-2 text-center">
             {#if item.correct === true}
               <span class="text-green-600">✅ Correct</span>
@@ -534,6 +651,8 @@
         <td class="border p-2 text-center">
           {Math.round(answerData.reduce((sum, entry) => sum + (entry.time || 0), 0))}
         </td>
+        <td class="border p-2 text-center"></td>
+        <td class="border p-2 text-center"></td>
         <td class="border p-2 text-center">
           <span class="text-green-600">✅ {correctQuestions}</span> 
           <span class="text-red-600 ml-2">❌ {incorrectQuestions}</span>
@@ -551,6 +670,9 @@
     <!-- <button onclick={goToToday}>Today</button> -->
   </div>
   <button onclick={resetData} class="reset-button">Reset All Data</button>
+  <div class="export-section">
+    <button onclick={exportToCsv}>Export to CSV</button>
+  </div>
 </main>
 
 <style>
@@ -564,7 +686,6 @@
   .answer-choices {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
     flex-wrap: wrap;
     justify-content: center;
   }
