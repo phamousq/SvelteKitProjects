@@ -8,6 +8,7 @@ export interface HistoryItem {
 	notes: string;
 	datetime: string;
 	source: string;
+	flagged?: boolean;
 }
 
 export interface UndoItem {

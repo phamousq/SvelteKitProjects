@@ -5,11 +5,13 @@
   let answerData = $state([]);
   let currentQuestion = $state(1);
   let reviewModeEnabled = $state(false);
+  let tutorModeEnabled = $state(false); // Add tutor mode state
   let currentDate = $state(new Date());
   let source = $state('');
   let currentNotes = $state('');
   let answerInput = $state('');
   let AnswerInput: HTMLInputElement;
+  let isFlagged = $state(false);
 
   // --- Date Filtering ---
   let filteredAnswerData = $derived(filterAnswersByDate(answerData, currentDate));
@@ -94,16 +96,17 @@
     const existingEntryIndex = answerData.findIndex(item => item.question === currentQuestion);
     
     if (existingEntryIndex !== -1) {
-      // Replace existing entry
+      // Replace existing entry, preserving flagged status
       answerData[existingEntryIndex] = { 
         ...answerData[existingEntryIndex], 
         answer, 
         time: timeElapsed,
         datetime: currentTimestamp.toISOString(),
-        correct: undefined // Reset correctness when re-answering
+        correct: undefined, // Reset correctness when re-answering
+        flagged: answerData[existingEntryIndex].flagged ?? isFlagged // Preserve or use current flag status
       };
     } else {
-      // Add new entry
+      // Add new entry with current flagged status
       answerData = [...answerData, { 
         question: currentQuestion, 
         answer, 
@@ -111,7 +114,8 @@
         correct: undefined,
         datetime: currentTimestamp.toISOString(), 
         source: source,
-        notes: currentNotes
+        notes: currentNotes,
+        flagged: isFlagged // Use current flag status
       }];
     }
 
@@ -176,27 +180,45 @@
     }
   }
 
-  function markCorrect(correct: string | undefined) {
-    const entryIndex = answerData.findIndex(item => item.question === currentQuestion);
-    if (entryIndex !== -1) {
-      answerData[entryIndex] = { ...answerData[entryIndex], correct };
+  function markCorrect() {
+    const currentAnswerIndex = answerData.findIndex(item => item.question === currentQuestion);
+    
+    if (currentAnswerIndex !== -1) {
+      // In tutor mode, allow marking without an answer
+      if (tutorModeEnabled || answerData[currentAnswerIndex].answer) {
+        answerData[currentAnswerIndex] = {
+          ...answerData[currentAnswerIndex],
+          correct: 'Correct'
+        };
+        
+        // In tutor mode, always increment to next question
+        if (tutorModeEnabled) {
+          currentQuestion = Math.max(...answerData.map(item => item.question)) + 1;
+        } else {
+          navigateToNextUnmarkedQuestion();
+        }
+      }
     }
+  }
+
+  function markIncorrect() {
+    const currentAnswerIndex = answerData.findIndex(item => item.question === currentQuestion);
     
-    // Find the next ungraded question
-    const ungraded = answerData
-      .filter(item => item.correct === undefined)
-      .map(item => item.question)
-      .filter(q => q > currentQuestion);
-    
-    if (ungraded.length > 0) {
-      // Move to the lowest ungraded question after the current one
-      currentQuestion = Math.min(...ungraded);
-    } else {
-      // If no more ungraded questions, switch back to test mode
-      reviewModeEnabled = false;
-      currentQuestion = Math.max(...answerData.map(item => item.question), 0) + 1;
-      timeElapsed = 0;
-      startTimer();
+    if (currentAnswerIndex !== -1) {
+      // In tutor mode, allow marking without an answer
+      if (tutorModeEnabled || answerData[currentAnswerIndex].answer) {
+        answerData[currentAnswerIndex] = {
+          ...answerData[currentAnswerIndex],
+          correct: 'Incorrect'
+        };
+        
+        // In tutor mode, always increment to next question
+        if (tutorModeEnabled) {
+          currentQuestion = Math.max(...answerData.map(item => item.question)) + 1;
+        } else {
+          navigateToNextUnmarkedQuestion();
+        }
+      }
     }
   }
 
@@ -512,6 +534,62 @@
       event.preventDefault();
     }
   }
+
+  function toggleFlag() {
+    const currentAnswerIndex = answerData.findIndex(item => item.question === currentQuestion);
+    if (currentAnswerIndex !== -1) {
+      answerData[currentAnswerIndex] = {
+        ...answerData[currentAnswerIndex],
+        flagged: !answerData[currentAnswerIndex].flagged
+      };
+      isFlagged = answerData[currentAnswerIndex].flagged;
+    }
+  }
+
+  $effect(() => {
+    const currentAnswer = answerData.find(item => item.question === currentQuestion);
+    isFlagged = currentAnswer?.flagged || false;
+  });
+
+  // Navigate to the next unmarked question
+  function navigateToNextUnmarkedQuestion() {
+    const unmarkedQuestions = answerData
+      .filter(item => item.correct === undefined)
+      .map(item => item.question);
+    
+    if (unmarkedQuestions.length > 0) {
+      // Move to the lowest unmarked question after the current one
+      const nextUnmarkedQuestion = Math.min(...unmarkedQuestions.filter(q => q > currentQuestion));
+      
+      // If no next unmarked question and not in tutor mode, switch back to test mode
+      if (nextUnmarkedQuestion === Infinity) {
+        if (!tutorModeEnabled) {
+          reviewModeEnabled = false;
+          currentQuestion = Math.max(...answerData.map(item => item.question), 0) + 1;
+          timeElapsed = 0;
+          startTimer();
+        } else {
+          // In tutor mode, always increment to next question
+          currentQuestion = Math.max(...answerData.map(item => item.question)) + 1;
+        }
+      } else {
+        // Move to next unmarked question
+        currentQuestion = nextUnmarkedQuestion;
+      }
+    } else {
+      // No unmarked questions
+      if (!tutorModeEnabled) {
+        // Only switch back to test mode if not in tutor mode
+        reviewModeEnabled = false;
+        currentQuestion = Math.max(...answerData.map(item => item.question), 0) + 1;
+        timeElapsed = 0;
+        startTimer();
+      } else {
+        // In tutor mode, increment to next question
+        currentQuestion = Math.max(...answerData.map(item => item.question)) + 1;
+      }
+    }
+  }
 </script>
 <main>
   <!-- Existing content -->
@@ -540,8 +618,19 @@
       <span class="text-sm text-gray-600 ml-4">{timeElapsed}s</span>
     </p>
   </div>
+  
 
   {#if !reviewModeEnabled}
+    <div class="flex items-center space-x-2 justify-center pb-2">
+      <input 
+        type="checkbox" 
+        id="flagQuestion" 
+        bind:checked={isFlagged}
+        onchange={toggleFlag}
+        class="form-checkbox h-5 w-5 text-yellow-500"
+      />
+      <label for="flagQuestion" class="text-sm">Flag Question</label>
+    </div>
     <div class="answer-choices flex flex-col items-center">
     <div class="flex space-x-2 mb-2">
       {#each answerChoices as choice}
@@ -621,10 +710,22 @@
   {:else}
   <div class="review-controls flex flex-col items-center space-y-4">
   
-    {#if currentAnswer}
+    {#if reviewModeEnabled}
+      <div class="flex items-center justify-center space-x-4 mb-4">
+        <label class="flex items-center space-x-2">
+          <input 
+            type="checkbox" 
+            bind:checked={tutorModeEnabled}
+            class="form-checkbox h-5 w-5 text-yellow-500"
+          />
+          <span>Tutor Mode</span>
+        </label>
+      </div>
+    {/if}
+    <!-- {#if currentAnswer} -->
     <div class="flex space-x-4">
       <button 
-        onclick={() => markCorrect('Correct')} 
+        onclick={markCorrect} 
         class="
           text-4xl w-56 h-24 rounded-full 
           bg-green-200
@@ -638,7 +739,7 @@
         ✅
       </button>
       <button 
-        onclick={() => markCorrect('Incorrect')} 
+        onclick={markIncorrect} 
         class="
           text-4xl w-56 h-24 rounded-full 
           bg-red-200
@@ -667,14 +768,12 @@
       </button> -->
       
     </div>
-    {/if}
-    {#if !currentAnswer}
-    <p class="text-gray-500 text-xl">(No answer recorded for this question)</p>
-    {/if}
+    <!-- {/if} -->
+
   </div>
   {/if}
 
- 
+
 
   <div class="notes-input-section pb-3">
     <input
@@ -720,6 +819,7 @@
     <thead>
       <tr class="bg-gray-200">
         <th class="border p-2">Question</th>
+        <th class="border p-2">Flagged</th>
         <th class="border p-2">Answer</th>
         <th class="border p-2">Time</th>
         <th class="border p-2">Notes</th>
@@ -736,6 +836,7 @@
           class:incorrect={item.correct === 'Incorrect'}
         >
           <td class="border p-2 text-center">{item.question}</td>
+          <td class="border p-2 text-center">{item.flagged ? '🚩' : ''}</td>
           <td class="border p-2 text-center">{item.answer?.toUpperCase() || 'N/A'}</td>
           <td class="border p-2 text-center">{item.time || 0}s</td>
           <td class="border p-2 text-center">{item.notes || ''}</td>
@@ -752,8 +853,11 @@
         </tr>
       {/each}
       {#if answerData.length > 0}
-      <tr class="bg-blue-50 font-bold">
+      <tr class="font-bold">
         <td class="border p-2 text-center">Total</td>
+        <td class="border p-2 text-center">
+          {answerData.filter(entry => entry.flagged).length}
+        </td>
         <td class="border p-2 text-center">
           {answerData.filter(entry => entry.answer).length} / {answerData.length}
         </td>
