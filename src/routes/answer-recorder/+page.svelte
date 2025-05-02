@@ -615,7 +615,14 @@
       {#if reviewModeEnabled}
       <span class="text-4xl bg-yellow-300 text-black px-2 py-1 rounded">{currentAnswer.toUpperCase() || 'Not answered'}</span>
       {/if}
-      <span class="text-sm text-gray-600 ml-4">{timeElapsed}s</span>
+      {#if answerData.find(item => item.question === currentQuestion)?.flagged}
+        <span class="text-medium text-red-600 ml-4">🚩</span>
+      {/if}
+      {#if timeElapsed > 60}
+        <span class="text-sm text-red-600 ml-4">{timeElapsed}s</span>
+      {:else}
+        <span class="text-sm text-gray-600 ml-4">{timeElapsed}s</span>
+      {/if}
     </p>
   </div>
   
@@ -710,7 +717,7 @@
   {:else}
   <div class="review-controls flex flex-col items-center space-y-4">
   
-    {#if reviewModeEnabled}
+    <!-- {#if reviewModeEnabled}
       <div class="flex items-center justify-center space-x-4 mb-4">
         <label class="flex items-center space-x-2">
           <input 
@@ -721,7 +728,7 @@
           <span>Tutor Mode</span>
         </label>
       </div>
-    {/if}
+    {/if} -->
     <!-- {#if currentAnswer} -->
     <div class="flex space-x-4">
       <button 
