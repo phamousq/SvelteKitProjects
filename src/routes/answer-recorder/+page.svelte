@@ -494,11 +494,10 @@
     if (event.key === 'Enter') {
       if (event.shiftKey || event.metaKey) {
         // (Shift or meta) + Enter: 
-        if (currentNotes === '') return;
-        incrementResult('Incorrect');
+        markIncorrect();
       } else {
         // Enter: Perform the default action
-        incrementResult('Correct');
+        markCorrect();
       }
       event.preventDefault(); // Prevent default form submission
     }
