@@ -29,7 +29,7 @@
 	let countComplete = $derived(correctCount + incorrectCount);
 	let percentCorrect = $derived(+((correctCount / countComplete) * 100).toFixed(1));
 	let history = $state([]);
-	let previousTimestamp: any = new Date();
+	let previousTimestamp: any = new Date(); // Used for Block 2's original timeDifference
 	let undoHistory = $state([]);
 	let source = $state('');
 	let csvLoaded = $state(false);
@@ -37,7 +37,7 @@
 
 	let currentDate = $state(new Date());
 	let filteredHistory = $derived(filterHistoryByDate(history, currentDate));
-	let dailyQuestionCount = $derived(filteredHistory.length + 1);
+	let dailyQuestionCount = $derived(filteredHistory.length);
 	let visibleCorrectCount = $derived(countCorrectInFiltered(filteredHistory));
 	let visibleIncorrectCount = $derived(countIncorrectInFiltered(filteredHistory));
 	let visibleCountComplete = $derived(visibleCorrectCount + visibleIncorrectCount);
@@ -51,6 +51,11 @@
 
 	let importConfirmation = $state('');
 	let importedEntriesCount = $state(0);
+
+	// --- Timer State (Copied from Block 1) ---
+	let questionStartTime: number;
+	let timeElapsed = $state(0);
+	let timerInterval: number | null = null;
 
 	let sourcedQuestionCount = $derived((sourceName: string) => {
 		// Get the target source name from the state variable, trim whitespace, and convert to lowercase for case-insensitive matching.
@@ -95,6 +100,8 @@
 
 		currentDate = new Date();
 		currentDate.setHours(0, 0, 0, 0);
+
+		startTimer(); // (Copied from Block 1) Start timer on mount
 	});
 
 	$effect(() => {
@@ -105,6 +112,21 @@
 		localStorage.setItem('csvLoaded', csvLoaded.toString());
 		localStorage.setItem('undoHistory', JSON.stringify(undoHistory));
 	});
+
+	// --- Timer Functions (Copied from Block 1) ---
+	function startTimer() {
+		questionStartTime = Date.now();
+		// Clear existing timer before starting a new one to prevent multiple timers
+		if (timerInterval) clearInterval(timerInterval);
+		timerInterval = setInterval(() => {
+			timeElapsed = Math.floor((Date.now() - questionStartTime) / 1000);
+		}, 1000);
+	}
+
+	function stopTimer() {
+		if (timerInterval) clearInterval(timerInterval);
+		timerInterval = null;
+	}
 
 	// Filter history entries by date
 	function filterHistoryByDate(historyItems: any, date: any) {
@@ -179,13 +201,16 @@
 	}
 
 	function incrementResult(result: 'Correct' | 'Incorrect') {
+		stopTimer(); // (Copied from Block 1) Stop timer before processing
 		const currentTimestamp: any = new Date();
+		// Block 2's original timeDifference logic (based on previousTimestamp)
 		const timeDifference = formatTimeDifference(currentTimestamp - previousTimestamp);
 
 		const newHistoryItem: any = {
 			question: dailyQuestionCount,
 			result: result,
-			timeDifference: timeDifference,
+			timeDifference: timeDifference, // Block 2's original field
+			time: timeElapsed, // (Copied from Block 1) Time taken for this question from the new timer
 			notes: currentNotes,
 			datetime: currentTimestamp.toISOString(),
 			source: source
@@ -204,7 +229,7 @@
 
 		history = [...history, newHistoryItem];
 		correctCount++;
-		previousTimestamp = currentTimestamp;
+		previousTimestamp = currentTimestamp; // Update for Block 2's timeDifference logic
 
 		// Make sure we're showing today when adding new entries
 		if (!isToday(currentDate)) {
@@ -212,9 +237,13 @@
 		}
 		currentNotes = '';
 		NotesInput ? NotesInput.focus() : null;
+
+		timeElapsed = 0; // (Copied from Block 1) Reset timer display AFTER recording
+		startTimer(); // (Copied from Block 1) Start timer for the new context
 	}
 
 	function resetCounts() {
+		stopTimer(); // (Copied from Block 1)
 		undoHistory = [
 			...undoHistory,
 			{
@@ -229,6 +258,8 @@
 		history = [];
 		previousTimestamp = new Date();
 		csvLoaded = false;
+		timeElapsed = 0; // (Copied from Block 1)
+		startTimer(); // (Copied from Block 1)
 	}
 
 	function formatTimeDifference(milliseconds: number) {
@@ -247,15 +278,13 @@
 	}
 
 	function exportCSV() {
-		const header = 'Datetime,Correctness,Time Taken,Notes,Source';
+		const header = 'Datetime,Correctness,Time Taken (Timer),Time Difference (Legacy),Notes,Source'; // Clarified time fields
 		const rows = history
 			.map((item) => {
-				// Handle potential missing datetime field for backward compatibility
 				const datetime = item.datetime || new Date().toISOString();
-				// Handle potential missing source field for backward compatibility
-				const source = item.source || '';
-
-				return `${datetime},${item.result},${item.timeDifference},"${item.notes.replace(/"/g, '""')}","${source.replace(/"/g, '""')}"`;
+				const itemSource = item.source || '';
+				// Include the new 'time' field from the timer, and keep original 'timeDifference'
+				return `${datetime},${item.result},${item.time !== undefined ? item.time + 's' : 'N/A'},${item.timeDifference || 'N/A'},"${item.notes.replace(/"/g, '""')}","${itemSource.replace(/"/g, '""')}"`;
 			})
 			.join('\n');
 		const csvContent = `${header}\n${rows}`;
@@ -290,10 +319,13 @@
 
 					// Ensure we have enough columns
 					while (cells.length < 5) {
+						// Adjust if expecting more due to new time field, though import might be for older format
 						cells.push(''); // Pad with empty strings if needed
 					}
 
-					const [datetime, correctness, timeTaken, notes, source] = cells;
+					// Assuming original CSV format for import, might need adjustment if CSV contains the new timer's 'time' field
+					const [datetime, correctness, timeTakenLegacy, notes, source] = cells;
+					// let timeFromNewTimer = cells[/* new index if present */];
 
 					// Normalize correctness to handle both string and boolean inputs
 					const normalizedCorrectness =
@@ -307,23 +339,17 @@
 								? 'Incorrect'
 								: undefined;
 
-					// console.log('CSV Import Debug:', {
-					// 	originalCorrectness: correctness,
-					// 	normalizedCorrectness: normalizedCorrectness
-					// });
-
-					// Parse time, handling various formats
-					let parsedTime = 0;
-					if (timeTaken) {
-						// Remove 's' and any other non-numeric characters
-						const timeStr = timeTaken.replace(/[^\d.]/g, '');
-						parsedTime = parseFloat(timeStr) || 0;
+					let parsedTimeLegacy = 0; // For timeDifference
+					if (timeTakenLegacy) {
+						const timeStr = timeTakenLegacy.replace(/[^\d.]/g, '');
+						parsedTimeLegacy = parseFloat(timeStr) || 0;
 					}
 
 					return {
 						datetime: new Date(datetime).toISOString(),
 						result: normalizedCorrectness,
-						time: parsedTime,
+						timeDifference: formatTimeDifference(parsedTimeLegacy * 1000), // Assuming timeTakenLegacy was in seconds and becomes timeDifference
+						// time: /* handle imported 'time' field if present */,
 						notes: notes || '',
 						source: source || ''
 					};
@@ -337,7 +363,7 @@
 						!history.some(
 							(existingEntry) =>
 								existingEntry.datetime === newEntry.datetime &&
-								existingEntry.question === newEntry.question
+								existingEntry.question === newEntry.question // 'question' might not exist on newEntry if not parsed
 						)
 				)
 			];
@@ -379,8 +405,11 @@
 			correctCount = lastUndo.previousCorrect;
 			incorrectCount = lastUndo.previousIncorrect;
 			history = lastUndo.previousHistory;
-			previousTimestamp = new Date();
+			previousTimestamp = new Date(); // Reset for Block 2's timeDifference logic
 			currentNotes = lastUndo.previousNotes;
+
+			timeElapsed = 0; // (Copied from Block 1)
+			startTimer(); // (Copied from Block 1)
 		}
 
 		if (NotesInput && currentNotes.length > 0) {
@@ -405,8 +434,14 @@
 		} else console.log('NotesInput or currentNotes is missing');
 	}
 
+	// resetTimer function in Block 2, merged with Block 1's timer reset logic
 	function resetTimer() {
+		// Original Block 2 logic:
 		previousTimestamp = new Date();
+
+		// Copied logic from Block 1's resetTimer:
+		timeElapsed = 0;
+		startTimer(); // Call the copied startTimer
 	}
 
 	function updateNotes(index, notes) {
@@ -421,20 +456,32 @@
 	function calculateAverageTimeDifference(items = filteredHistory) {
 		if (items.length === 0) return '0s';
 
+		// This function uses 'timeDifference'. If you want it to use the new 'time' field, it needs adjustment.
+		// For now, keeping it as is, using 'timeDifference'.
 		const totalMilliseconds = items.reduce((sum, item) => {
 			const timeParts = item.timeDifference.split(/m |s/);
 			let minutes = 0;
 			let seconds = 0;
 
 			if (timeParts.length === 3) {
-				minutes = parseInt(timeParts[0]);
-				seconds = parseInt(timeParts[1]);
+				// "Xm Ys"
+				minutes = parseInt(timeParts[0]) || 0;
+				seconds = parseInt(timeParts[1]) || 0;
 			} else if (timeParts.length === 2 && item.timeDifference.includes('m')) {
-				minutes = parseInt(timeParts[0]);
+				// "Xm"
+				minutes = parseInt(timeParts[0]) || 0;
 			} else if (timeParts.length === 2 && item.timeDifference.includes('s')) {
-				seconds = parseInt(timeParts[0]);
-			} else if (timeParts.length === 1) {
-				seconds = parseInt(timeParts[0]);
+				// "Ys"
+				seconds = parseInt(timeParts[0]) || 0;
+			} else if (timeParts.length === 1 && item.timeDifference.includes('s')) {
+				// "Ys" (no space)
+				seconds = parseInt(timeParts[0]) || 0;
+			} else if (timeParts.length === 1 && item.timeDifference.includes('m')) {
+				// "Xm" (no space)
+				minutes = parseInt(timeParts[0]) || 0;
+			} else if (timeParts.length === 1 && !isNaN(parseInt(timeParts[0]))) {
+				// Just seconds as number string
+				seconds = parseInt(timeParts[0]) || 0;
 			}
 
 			return sum + (minutes * 60 + seconds) * 1000;
@@ -476,16 +523,19 @@
 		if (event.key === 'Enter') {
 			if (event.shiftKey || event.metaKey) {
 				// (Shift or meta) + Enter:
-				if (currentNotes === '') return;
+				// Block 2 doesn't have a direct equivalent for Block 1's markIncorrect() here
+				// It calls incrementResult('Incorrect') which has its own notes check
+				if (currentNotes === '') return; // Keeping Block 1's like check, though incrementResult also checks
 				incrementResult('Incorrect');
 			} else {
 				// Enter: Perform the default action
+				// Block 2 calls incrementResult('Correct')
 				incrementResult('Correct');
 			}
 			event.preventDefault(); // Prevent default form submission
 		}
 		if (event.key === 'Escape') {
-			resetTimer();
+			resetTimer(); // This will now call the merged resetTimer
 		}
 		if (event.metaKey && event.key === 'z') {
 			undoLastAction();
@@ -493,18 +543,23 @@
 	}
 
 	import { browser } from '$app/environment';
-	import type { HistoryItem } from '$lib/store';
+	import type { HistoryItem } from '$lib/store'; // Assuming HistoryItem type matches or is adapted
 
 	function getLocalStorageHistory(): HistoryItem[] {
-		if (!browser) return history;
+		// Type HistoryItem might need 'time' field
+		if (!browser) return history; // Should be an empty array if history is not yet defined.
+		// Or, if history is $state([]), it's fine.
 		try {
 			const storedHistory = localStorage.getItem('qbankHistory');
-			return storedHistory ? JSON.parse(storedHistory) : history;
+			// Ensure parsing handles items that might be missing the new 'time' field.
+			const parsed = storedHistory ? JSON.parse(storedHistory) : [];
+			return parsed.map((item) => ({ ...item, time: item.time || 0 })); // Default time if missing
 		} catch {
-			return history;
+			return []; // Return empty array on error, if history is not yet defined.
 		}
 	}
 
+	// This localStorageHistory might be redundant if 'history' is the main source of truth
 	let localStorageHistory = $state(getLocalStorageHistory());
 
 	let localStorageStats = $derived({
@@ -525,9 +580,10 @@
 
 		try {
 			localStorage.setItem('qbankHistory', JSON.stringify(history));
-			localStorageHistory = history;
+			// If localStorageHistory is meant to be a reactive mirror of history for some reason:
+			// localStorageHistory = history.map(item => ({...item})); // Deep copy if needed
 		} catch {
-			console.error('Failed to update local storage');
+			console.error('Failed to update local storage for qbankHistory');
 		}
 	});
 </script>
@@ -609,13 +665,18 @@
 		</div>
 	</div>
 	{#if source}
-		<div>
-			<div class="wrapper" id="QuestionContainer">
-				<div>
-					<h1 style="font-size: 32px; font-weight: bold;">
-						{source}: {sourcedQuestionCount(source)}
-					</h1>
-				</div>
+		<div class="flex items-center justify-center">
+			<div>
+				<span style="font-size: 32px; font-weight: bold;">
+					{source}: {sourcedQuestionCount(source)}
+				</span>
+				{#if timeElapsed >= 90}
+					<span class="ml-4 text-sm text-red-600">{timeElapsed}s</span>
+				{:else if timeElapsed >= 60}
+					<span class="ml-4 text-sm text-orange-400">{timeElapsed}s</span>
+				{:else}
+					<span class="ml-4 text-sm text-gray-600">{timeElapsed}s</span>
+				{/if}
 			</div>
 		</div>
 	{/if}
