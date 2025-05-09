@@ -524,7 +524,6 @@
 				// (Shift or meta) + Enter:
 				// Block 2 doesn't have a direct equivalent for Block 1's markIncorrect() here
 				// It calls incrementResult('Incorrect') which has its own notes check
-				if (currentNotes === '') return; // Keeping Block 1's like check, though incrementResult also checks
 				incrementResult('Incorrect');
 			} else {
 				// Enter: Perform the default action
