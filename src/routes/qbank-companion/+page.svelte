@@ -29,6 +29,8 @@
 	let countComplete = $derived(correctCount + incorrectCount);
 	let percentCorrect = $derived(+((correctCount / countComplete) * 100).toFixed(1));
 	let history = $state([]);
+	let historyCorrect = $derived(history.filter((item) => item.result === 'Correct').length);
+	let historyIncorrect = $derived(history.filter((item) => item.result === 'Incorrect').length);
 	let previousTimestamp: any = new Date(); // Used for Block 2's original timeDifference
 	let undoHistory = $state([]);
 	let source = $state('');
@@ -589,7 +591,7 @@
 </script>
 
 <main>
-	<div id="ChartContainer" class="grid grid-cols-3 gap-4">
+	<div id="ChartContainer" class="grid grid-cols-3 gap-4 p-2">
 		<div class="col-span-2 h-[300px] rounded border p-4">
 			<BarChart
 				data={lastSevenDaysData()}
@@ -614,14 +616,13 @@
 			>
 				<svelte:fragment slot="tooltip" let:x let:y>
 					<Tooltip.Root let:data>
-						<Tooltip.Header>{data.label}</Tooltip.Header>
+						<Tooltip.Header>{data.label}: {data.correct + data.incorrect}</Tooltip.Header>
 						<Tooltip.List>
 							<Tooltip.Item label="Correct" value={data.correct} />
 							<Tooltip.Item label="Incorrect" value={data.incorrect} />
 						</Tooltip.List>
 						<Tooltip.Separator />
 						<Tooltip.List>
-							<Tooltip.Item label="Total" value={data.correct + data.incorrect} />
 							<Tooltip.Item
 								label="% Correct"
 								value={((data.correct / (data.correct + data.incorrect)) * 100).toFixed(0)}
@@ -642,14 +643,14 @@
 			>
 				<svelte:fragment slot="aboveMarks">
 					<Text
-						value={`${localStorageStats.total} total`}
+						value={`${historyCorrect + historyIncorrect} total`}
 						textAnchor="middle"
 						verticalAnchor="middle"
 						class="text-4xl"
 						dy={4}
 					/>
 					<Text
-						value={`${localStorageStats.correctPercentage}%`}
+						value={`${((historyCorrect / (historyCorrect + historyIncorrect)) * 100).toFixed(0)}%`}
 						textAnchor="middle"
 						verticalAnchor="middle"
 						class="fill-surface-content/50 text-sm"
