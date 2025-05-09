@@ -662,21 +662,21 @@
 	</div>
 	<div class="wrapper" id="QuestionContainer">
 		<div>
-			<h1 style="font-size: 32px; font-weight: bold;">Daily Count: {dailyQuestionCount}</h1>
+			<h1 style="font-size: 20px; font-weight: bold;">Daily: {dailyQuestionCount}</h1>
 		</div>
 	</div>
 	{#if source}
 		<div class="flex items-center justify-center">
 			<div>
-				<span style="font-size: 32px; font-weight: bold;">
+				<span style="font-size: 24px; font-weight: bold;">
 					{source}: {sourcedQuestionCount(source)}
 				</span>
 				{#if timeElapsed >= 90}
-					<span class="ml-4 text-sm text-red-600">{timeElapsed}s</span>
+					<button class="ml-4 text-sm text-red-600" onclick={resetTimer}>{timeElapsed}s</button>
 				{:else if timeElapsed >= 60}
-					<span class="ml-4 text-sm text-orange-400">{timeElapsed}s</span>
+					<button class="ml-4 text-sm text-orange-400" onclick={resetTimer}>{timeElapsed}s</button>
 				{:else}
-					<span class="ml-4 text-sm text-gray-600">{timeElapsed}s</span>
+					<button class="ml-4 text-sm text-gray-600" onclick={resetTimer}>{timeElapsed}s</button>
 				{/if}
 			</div>
 		</div>
