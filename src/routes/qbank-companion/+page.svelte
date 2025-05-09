@@ -1,4 +1,16 @@
 <script lang="ts">
+	import {
+		historyStore,
+		sourceStore,
+		correctCountStore,
+		incorrectCountStore,
+		dailyQuestionCountStore,
+		currentNotesStore,
+		formatTimeDifference,
+		totalQuestionsStore,
+		correctQuestionsStore,
+		correctPercentageStore
+	} from '$lib/store';
 	import { onMount } from 'svelte';
 	import { sineOut } from 'svelte/easing';
 	import { scaleTime, scaleBand } from 'd3-scale';
@@ -262,21 +274,6 @@
 		csvLoaded = false;
 		timeElapsed = 0; // (Copied from Block 1)
 		startTimer(); // (Copied from Block 1)
-	}
-
-	function formatTimeDifference(milliseconds: number) {
-		const seconds = Math.floor(milliseconds / 1000);
-		const minutes = Math.floor(seconds / 60);
-		const remainingSeconds = seconds % 60;
-
-		let formattedTime = '';
-
-		if (minutes > 0) {
-			formattedTime += `${minutes}m `;
-		}
-		formattedTime += `${remainingSeconds}s`;
-
-		return formattedTime;
 	}
 
 	function exportCSV() {
@@ -543,51 +540,6 @@
 			undoLastAction();
 		}
 	}
-
-	import { browser } from '$app/environment';
-	import type { HistoryItem } from '$lib/store'; // Assuming HistoryItem type matches or is adapted
-
-	function getLocalStorageHistory(): HistoryItem[] {
-		// Type HistoryItem might need 'time' field
-		if (!browser) return history; // Should be an empty array if history is not yet defined.
-		// Or, if history is $state([]), it's fine.
-		try {
-			const storedHistory = localStorage.getItem('qbankHistory');
-			// Ensure parsing handles items that might be missing the new 'time' field.
-			const parsed = storedHistory ? JSON.parse(storedHistory) : [];
-			return parsed.map((item) => ({ ...item, time: item.time || 0 })); // Default time if missing
-		} catch {
-			return []; // Return empty array on error, if history is not yet defined.
-		}
-	}
-
-	// This localStorageHistory might be redundant if 'history' is the main source of truth
-	let localStorageHistory = $state(getLocalStorageHistory());
-
-	let localStorageStats = $derived({
-		total: localStorageHistory.length,
-		correct: localStorageHistory.filter((item) => item.result === 'Correct').length,
-		correctPercentage:
-			localStorageHistory.length > 0
-				? (
-						(localStorageHistory.filter((item) => item.result === 'Correct').length /
-							localStorageHistory.length) *
-						100
-					).toFixed(0)
-				: '0'
-	});
-
-	$effect(() => {
-		if (!browser) return;
-
-		try {
-			localStorage.setItem('qbankHistory', JSON.stringify(history));
-			// If localStorageHistory is meant to be a reactive mirror of history for some reason:
-			// localStorageHistory = history.map(item => ({...item})); // Deep copy if needed
-		} catch {
-			console.error('Failed to update local storage for qbankHistory');
-		}
-	});
 </script>
 
 <main>

@@ -5,6 +5,7 @@ export interface HistoryItem {
 	question: number;
 	result: 'Correct' | 'Incorrect';
 	timeDifference: string;
+	time: number;
 	notes: string;
 	datetime: string;
 	source: string;
@@ -35,152 +36,87 @@ function formatTimeDifference(milliseconds: number): string {
 
 // Local Storage Helpers
 const safeGetLocalStorage = <T>(key: string, defaultValue: T): T => {
-	if (typeof window === 'undefined' || !window.localStorage) return defaultValue;
-	const storedValue = localStorage.getItem(key);
-	if (storedValue === null) return defaultValue;
 	try {
+		if (typeof window === 'undefined' || !window.localStorage) return defaultValue;
+		const storedValue = localStorage.getItem(key);
+		if (storedValue === null) return defaultValue;
 		return JSON.parse(storedValue);
-	} catch {
+	} catch (error) {
+		console.warn(`Error reading localStorage for ${key}:`, error);
 		return defaultValue;
 	}
 };
 
 const safeSetLocalStorage = <T>(key: string, value: T): void => {
-	if (typeof window !== 'undefined' && window.localStorage) {
-		localStorage.setItem(key, JSON.stringify(value));
+	try {
+		if (typeof window === 'undefined' || !window.localStorage) return;
+
+		// Limit storage size and handle large objects
+		const limitedValue = Array.isArray(value)
+			? value.slice(-500) // Limit array to last 500 items
+			: value;
+
+		localStorage.setItem(key, JSON.stringify(limitedValue));
+	} catch (error) {
+		if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+			console.error('localStorage quota exceeded. Clearing oldest entries.');
+			// Optional: Implement a strategy to clear oldest entries
+		} else {
+			console.error(`Failed to set localStorage for ${key}:`, error);
+		}
 	}
 };
 
-// Stores
-export const correctCount = writable(safeGetLocalStorage('correctCount', 0));
-correctCount.subscribe((value) => safeSetLocalStorage('correctCount', value));
+// Persistent Writable Store
+export function persistentStore<T>(key: string, initialValue: T) {
+	const storedValue = safeGetLocalStorage(key, initialValue);
+	const { subscribe, set, update } = writable<T>(storedValue);
 
-export const incorrectCount = writable(safeGetLocalStorage('incorrectCount', 0));
-incorrectCount.subscribe((value) => safeSetLocalStorage('incorrectCount', value));
-
-export const history = writable<HistoryItem[]>(safeGetLocalStorage('history', []));
-history.subscribe((value) => safeSetLocalStorage('history', value));
-
-export const undoHistory = writable<UndoItem[]>(safeGetLocalStorage('undoHistory', []));
-undoHistory.subscribe((value) => safeSetLocalStorage('undoHistory', value));
-
-export const source = writable(safeGetLocalStorage('source', ''));
-source.subscribe((value) => safeSetLocalStorage('source', value));
-
-export const currentNotes = writable('');
-
-export const currentDate = writable(new Date());
-
-// Derived Stores
-export const countComplete = derived(
-	[correctCount, incorrectCount],
-	([$correctCount, $incorrectCount]) => $correctCount + $incorrectCount
-);
-
-export const percentCorrect = derived(
-	[correctCount, countComplete],
-	([$correctCount, $countComplete]) => {
-		if ($countComplete === 0) return 0;
-		return +(($correctCount / $countComplete) * 100).toFixed(1);
-	}
-);
-
-// Actions
-export function incrementResult(result: 'Correct' | 'Incorrect') {
-	const currentTimestamp = new Date();
-	const previousTimestamp = new Date(); // You might want to track this separately
-
-	const timeDifference = formatTimeDifference(
-		currentTimestamp.getTime() - previousTimestamp.getTime()
-	);
-
-	const newHistoryItem: HistoryItem = {
-		question: history.get().length + 1,
-		result: result,
-		timeDifference: timeDifference,
-		notes: currentNotes.get(),
-		datetime: currentTimestamp.toISOString(),
-		source: source.get()
+	return {
+		subscribe,
+		set: (value: T) => {
+			safeSetLocalStorage(key, value);
+			set(value);
+		},
+		update: (updater: (value: T) => T) => {
+			update((currentValue) => {
+				const newValue = updater(currentValue);
+				safeSetLocalStorage(key, newValue);
+				return newValue;
+			});
+		},
+		reset: () => {
+			if (typeof window !== 'undefined' && window.localStorage) {
+				localStorage.removeItem(key);
+			}
+			set(initialValue);
+		},
+		get: () => {
+			let value: T;
+			subscribe((v) => (value = v))();
+			return value;
+		}
 	};
-
-	undoHistory.update((history) => [
-		...history,
-		{
-			type: result,
-			previousCorrect: correctCount.get(),
-			previousIncorrect: incorrectCount.get(),
-			previousHistory: history.get(),
-			previousNotes: currentNotes.get()
-		}
-	]);
-
-	history.update((items) => [...items, newHistoryItem]);
-	if (result === 'Correct') {
-		correctCount.update((count) => count + 1);
-	} else {
-		incorrectCount.update((count) => count + 1);
-	}
-	currentNotes.set('');
 }
 
-export function undoLastAction() {
-	undoHistory.update((history) => {
-		if (history.length === 0) return history;
+// Create specific stores
+export const historyStore = persistentStore<HistoryItem[]>('qbankHistory', []);
+export const sourceStore = persistentStore<string>('source', '');
+export const correctCountStore = persistentStore<number>('correctCount', 0);
+export const incorrectCountStore = persistentStore<number>('incorrectCount', 0);
+export const dailyQuestionCountStore = persistentStore<number>('dailyQuestionCount', 1);
+export const currentNotesStore = persistentStore<string>('currentNotes', '');
 
-		const lastUndo = history[history.length - 1];
-		correctCount.set(lastUndo.previousCorrect);
-		incorrectCount.set(lastUndo.previousIncorrect);
-		history.set(lastUndo.previousHistory);
-		currentNotes.set(lastUndo.previousNotes || '');
+// Derived stores for analytics
+export const totalQuestionsStore = derived(historyStore, ($history) => $history.length);
+export const correctQuestionsStore = derived(
+	historyStore,
+	($history) => $history.filter((item) => item.result === 'Correct').length
+);
+export const correctPercentageStore = derived(
+	[totalQuestionsStore, correctQuestionsStore],
+	([$total, $correct]) => ($total > 0 ? Math.round(($correct / $total) * 100) : 0)
+);
 
-		return history.slice(0, -1);
-	});
-}
-
-export function resetCounts() {
-	undoHistory.update((history) => [
-		...history,
-		{
-			type: 'reset',
-			previousCorrect: correctCount.get(),
-			previousIncorrect: incorrectCount.get(),
-			previousHistory: history.get()
-		}
-	]);
-
-	correctCount.set(0);
-	incorrectCount.set(0);
-	history.set([]);
-}
-
-// Utility Functions for Filtering and Calculations
-export function filterHistoryByDate(historyItems: HistoryItem[], date: Date): HistoryItem[] {
-	const startOfDay = new Date(date);
-	startOfDay.setHours(0, 0, 0, 0);
-
-	const endOfDay = new Date(date);
-	endOfDay.setHours(23, 59, 59, 999);
-
-	return historyItems.filter((item) => {
-		const itemDate = new Date(item.datetime);
-		return itemDate >= startOfDay && itemDate <= endOfDay;
-	});
-}
-
-export function formatDate(date: Date): string {
-	return date.toLocaleDateString(undefined, {
-		weekday: 'short',
-		year: 'numeric',
-		month: 'short',
-		day: 'numeric'
-	});
-}
-
-export function isToday(date: Date): boolean {
-	const today = new Date();
-	return (
-		date.getDate() === today.getDate() &&
-		date.getMonth() === today.getMonth() &&
-		date.getFullYear() === today.getFullYear()
-	);
-}
+// Utility function for time difference
+export { formatTimeDifference };
