@@ -43,7 +43,6 @@
 	let history = $state([]);
 	let historyCorrect = $derived(history.filter((item) => item.result === 'Correct').length);
 	let historyIncorrect = $derived(history.filter((item) => item.result === 'Incorrect').length);
-	let previousTimestamp: any = new Date(); // Used for Block 2's original timeDifference
 	let undoHistory = $state([]);
 	let source = $state('');
 	let csvLoaded = $state(false);
@@ -217,13 +216,10 @@
 	function incrementResult(result: 'Correct' | 'Incorrect') {
 		stopTimer(); // (Copied from Block 1) Stop timer before processing
 		const currentTimestamp: any = new Date();
-		// Block 2's original timeDifference logic (based on previousTimestamp)
-		const timeDifference = formatTimeDifference(currentTimestamp - previousTimestamp);
 
 		const newHistoryItem: any = {
 			question: dailyQuestionCount,
 			result: result,
-			timeDifference: timeDifference, // Block 2's original field
 			time: timeElapsed, // (Copied from Block 1) Time taken for this question from the new timer
 			notes: currentNotes,
 			datetime: currentTimestamp.toISOString(),
@@ -243,7 +239,6 @@
 
 		history = [...history, newHistoryItem];
 		correctCount++;
-		previousTimestamp = currentTimestamp; // Update for Block 2's timeDifference logic
 
 		// Make sure we're showing today when adding new entries
 		if (!isToday(currentDate)) {
@@ -270,7 +265,6 @@
 		correctCount = 0;
 		incorrectCount = 0;
 		history = [];
-		previousTimestamp = new Date();
 		csvLoaded = false;
 		timeElapsed = 0; // (Copied from Block 1)
 		startTimer(); // (Copied from Block 1)
@@ -282,7 +276,6 @@
 			.map((item) => {
 				const datetime = item.datetime || new Date().toISOString();
 				const itemSource = item.source || '';
-				// Include the new 'time' field from the timer, and keep original 'timeDifference'
 				return `${datetime},${item.result},${item.time !== undefined ? item.time + 's' : 'N/A'},"${item.notes.replace(/"/g, '""')}","${itemSource.replace(/"/g, '""')}"`;
 			})
 			.join('\n');
@@ -372,7 +365,7 @@
 					return {
 						datetime: new Date(datetimeStr).toISOString(),
 						result: normalizedCorrectness,
-						timeDifference: parsedNumericTimeDifference,
+						time: parsedNumericTimeDifference,
 						notes: notesStr || '',
 						source: sourceStr || ''
 					};
@@ -428,7 +421,6 @@
 			correctCount = lastUndo.previousCorrect;
 			incorrectCount = lastUndo.previousIncorrect;
 			history = lastUndo.previousHistory;
-			previousTimestamp = new Date(); // Reset for Block 2's timeDifference logic
 			currentNotes = lastUndo.previousNotes;
 
 			timeElapsed = 0; // (Copied from Block 1)
