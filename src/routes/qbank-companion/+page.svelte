@@ -85,6 +85,23 @@
 			}).length;
 		}
 	});
+	let sourcedIncorrectCount = $derived((sourceName: string) => {
+		// Get the target source name, trim whitespace, and convert to lowercase for case-insensitive matching.
+		const targetSource = sourceName.trim().toLowerCase();
+
+		if (targetSource === '') {
+			// If `sourceName` is an empty string, count incorrect items where the source is effectively null, undefined, or an empty string.
+			return history.filter(
+				(item) => (!item.source || item.source.trim() === '') && item.result === 'Incorrect'
+			).length;
+		} else {
+			// If `sourceName` specifies a source, count incorrect items that match that source name.
+			return history.filter((item) => {
+				const itemSource = item.source?.trim().toLowerCase(); // Get item's source, trim, and lowercase
+				return itemSource === targetSource && item.result === 'Incorrect'; // Compare with the target source and check for incorrect result
+			}).length;
+		}
+	});
 
 	let listUniqueSources = $derived(() => {
 		// Create a Set to get unique sources, filtering out empty or undefined sources
@@ -220,7 +237,7 @@
 		const newHistoryItem: any = {
 			question: dailyQuestionCount,
 			result: result,
-			time: timeElapsed, // (Copied from Block 1) Time taken for this question from the new timer
+			time: timeElapsed,
 			notes: currentNotes,
 			datetime: currentTimestamp.toISOString(),
 			source: source
@@ -271,7 +288,7 @@
 	}
 
 	function exportCSV() {
-		const header = 'Datetime,Correctness,Time Taken,Notes,Source'; // Clarified time fields
+		const header = 'Datetime,Correctness,Time Taken,Notes,Source';
 		const rows = history
 			.map((item) => {
 				const datetime = item.datetime || new Date().toISOString();
@@ -284,7 +301,10 @@
 		const encodedUri = encodeURI('data:text/csv;charset=utf-8,' + csvContent);
 		const link = document.createElement('a');
 		link.setAttribute('href', encodedUri);
-		link.setAttribute('download', 'history.csv');
+		link.setAttribute(
+			'download',
+			`${new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' })} ${new Date().toLocaleTimeString('en-GB', { timeZone: 'America/Chicago', hourCycle: 'h23' })}.csv`
+		);
 		document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
@@ -468,44 +488,6 @@
 		}
 	}
 
-	function calculateAverageTimeDifference(items = filteredHistory) {
-		if (items.length === 0) return '0s';
-
-		// This function uses 'timeDifference'. If you want it to use the new 'time' field, it needs adjustment.
-		// For now, keeping it as is, using 'timeDifference'.
-		const totalMilliseconds = items.reduce((sum, item) => {
-			const timeParts = item.timeDifference.split(/m |s/);
-			let minutes = 0;
-			let seconds = 0;
-
-			if (timeParts.length === 3) {
-				// "Xm Ys"
-				minutes = parseInt(timeParts[0]) || 0;
-				seconds = parseInt(timeParts[1]) || 0;
-			} else if (timeParts.length === 2 && item.timeDifference.includes('m')) {
-				// "Xm"
-				minutes = parseInt(timeParts[0]) || 0;
-			} else if (timeParts.length === 2 && item.timeDifference.includes('s')) {
-				// "Ys"
-				seconds = parseInt(timeParts[0]) || 0;
-			} else if (timeParts.length === 1 && item.timeDifference.includes('s')) {
-				// "Ys" (no space)
-				seconds = parseInt(timeParts[0]) || 0;
-			} else if (timeParts.length === 1 && item.timeDifference.includes('m')) {
-				// "Xm" (no space)
-				minutes = parseInt(timeParts[0]) || 0;
-			} else if (timeParts.length === 1 && !isNaN(parseInt(timeParts[0]))) {
-				// Just seconds as number string
-				seconds = parseInt(timeParts[0]) || 0;
-			}
-
-			return sum + (minutes * 60 + seconds) * 1000;
-		}, 0);
-
-		const averageMilliseconds = totalMilliseconds / items.length;
-		return formatTimeDifference(averageMilliseconds);
-	}
-
 	let lastSevenDaysData = () => {
 		const days = [];
 		const today = new Date();
@@ -633,11 +615,14 @@
 		</div>
 	</div>
 	{#if source}
-		<div class="flex items-center justify-center">
+		<div class="flex items-center justify-center text-center">
 			<div>
-				<span style="font-size: 24px; font-weight: bold;">
-					{source}: {sourcedQuestionCount(source)}
-				</span>
+				<h2 style="font-size: 24px; font-weight: bold;">
+					{source}
+				</h2>
+				<span class="rounded bg-orange-300 px-2 py-1 text-xl text-black"
+					>{sourcedQuestionCount(source) + 1}</span
+				>
 				{#if timeElapsed >= 90}
 					<button class="ml-4 text-sm text-red-600" onclick={resetTimer}>{timeElapsed}s</button>
 				{:else if timeElapsed >= 60}
@@ -845,12 +830,13 @@
 	</div> -->
 	{#if listUniqueSources()}
 		<div class="sources-list">
-			<h3>Unique Sources</h3>
+			<h3 class="text-center text-lg font-semibold">Unique Sources</h3>
 			<table>
 				<thead>
 					<tr>
 						<th>Source</th>
 						<th>Count</th>
+						<th>% Correct</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -858,6 +844,13 @@
 						<tr>
 							<td>{uniqueSource}</td>
 							<td class="text-right">{sourcedQuestionCount(uniqueSource)}</td>
+							<td class="text-right"
+								>{(
+									((sourcedQuestionCount(uniqueSource) - sourcedIncorrectCount(uniqueSource)) /
+										sourcedQuestionCount(uniqueSource)) *
+									100
+								).toFixed(0)}%</td
+							>
 						</tr>
 					{/each}
 				</tbody>
