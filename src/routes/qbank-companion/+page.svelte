@@ -277,13 +277,13 @@
 	}
 
 	function exportCSV() {
-		const header = 'Datetime,Correctness,Time Taken (Timer),Time Difference (Legacy),Notes,Source'; // Clarified time fields
+		const header = 'Datetime,Correctness,Time Taken,Notes,Source'; // Clarified time fields
 		const rows = history
 			.map((item) => {
 				const datetime = item.datetime || new Date().toISOString();
 				const itemSource = item.source || '';
 				// Include the new 'time' field from the timer, and keep original 'timeDifference'
-				return `${datetime},${item.result},${item.time !== undefined ? item.time + 's' : 'N/A'},${item.timeDifference || 'N/A'},"${item.notes.replace(/"/g, '""')}","${itemSource.replace(/"/g, '""')}"`;
+				return `${datetime},${item.result},${item.time !== undefined ? item.time + 's' : 'N/A'},"${item.notes.replace(/"/g, '""')}","${itemSource.replace(/"/g, '""')}"`;
 			})
 			.join('\n');
 		const csvContent = `${header}\n${rows}`;
@@ -353,6 +353,7 @@
 						source: source || ''
 					};
 				});
+			console.log(importedEntries);
 
 			// Merge imported entries with existing history
 			const mergedHistory = [
