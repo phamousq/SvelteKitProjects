@@ -36,35 +36,34 @@ function formatTimeDifference(milliseconds: number): string {
 
 // Local Storage Helpers
 const safeGetLocalStorage = <T>(key: string, defaultValue: T): T => {
-	try {
-		if (typeof window === 'undefined' || !window.localStorage) return defaultValue;
-		const storedValue = localStorage.getItem(key);
-		if (storedValue === null) return defaultValue;
-		return JSON.parse(storedValue);
-	} catch (error) {
-		console.warn(`Error reading localStorage for ${key}:`, error);
-		return defaultValue;
-	}
+	// try {
+	// 	if (typeof window === 'undefined' || !window.localStorage) return defaultValue;
+	// 	const storedValue = localStorage.getItem(key);
+	// 	if (storedValue === null) return defaultValue;
+	// 	return JSON.parse(storedValue);
+	// } catch (error) {
+	// 	console.warn(`Error reading localStorage for ${key}:`, error);
+	// 	return defaultValue;
+	// }
 };
 
 const safeSetLocalStorage = <T>(key: string, value: T): void => {
-	try {
-		if (typeof window === 'undefined' || !window.localStorage) return;
-
-		// Limit storage size and handle large objects
-		const limitedValue = Array.isArray(value)
-			? value.slice(-500) // Limit array to last 500 items
-			: value;
-
-		localStorage.setItem(key, JSON.stringify(limitedValue));
-	} catch (error) {
-		if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-			console.error('localStorage quota exceeded. Clearing oldest entries.');
-			// Optional: Implement a strategy to clear oldest entries
-		} else {
-			console.error(`Failed to set localStorage for ${key}:`, error);
-		}
-	}
+	// try {
+	// 	if (typeof window === 'undefined' || !window.localStorage) return;
+	// 	// Limit storage size and handle large objects
+	// 	const limitedValue = Array.isArray(value)
+	// 		? value.slice(-500) // Limit array to last 500 items
+	// 		: value;
+	// 	localStorage.setItem(key, JSON.stringify(limitedValue));
+	// }
+	// catch (error) {
+	// 	if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+	// 		console.error('localStorage quota exceeded. Clearing oldest entries.');
+	// 		// Optional: Implement a strategy to clear oldest entries
+	// 	} else {
+	// 		console.error(`Failed to set localStorage for ${key}:`, error);
+	// 	}
+	// }
 };
 
 // Persistent Writable Store

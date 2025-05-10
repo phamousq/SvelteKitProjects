@@ -118,14 +118,14 @@
 		startTimer(); // (Copied from Block 1) Start timer on mount
 	});
 
-	$effect(() => {
-		localStorage.setItem('correctCount', correctCount.toString());
-		localStorage.setItem('incorrectCount', incorrectCount.toString());
-		localStorage.setItem('history', JSON.stringify(history));
-		localStorage.setItem('source', source);
-		localStorage.setItem('csvLoaded', csvLoaded.toString());
-		localStorage.setItem('undoHistory', JSON.stringify(undoHistory));
-	});
+	// $effect(() => {
+	// 	localStorage.setItem('correctCount', correctCount.toString());
+	// 	localStorage.setItem('incorrectCount', incorrectCount.toString());
+	// 	localStorage.setItem('history', JSON.stringify(history));
+	// 	localStorage.setItem('source', source);
+	// 	localStorage.setItem('csvLoaded', csvLoaded.toString());
+	// 	localStorage.setItem('undoHistory', JSON.stringify(undoHistory));
+	// });
 
 	// --- Timer Functions (Copied from Block 1) ---
 	function startTimer() {
@@ -313,47 +313,70 @@
 			const importedEntries = rows
 				.filter((row) => row.trim() !== '') // Remove empty rows
 				.map((row) => {
-					// More robust parsing to handle potential CSV variations
-					const cells = row.split(',').map((cell) => cell.replace(/^"|"$/g, '').trim());
+					// More robust CSV parsing that respects quoted fields
+					const cells = [];
+					let currentCell = '';
+					let inQuotes = false;
+					let escaped = false;
+
+					for (let char of row) {
+						if (escaped) {
+							currentCell += char;
+							escaped = false;
+						} else if (char === '\\') {
+							escaped = true;
+						} else if (char === '"') {
+							inQuotes = !inQuotes;
+						} else if (char === ',' && !inQuotes) {
+							cells.push(currentCell.trim());
+							currentCell = '';
+						} else {
+							currentCell += char;
+						}
+					}
+					cells.push(currentCell.trim()); // Add last cell
+
+					// Remove surrounding quotes if present
+					cells.forEach((cell, index) => {
+						if (cell.startsWith('"') && cell.endsWith('"')) {
+							cells[index] = cell.slice(1, -1).replace(/""/g, '"');
+						}
+					});
 
 					// Ensure we have enough columns
 					while (cells.length < 5) {
-						// Adjust if expecting more due to new time field, though import might be for older format
-						cells.push(''); // Pad with empty strings if needed
+						cells.push('');
 					}
 
-					// Assuming original CSV format for import, might need adjustment if CSV contains the new timer's 'time' field
-					const [datetime, correctness, timeTakenLegacy, notes, source] = cells;
-					// let timeFromNewTimer = cells[/* new index if present */];
+					// Destructure based on the CSV columns
+					const [datetimeStr, resultStr, timeDifferenceCsvStr, notesStr, sourceStr] = cells;
 
-					// Normalize correctness to handle both string and boolean inputs
+					// Normalize correctness
 					const normalizedCorrectness =
-						correctness === 'true' ||
-						correctness === 'correct' ||
-						correctness.toUpperCase() === 'CORRECT'
+						resultStr === 'true' ||
+						resultStr === 'correct' ||
+						(resultStr && resultStr.toUpperCase() === 'CORRECT')
 							? 'Correct'
-							: correctness === 'false' ||
-								  correctness === 'incorrect' ||
-								  correctness.toUpperCase() === 'INCORRECT'
+							: resultStr === 'false' ||
+								  resultStr === 'incorrect' ||
+								  (resultStr && resultStr.toUpperCase() === 'INCORRECT')
 								? 'Incorrect'
 								: undefined;
 
-					let parsedTimeLegacy = 0; // For timeDifference
-					if (timeTakenLegacy) {
-						const timeStr = timeTakenLegacy.replace(/[^\d.]/g, '');
-						parsedTimeLegacy = parseFloat(timeStr) || 0;
+					let parsedNumericTimeDifference = 0;
+					if (timeDifferenceCsvStr) {
+						const timeValueOnly = timeDifferenceCsvStr.replace(/[^\d.]/g, '');
+						parsedNumericTimeDifference = parseFloat(timeValueOnly) || 0;
 					}
 
 					return {
-						datetime: new Date(datetime).toISOString(),
+						datetime: new Date(datetimeStr).toISOString(),
 						result: normalizedCorrectness,
-						timeDifference: formatTimeDifference(parsedTimeLegacy * 1000), // Assuming timeTakenLegacy was in seconds and becomes timeDifference
-						// time: /* handle imported 'time' field if present */,
-						notes: notes || '',
-						source: source || ''
+						timeDifference: parsedNumericTimeDifference,
+						notes: notesStr || '',
+						source: sourceStr || ''
 					};
 				});
-			console.log(importedEntries);
 
 			// Merge imported entries with existing history
 			const mergedHistory = [
