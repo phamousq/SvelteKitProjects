@@ -304,7 +304,7 @@
 		link.setAttribute('href', encodedUri);
 		link.setAttribute(
 			'download',
-			`${new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' })} ${new Date().toLocaleTimeString('en-GB', { timeZone: 'America/Chicago', hourCycle: 'h23' })}.csv`
+			`${new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' })} ${new Date().getHours()}${new Date().getMinutes()}.csv`
 		);
 		document.body.appendChild(link);
 		link.click();
@@ -857,7 +857,9 @@
 							</td>
 							<td class="border p-2 text-center">{item.source || ''}</td>
 							<td class="border p-2 text-center">
-								{new Date(item.datetime).toLocaleString()}
+								{String(new Date(item.datetime).getHours()).padStart(2, '0')}:{String(
+									new Date(item.datetime).getMinutes()
+								).padStart(2, '0')}
 							</td>
 						</tr>
 					{/each}
@@ -1015,8 +1017,7 @@
 
 	table {
 		border-collapse: collapse;
-		width: 100%;
-		max-width: 600px;
+		width: 90%;
 		margin: 20px auto;
 	}
 	tr:nth-child(odd) {
