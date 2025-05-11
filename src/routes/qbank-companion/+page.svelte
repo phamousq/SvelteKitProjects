@@ -311,128 +311,147 @@
 		document.body.removeChild(link);
 	}
 
-	function importCSV(event: Event) {
-		const file = (event.target as HTMLInputElement).files?.[0];
-		if (!file) return;
+	function importCSV() {
+		// Create a hidden file input element
+		const fileInput = document.createElement('input');
+		fileInput.type = 'file';
+		fileInput.accept = '.csv';
+		fileInput.style.display = 'none';
 
-		// Reset previous confirmation
-		importConfirmation = '';
-		importedEntriesCount = 0;
+		// Handle file selection
+		fileInput.onchange = (e) => {
+			const target = e.target as HTMLInputElement;
+			const file = target.files?.[0];
+			if (!file) {
+				document.body.removeChild(fileInput); // Clean up if no file selected
+				return;
+			}
 
-		const reader = new FileReader();
-		reader.onload = (e) => {
-			const csvText = e.target?.result as string;
-			const rows = csvText.split('\n').slice(1); // Skip header row
+			// Reset previous confirmation
+			importConfirmation = '';
+			importedEntriesCount = 0;
 
-			const importedEntries = rows
-				.filter((row) => row.trim() !== '') // Remove empty rows
-				.map((row) => {
-					// More robust CSV parsing that respects quoted fields
-					const cells = [];
-					let currentCell = '';
-					let inQuotes = false;
-					let escaped = false;
+			const reader = new FileReader();
+			reader.onload = (loadEvent) => {
+				const csvText = loadEvent.target?.result as string;
+				const rows = csvText.split('\n').slice(1); // Skip header row
 
-					for (let char of row) {
-						if (escaped) {
-							currentCell += char;
-							escaped = false;
-						} else if (char === '\\') {
-							escaped = true;
-						} else if (char === '"') {
-							inQuotes = !inQuotes;
-						} else if (char === ',' && !inQuotes) {
-							cells.push(currentCell.trim());
-							currentCell = '';
-						} else {
-							currentCell += char;
+				const importedEntries = rows
+					.filter((row) => row.trim() !== '') // Remove empty rows
+					.map((row) => {
+						// More robust CSV parsing that respects quoted fields
+						const cells = [];
+						let currentCell = '';
+						let inQuotes = false;
+						let escaped = false;
+
+						for (let char of row) {
+							if (escaped) {
+								currentCell += char;
+								escaped = false;
+							} else if (char === '\\') {
+								escaped = true;
+							} else if (char === '"') {
+								inQuotes = !inQuotes;
+							} else if (char === ',' && !inQuotes) {
+								cells.push(currentCell.trim());
+								currentCell = '';
+							} else {
+								currentCell += char;
+							}
 						}
-					}
-					cells.push(currentCell.trim()); // Add last cell
+						cells.push(currentCell.trim()); // Add last cell
 
-					// Remove surrounding quotes if present
-					cells.forEach((cell, index) => {
-						if (cell.startsWith('"') && cell.endsWith('"')) {
-							cells[index] = cell.slice(1, -1).replace(/""/g, '"');
+						// Remove surrounding quotes if present
+						cells.forEach((cell, index) => {
+							if (cell.startsWith('"') && cell.endsWith('"')) {
+								cells[index] = cell.slice(1, -1).replace(/""/g, '"');
+							}
+						});
+
+						// Ensure we have enough columns
+						while (cells.length < 5) {
+							cells.push('');
 						}
+
+						// Destructure based on the CSV columns
+						const [datetimeStr, resultStr, timeDifferenceCsvStr, notesStr, sourceStr] = cells;
+
+						// Normalize correctness
+						const normalizedCorrectness =
+							resultStr === 'true' ||
+							resultStr === 'correct' ||
+							(resultStr && resultStr.toUpperCase() === 'CORRECT')
+								? 'Correct'
+								: resultStr === 'false' ||
+									  resultStr === 'incorrect' ||
+									  (resultStr && resultStr.toUpperCase() === 'INCORRECT')
+									? 'Incorrect'
+									: undefined;
+
+						let parsedNumericTimeDifference = 0;
+						if (timeDifferenceCsvStr) {
+							const timeValueOnly = timeDifferenceCsvStr.replace(/[^\d.]/g, '');
+							parsedNumericTimeDifference = parseFloat(timeValueOnly) || 0;
+						}
+
+						return {
+							datetime: new Date(datetimeStr).toISOString(),
+							result: normalizedCorrectness,
+							time: parsedNumericTimeDifference,
+							notes: notesStr || '',
+							source: sourceStr || ''
+						};
 					});
 
-					// Ensure we have enough columns
-					while (cells.length < 5) {
-						cells.push('');
-					}
+				// Merge imported entries with existing history
+				const mergedHistory = [
+					...history,
+					...importedEntries.filter(
+						(newEntry) =>
+							!history.some(
+								(existingEntry) =>
+									existingEntry.datetime === newEntry.datetime &&
+									existingEntry.question === newEntry.question // 'question' might not exist on newEntry if not parsed
+							)
+					)
+				];
 
-					// Destructure based on the CSV columns
-					const [datetimeStr, resultStr, timeDifferenceCsvStr, notesStr, sourceStr] = cells;
+				// Update history and related counts
+				history = mergedHistory;
+				correctCount = mergedHistory.filter((entry) => entry.result === 'Correct').length;
+				incorrectCount = mergedHistory.filter((entry) => entry.result === 'Incorrect').length;
 
-					// Normalize correctness
-					const normalizedCorrectness =
-						resultStr === 'true' ||
-						resultStr === 'correct' ||
-						(resultStr && resultStr.toUpperCase() === 'CORRECT')
-							? 'Correct'
-							: resultStr === 'false' ||
-								  resultStr === 'incorrect' ||
-								  (resultStr && resultStr.toUpperCase() === 'INCORRECT')
-								? 'Incorrect'
-								: undefined;
+				// Update local storage
+				localStorage.setItem('history', JSON.stringify(history));
+				localStorage.setItem('correctCount', correctCount.toString());
+				localStorage.setItem('incorrectCount', incorrectCount.toString());
 
-					let parsedNumericTimeDifference = 0;
-					if (timeDifferenceCsvStr) {
-						const timeValueOnly = timeDifferenceCsvStr.replace(/[^\d.]/g, '');
-						parsedNumericTimeDifference = parseFloat(timeValueOnly) || 0;
-					}
+				// Set CSV loaded flag
+				csvLoaded = true;
+				localStorage.setItem('csvLoaded', 'true');
 
-					return {
-						datetime: new Date(datetimeStr).toISOString(),
-						result: normalizedCorrectness,
-						time: parsedNumericTimeDifference,
-						notes: notesStr || '',
-						source: sourceStr || ''
-					};
-				});
+				// Set import confirmation and count
+				importedEntriesCount = importedEntries.length;
+				importConfirmation = `Successfully imported ${importedEntriesCount} records.`;
 
-			// Merge imported entries with existing history
-			const mergedHistory = [
-				...history,
-				...importedEntries.filter(
-					(newEntry) =>
-						!history.some(
-							(existingEntry) =>
-								existingEntry.datetime === newEntry.datetime &&
-								existingEntry.question === newEntry.question // 'question' might not exist on newEntry if not parsed
-						)
-				)
-			];
+				// Clear the file input value (though it will be removed anyway)
+				target.value = '';
+				document.body.removeChild(fileInput); // Clean up the input element
+			};
 
-			// Update history and related counts
-			history = mergedHistory;
-			correctCount = mergedHistory.filter((entry) => entry.result === 'Correct').length;
-			incorrectCount = mergedHistory.filter((entry) => entry.result === 'Incorrect').length;
+			reader.onerror = () => {
+				importConfirmation = 'Error reading file. Please try again.';
+				importedEntriesCount = 0;
+				document.body.removeChild(fileInput); // Clean up on error too
+			};
 
-			// Update local storage
-			localStorage.setItem('history', JSON.stringify(history));
-			localStorage.setItem('correctCount', correctCount.toString());
-			localStorage.setItem('incorrectCount', incorrectCount.toString());
-
-			// Set CSV loaded flag
-			csvLoaded = true;
-			localStorage.setItem('csvLoaded', 'true');
-
-			// Set import confirmation and count
-			importedEntriesCount = importedEntries.length;
-			importConfirmation = `Successfully imported ${importedEntriesCount} records.`;
-
-			// Clear file input
-			(event.target as HTMLInputElement).value = '';
+			reader.readAsText(file);
 		};
 
-		reader.onerror = () => {
-			importConfirmation = 'Error reading file. Please try again.';
-			importedEntriesCount = 0;
-		};
-
-		reader.readAsText(file);
+		// Append to body and trigger click to open file dialog
+		document.body.appendChild(fileInput);
+		fileInput.click();
 	}
 
 	function undoLastAction() {
