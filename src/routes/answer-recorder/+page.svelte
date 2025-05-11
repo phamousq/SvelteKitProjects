@@ -1,722 +1,744 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+	import { onMount } from 'svelte';
 
-  // --- State Management with Svelte 5 ---
-  let answerData = $state([]);
-  let currentQuestion = $state(1);
-  let reviewModeEnabled = $state(false);
-  let tutorModeEnabled = $state(false); // Add tutor mode state
-  let currentDate = $state(new Date());
-  let source = $state('');
-  let currentNotes = $state('');
-  let answerInput = $state('');
-  let AnswerInput: HTMLInputElement;
-  let isFlagged = $state(false);
+	// --- State Management with Svelte 5 ---
+	let answerData = $state([]);
+	let currentQuestion = $state(1);
+	let reviewModeEnabled = $state(false);
+	let tutorModeEnabled = $state(false); // Add tutor mode state
+	let currentDate = $state(new Date());
+	let source = $state('');
+	let currentNotes = $state('');
+	let answerInput = $state('');
+	let AnswerInput: HTMLInputElement;
+	let isFlagged = $state(false);
 
-  // --- Date Filtering ---
-  let filteredAnswerData = $derived(filterAnswersByDate(answerData, currentDate));
+	// --- Date Filtering ---
+	let filteredAnswerData = $derived(filterAnswersByDate(answerData, currentDate));
 
-  // --- Timer State ---
-  let questionStartTime: number;
-  let timeElapsed = $state(0);
-  let timerInterval: number | null = null;
-  let answerChoices = $state(['a', 'b', 'c', 'd', 'e']);
-  let NotesInput: HTMLInputElement;
+	// --- Timer State ---
+	let questionStartTime: number;
+	let timeElapsed = $state(0);
+	let timerInterval: number | null = null;
+	let answerChoices = $state(['a', 'b', 'c', 'd', 'e']);
+	let NotesInput: HTMLInputElement;
 
-  // --- Derived State ---
-  let totalQuestions = $derived(answerData.length);
-  let filteredTotalQuestions = $derived(filteredAnswerData.length);
-  let correctQuestions = $derived(answerData.filter(item => item.correct === 'Correct').length);
-  let incorrectQuestions = $derived(answerData.filter(item => item.correct === 'Incorrect').length);
-  let percentageCorrect = $derived(totalQuestions > 0 
-    ? Math.round((correctQuestions / totalQuestions) * 100) 
-    : 0);
+	// --- Derived State ---
+	let totalQuestions = $derived(answerData.length);
+	let filteredTotalQuestions = $derived(filteredAnswerData.length);
+	let correctQuestions = $derived(answerData.filter((item) => item.correct === 'Correct').length);
+	let incorrectQuestions = $derived(
+		answerData.filter((item) => item.correct === 'Incorrect').length
+	);
+	let percentageCorrect = $derived(
+		totalQuestions > 0 ? Math.round((correctQuestions / totalQuestions) * 100) : 0
+	);
 
-  let maxRecordedQuestion = $derived(Math.max(...answerData.map(item => item.question), 0));
+	let maxRecordedQuestion = $derived(Math.max(...answerData.map((item) => item.question), 0));
 
-  // --- Reactive Derived Values ---
-  let currentAnswer = $derived(answerData.find(item => item.question === currentQuestion)?.answer || '');
-  let isCorrect = $derived(answerData.find(item => item.question === currentQuestion)?.correct);
+	// --- Reactive Derived Values ---
+	let currentAnswer = $derived(
+		answerData.find((item) => item.question === currentQuestion)?.answer || ''
+	);
+	let isCorrect = $derived(answerData.find((item) => item.question === currentQuestion)?.correct);
 
-  // --- Date Filtering ---
-  function filterAnswersByDate(items: any[], date: Date) {
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-    
-    return items.filter(item => {
-      const itemDate = new Date(item.datetime);
-      return itemDate >= startOfDay && itemDate <= endOfDay;
-    });
-  }
+	// --- Date Filtering ---
+	function filterAnswersByDate(items: any[], date: Date) {
+		const startOfDay = new Date(date);
+		startOfDay.setHours(0, 0, 0, 0);
 
-  // --- Lifecycle and Side Effects ---
-  onMount(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const storedAnswerData = localStorage.getItem('answerData');
-      const storedCurrentQuestion = localStorage.getItem('currentQuestion');
-      const storedReviewMode = localStorage.getItem('reviewModeEnabled');
-      const storedSource = localStorage.getItem('source');
+		const endOfDay = new Date(date);
+		endOfDay.setHours(23, 59, 59, 999);
 
-      if (storedAnswerData) answerData = JSON.parse(storedAnswerData);
-      if (storedCurrentQuestion) currentQuestion = parseInt(storedCurrentQuestion, 10);
-      if (storedReviewMode) reviewModeEnabled = storedReviewMode === 'true';
-      if (storedSource) source = storedSource;
-    }
-    currentDate.setHours(0, 0, 0, 0);
-    startTimer(); // Start timer on mount
+		return items.filter((item) => {
+			const itemDate = new Date(item.datetime);
+			return itemDate >= startOfDay && itemDate <= endOfDay;
+		});
+	}
 
-    // Reactive save to local storage
-    $effect(() => {
-      saveToLocalStorage();
-    });
-  });
+	// --- Lifecycle and Side Effects ---
+	onMount(() => {
+		if (typeof window !== 'undefined' && window.localStorage) {
+			const storedAnswerData = localStorage.getItem('answerData');
+			const storedCurrentQuestion = localStorage.getItem('currentQuestion');
+			const storedReviewMode = localStorage.getItem('reviewModeEnabled');
+			const storedSource = localStorage.getItem('source');
 
-  // --- Timer Functions ---
-  function startTimer() {
-    questionStartTime = Date.now();
-    // Clear existing timer before starting a new one to prevent multiple timers
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      timeElapsed = Math.floor((Date.now() - questionStartTime) / 1000);
-    }, 1000);
-  }
+			if (storedAnswerData) answerData = JSON.parse(storedAnswerData);
+			if (storedCurrentQuestion) currentQuestion = parseInt(storedCurrentQuestion, 10);
+			if (storedReviewMode) reviewModeEnabled = storedReviewMode === 'true';
+			if (storedSource) source = storedSource;
+		}
+		currentDate.setHours(0, 0, 0, 0);
+		startTimer(); // Start timer on mount
 
-  function stopTimer() {
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = null;
-  }
+		// Reactive save to local storage
+		$effect(() => {
+			saveToLocalStorage();
+		});
+	});
 
-  // --- Answer Recording Functions ---
-  function recordAnswer(answer: string) {
-    stopTimer();
-    const currentTimestamp = new Date();
-    const existingEntryIndex = answerData.findIndex(item => item.question === currentQuestion);
-    
-    if (existingEntryIndex !== -1) {
-      // Replace existing entry, preserving flagged status
-      answerData[existingEntryIndex] = { 
-        ...answerData[existingEntryIndex], 
-        answer, 
-        time: timeElapsed,
-        datetime: currentTimestamp.toISOString(),
-        correct: undefined, // Reset correctness when re-answering
-        flagged: answerData[existingEntryIndex].flagged ?? isFlagged // Preserve or use current flag status
-      };
-    } else {
-      // Add new entry with current flagged status
-      answerData = [...answerData, { 
-        question: currentQuestion, 
-        answer, 
-        time: timeElapsed, 
-        correct: undefined,
-        datetime: currentTimestamp.toISOString(), 
-        source: source,
-        notes: currentNotes,
-        flagged: isFlagged // Use current flag status
-      }];
-    }
+	// --- Timer Functions ---
+	function startTimer() {
+		questionStartTime = Date.now();
+		// Clear existing timer before starting a new one to prevent multiple timers
+		if (timerInterval) clearInterval(timerInterval);
+		timerInterval = setInterval(() => {
+			timeElapsed = Math.floor((Date.now() - questionStartTime) / 1000);
+		}, 1000);
+	}
 
-    // In test mode, always move to next question
-    if (!reviewModeEnabled) {
-      currentQuestion += 1;
-      AnswerInput?.focus();
-    }else{
-      NotesInput?.focus();
-    }
+	function stopTimer() {
+		if (timerInterval) clearInterval(timerInterval);
+		timerInterval = null;
+	}
 
-    answerChoices = ['a', 'b', 'c', 'd', 'e'];
-    // Reset timeElapsed immediately AFTER recording, before starting new timer
-    timeElapsed = 0;
-    currentNotes = '';
-    startTimer(); // Start timer for the *new* question
-  }
+	// --- Answer Recording Functions ---
+	function recordAnswer(answer: string) {
+		stopTimer();
+		const currentTimestamp = new Date();
+		const existingEntryIndex = answerData.findIndex((item) => item.question === currentQuestion);
 
-  function addAnswerChoice() {
-    if (answerChoices.length < 26) {
-      const nextLetter = String.fromCharCode(97 + answerChoices.length);
-      answerChoices = [...answerChoices, nextLetter];
-    }
-  }
+		if (existingEntryIndex !== -1) {
+			// Replace existing entry, preserving flagged status
+			answerData[existingEntryIndex] = {
+				...answerData[existingEntryIndex],
+				answer,
+				time: timeElapsed,
+				datetime: currentTimestamp.toISOString(),
+				correct: undefined, // Reset correctness when re-answering
+				flagged: answerData[existingEntryIndex].flagged ?? isFlagged // Preserve or use current flag status
+			};
+		} else {
+			// Add new entry with current flagged status
+			answerData = [
+				...answerData,
+				{
+					question: currentQuestion,
+					answer,
+					time: timeElapsed,
+					correct: undefined,
+					datetime: currentTimestamp.toISOString(),
+					source: source,
+					notes: currentNotes,
+					flagged: isFlagged // Use current flag status
+				}
+			];
+		}
 
-  $effect(() => {
-    if (!reviewModeEnabled) {
-      // When switching out of review mode, focus on answer input
-      queueMicrotask(() => {
-        AnswerInput?.focus();
-      });
-    }
-  });
+		// In test mode, always move to next question
+		if (!reviewModeEnabled) {
+			currentQuestion += 1;
+			AnswerInput?.focus();
+		} else {
+			NotesInput?.focus();
+		}
 
-  function toggleReviewMode() {
-    reviewModeEnabled = !reviewModeEnabled;
-    // switching to review mode
-    if (reviewModeEnabled) {
-      // Find the lowest question that hasn't been graded yet
-      const ungraded = answerData
-        .filter(item => item.correct === undefined)
-        .map(item => item.question);
-      
-      currentQuestion = ungraded.length > 0 
-        ? Math.min(...ungraded) 
-        : (answerData.length > 0 
-          ? Math.max(...answerData.map(item => item.question)) 
-          : 1);
-      
-      queueMicrotask(() => {
-        NotesInput?.focus();
-      });
-      stopTimer();
-    } else {
-      // When switching to test mode, set current question to next question
-      currentQuestion = Math.max(...answerData.map(item => item.question), 0) + 1;
-      timeElapsed = 0;
-      queueMicrotask(() => {
-        AnswerInput?.focus();
-      });
-      startTimer();
-    }
-  }
+		answerChoices = ['a', 'b', 'c', 'd', 'e'];
+		// Reset timeElapsed immediately AFTER recording, before starting new timer
+		timeElapsed = 0;
+		currentNotes = '';
+		startTimer(); // Start timer for the *new* question
+	}
 
-  function markCorrect() {
-    const currentAnswerIndex = answerData.findIndex(item => item.question === currentQuestion);
-    
-    if (currentAnswerIndex !== -1) {
-      // In tutor mode, allow marking without an answer
-      if (tutorModeEnabled || answerData[currentAnswerIndex].answer) {
-        answerData[currentAnswerIndex] = {
-          ...answerData[currentAnswerIndex],
-          correct: 'Correct'
-        };
-        
-        // In tutor mode, always increment to next question
-        if (tutorModeEnabled) {
-          currentQuestion = Math.max(...answerData.map(item => item.question)) + 1;
-        } else {
-          navigateToNextUnmarkedQuestion();
-        }
-      }
-    }
-  }
+	function addAnswerChoice() {
+		if (answerChoices.length < 26) {
+			const nextLetter = String.fromCharCode(97 + answerChoices.length);
+			answerChoices = [...answerChoices, nextLetter];
+		}
+	}
 
-  function markIncorrect() {
-    const currentAnswerIndex = answerData.findIndex(item => item.question === currentQuestion);
-    
-    if (currentAnswerIndex !== -1) {
-      // In tutor mode, allow marking without an answer
-      if (tutorModeEnabled || answerData[currentAnswerIndex].answer) {
-        answerData[currentAnswerIndex] = {
-          ...answerData[currentAnswerIndex],
-          correct: 'Incorrect'
-        };
-        
-        // In tutor mode, always increment to next question
-        if (tutorModeEnabled) {
-          currentQuestion = Math.max(...answerData.map(item => item.question)) + 1;
-        } else {
-          navigateToNextUnmarkedQuestion();
-        }
-      }
-    }
-  }
+	$effect(() => {
+		if (!reviewModeEnabled) {
+			// When switching out of review mode, focus on answer input
+			queueMicrotask(() => {
+				AnswerInput?.focus();
+			});
+		}
+	});
 
-  function resetData() {
-    if (confirm('Are you sure you want to reset all data?')) {
-      stopTimer(); // Stop timer before resetting
-      answerData = [];
-      currentQuestion = 1;
-      reviewModeEnabled = false;
-      answerChoices = ['a', 'b', 'c', 'd', 'e'];
-      timeElapsed = 0;
-      source = '';
-      currentNotes = '';
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.removeItem('answerData');
-        localStorage.removeItem('currentQuestion');
-        localStorage.removeItem('reviewModeEnabled');
-        localStorage.removeItem('source');
-      }
-      startTimer(); // Restart timer for the fresh question 1
-    }
-  }
+	function toggleReviewMode() {
+		reviewModeEnabled = !reviewModeEnabled;
+		// switching to review mode
+		if (reviewModeEnabled) {
+			// Find the lowest question that hasn't been graded yet
+			const ungraded = answerData
+				.filter((item) => item.correct === undefined)
+				.map((item) => item.question);
 
-  function undoLastAnswer() {
-    if (answerData.length > 0) {
-      // Remove the last answer entry
-      answerData = answerData.slice(0, -1);
-      
-      // Go back to the previous question
-      if (currentQuestion > 1) {
-        currentQuestion -= 1;
-      }
-      
-      // Restart timer for the previous question
-      timeElapsed = 0;
-      startTimer();
-    }
-  }
+			currentQuestion =
+				ungraded.length > 0
+					? Math.min(...ungraded)
+					: answerData.length > 0
+						? Math.max(...answerData.map((item) => item.question))
+						: 1;
 
-  function recordGuessAnswer() {
-    recordAnswer('?');
-  }
+			queueMicrotask(() => {
+				NotesInput?.focus();
+			});
+			stopTimer();
+		} else {
+			// When switching to test mode, set current question to next question
+			currentQuestion = Math.max(...answerData.map((item) => item.question), 0) + 1;
+			timeElapsed = 0;
+			queueMicrotask(() => {
+				AnswerInput?.focus();
+			});
+			startTimer();
+		}
+	}
 
-  // Timer and Question Navigation Effect
-  $effect(() => {
-    if (typeof window !== 'undefined') { // Ensure this only runs client-side
-      const currentAnswerEntry = answerData.find(item => item.question === currentQuestion);
-      if (!reviewModeEnabled) {
-        // In test mode, always restart the timer for the current question
-        stopTimer();
-        timeElapsed = currentAnswerEntry?.time || 0; // Load existing time if re-visiting
-        startTimer();
-      } else {
-        // In review mode, just display the recorded time, don't run the timer
-        stopTimer();
-        timeElapsed = currentAnswerEntry?.time || 0;
-      }
-    }
-  });
+	function markCorrect() {
+		const currentAnswerIndex = answerData.findIndex((item) => item.question === currentQuestion);
 
-  // Modify the navigation logic to respect max answered questions
-  $effect(() => {
-    if (reviewModeEnabled && currentQuestion > answerData.length) {
-      currentQuestion = answerData.length;
-    }
-  });
+		if (currentAnswerIndex !== -1) {
+			// In tutor mode, allow marking without an answer
+			if (tutorModeEnabled || answerData[currentAnswerIndex].answer) {
+				answerData[currentAnswerIndex] = {
+					...answerData[currentAnswerIndex],
+					correct: 'Correct'
+				};
 
-  // Add a function to get navigable questions in test mode
-  function getNavigableQuestions() {
-    const sortedQuestions = answerData
-      .slice()
-      .sort((a, b) => a.question - b.question)
-      .map(item => item.question);
-    
-    // Add the next question after the last answered question
-    const maxQuestion = Math.max(...sortedQuestions, 0);
-    if (maxQuestion > 0) {
-      sortedQuestions.push(maxQuestion + 1);
-    }
-    
-    return sortedQuestions;
-  }
+				// In tutor mode, always increment to next question
+				if (tutorModeEnabled) {
+					currentQuestion = Math.max(...answerData.map((item) => item.question)) + 1;
+				} else {
+					navigateToNextUnmarkedQuestion();
+				}
+			}
+		}
+	}
 
-  // Modify the existing navigation effect to handle test mode navigation
-  $effect(() => {
-    if (!reviewModeEnabled) {
-      const navigableQuestions = getNavigableQuestions();
-      
-      // Ensure current question is within navigable questions
-      if (currentQuestion > navigableQuestions[navigableQuestions.length - 1]) {
-        currentQuestion = navigableQuestions[navigableQuestions.length - 1];
-      }
-      
-      // If current question is not in navigable questions, find the closest
-      if (!navigableQuestions.includes(currentQuestion)) {
-        const closestQuestion = navigableQuestions.reduce((prev, curr) => 
-          Math.abs(curr - currentQuestion) < Math.abs(prev - currentQuestion) ? curr : prev
-        );
-        currentQuestion = closestQuestion;
-      }
-    }
-  });
+	function markIncorrect() {
+		const currentAnswerIndex = answerData.findIndex((item) => item.question === currentQuestion);
 
-  // Reactive effect to update notes when current question changes
-  $effect(() => {
-    // Find the current question's entry in answerData
-    const currentQuestionEntry = answerData.find(item => item.question === currentQuestion);
-    
-    // Update currentNotes if an entry exists
-    currentNotes = currentQuestionEntry?.notes || '';
-  });
+		if (currentAnswerIndex !== -1) {
+			// In tutor mode, allow marking without an answer
+			if (tutorModeEnabled || answerData[currentAnswerIndex].answer) {
+				answerData[currentAnswerIndex] = {
+					...answerData[currentAnswerIndex],
+					correct: 'Incorrect'
+				};
 
-  // Function to update notes for a specific question
-  function updateQuestionNotes() {
-    // Find the index of the current question in answerData
-    const questionIndex = answerData.findIndex(item => item.question === currentQuestion);
-    
-    if (questionIndex !== -1) {
-      // Create a copy of the existing answer data
-      const updatedAnswerData = [...answerData];
-      
-      // Update the notes for the current question
-      updatedAnswerData[questionIndex] = {
-        ...updatedAnswerData[questionIndex],
-        notes: currentNotes
-      };
-      
-      // Update the answerData
-      answerData = updatedAnswerData;
+				// In tutor mode, always increment to next question
+				if (tutorModeEnabled) {
+					currentQuestion = Math.max(...answerData.map((item) => item.question)) + 1;
+				} else {
+					navigateToNextUnmarkedQuestion();
+				}
+			}
+		}
+	}
 
-      // Persist to localStorage
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem('answerData', JSON.stringify(answerData));
-      }
-    }
-  }
+	function resetData() {
+		if (confirm('Are you sure you want to reset all data?')) {
+			stopTimer(); // Stop timer before resetting
+			answerData = [];
+			currentQuestion = 1;
+			reviewModeEnabled = false;
+			answerChoices = ['a', 'b', 'c', 'd', 'e'];
+			timeElapsed = 0;
+			source = '';
+			currentNotes = '';
+			if (typeof window !== 'undefined' && window.localStorage) {
+				localStorage.removeItem('answerData');
+				localStorage.removeItem('currentQuestion');
+				localStorage.removeItem('reviewModeEnabled');
+				localStorage.removeItem('source');
+			}
+			startTimer(); // Restart timer for the fresh question 1
+		}
+	}
 
-  // Add an event listener to update notes when input loses focus
-  function handleNotesBlur() {
-    updateQuestionNotes();
-  }
+	function undoLastAnswer() {
+		if (answerData.length > 0) {
+			// Remove the last answer entry
+			answerData = answerData.slice(0, -1);
 
-  // --- Date Navigation ---
-  function goToPreviousDay() {
-    const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() - 1);
-    currentDate = newDate;
-  }
-  
-  function goToNextDay() {
-    const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() + 1);
-    
-    // Don't allow going to future dates
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (newDate <= today) {
-      currentDate = newDate;
-    }
-  }
-  
-  function goToToday() {
-    currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-  }
+			// Go back to the previous question
+			if (currentQuestion > 1) {
+				currentQuestion -= 1;
+			}
 
-  function formatDate(date: Date) {
-    return date.toLocaleDateString(undefined, { 
-      weekday: 'short', 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  }
+			// Restart timer for the previous question
+			timeElapsed = 0;
+			startTimer();
+		}
+	}
 
-  // --- Local Storage Management ---
-  function saveToLocalStorage() {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('answerData', JSON.stringify(answerData));
-      localStorage.setItem('currentQuestion', currentQuestion.toString());
-      localStorage.setItem('reviewModeEnabled', reviewModeEnabled.toString());
-      localStorage.setItem('source', source);
-    }
-  }
+	function recordGuessAnswer() {
+		recordAnswer('?');
+	}
 
-  function exportToCsv() {
-    // Prepare CSV headers
-    const headers = ['Datetime', 'Correctness', 'Time Taken', 'Notes', 'Source'];
-    
-    // Convert answer data to CSV rows
-    const csvRows = answerData.map(item => [
-      item.datetime ? new Date(item.datetime).toLocaleString() : '',
-      // Mark undefined or null as 'Incorrect'
-      item.correct === 'Correct' ? 'Correct' : item.correct === 'Incorrect' ? 'Incorrect' : 'Unmarked',
-      `${item.time || 0}s`,
-      item.notes || '',
-      item.source || ''
-    ]);
+	// Timer and Question Navigation Effect
+	$effect(() => {
+		if (typeof window !== 'undefined') {
+			// Ensure this only runs client-side
+			const currentAnswerEntry = answerData.find((item) => item.question === currentQuestion);
+			if (!reviewModeEnabled) {
+				// In test mode, always restart the timer for the current question
+				stopTimer();
+				timeElapsed = currentAnswerEntry?.time || 0; // Load existing time if re-visiting
+				startTimer();
+			} else {
+				// In review mode, just display the recorded time, don't run the timer
+				stopTimer();
+				timeElapsed = currentAnswerEntry?.time || 0;
+			}
+		}
+	});
 
-    // Combine headers and rows
-    const csvContent = [
-      headers.join(','),
-      ...csvRows.map(row => row.map(cell => 
-        // Escape commas and quotes
-        `"${cell.toString().replace(/"/g, '""')}"`
-      ).join(','))
-    ].join('\n');
+	// Modify the navigation logic to respect max answered questions
+	$effect(() => {
+		if (reviewModeEnabled && currentQuestion > answerData.length) {
+			currentQuestion = answerData.length;
+		}
+	});
 
-    // Create and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', `answer_data_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+	// Add a function to get navigable questions in test mode
+	function getNavigableQuestions() {
+		const sortedQuestions = answerData
+			.slice()
+			.sort((a, b) => a.question - b.question)
+			.map((item) => item.question);
 
-  // Modify navigation functions to ensure notes are updated
-  function navigateBack() {
-    if (reviewModeEnabled) {
-      // In review mode, navigate through filtered data
-      const currentIndex = filteredAnswerData.findIndex(item => item.question === currentQuestion);
-      if (currentIndex !== -1 && currentIndex > 0) {
-        currentQuestion = filteredAnswerData[currentIndex - 1].question;
-      }
-    } else {
-      // In test mode, navigate through answered questions and next question
-      const navigableQuestions = getNavigableQuestions();
-      const currentIndex = navigableQuestions.indexOf(currentQuestion);
-      if (currentIndex > 0) {
-        currentQuestion = navigableQuestions[currentIndex - 1];
-      }
-    }
-  }
+		// Add the next question after the last answered question
+		const maxQuestion = Math.max(...sortedQuestions, 0);
+		if (maxQuestion > 0) {
+			sortedQuestions.push(maxQuestion + 1);
+		}
 
-  function navigateNext() {
-    if (reviewModeEnabled) {
-      // In review mode, navigate through filtered data
-      const currentIndex = filteredAnswerData.findIndex(item => item.question === currentQuestion);
-      if (currentIndex !== -1 && currentIndex < filteredAnswerData.length - 1) {
-        currentQuestion = filteredAnswerData[currentIndex + 1].question;
-      }
-    } else {
-      // In test mode, navigate through answered questions and next question
-      const navigableQuestions = getNavigableQuestions();
-      const currentIndex = navigableQuestions.indexOf(currentQuestion);
-      if (currentIndex < navigableQuestions.length - 1) {
-        currentQuestion = navigableQuestions[currentIndex + 1];
-      }
-    }
-  }
+		return sortedQuestions;
+	}
 
-  // --- Keyboard Event Handling ---
-  function incrementResult(result: 'Correct' | 'Incorrect') {
-    if (currentNotes === '') return;
-    markCorrect(result);
-  }
+	// Modify the existing navigation effect to handle test mode navigation
+	$effect(() => {
+		if (!reviewModeEnabled) {
+			const navigableQuestions = getNavigableQuestions();
 
-  function resetTimer() {
-    timeElapsed = 0;
-    startTimer();
-  }
+			// Ensure current question is within navigable questions
+			if (currentQuestion > navigableQuestions[navigableQuestions.length - 1]) {
+				currentQuestion = navigableQuestions[navigableQuestions.length - 1];
+			}
 
-  function undoLastAction() {
-    undoLastAnswer();
-  }
+			// If current question is not in navigable questions, find the closest
+			if (!navigableQuestions.includes(currentQuestion)) {
+				const closestQuestion = navigableQuestions.reduce((prev, curr) =>
+					Math.abs(curr - currentQuestion) < Math.abs(prev - currentQuestion) ? curr : prev
+				);
+				currentQuestion = closestQuestion;
+			}
+		}
+	});
 
-  function handleKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Enter') {
-      if (event.shiftKey || event.metaKey) {
-        // (Shift or meta) + Enter: 
-        markIncorrect();
-      } else {
-        // Enter: Perform the default action
-        markCorrect();
-      }
-      event.preventDefault(); // Prevent default form submission
-    }
-    if (event.key === 'Escape') {
-      resetTimer();
-    }
-    if (event.metaKey && event.key === 'z') {
-      undoLastAction();
-    }
-  }
+	// Reactive effect to update notes when current question changes
+	$effect(() => {
+		// Find the current question's entry in answerData
+		const currentQuestionEntry = answerData.find((item) => item.question === currentQuestion);
 
-  function handleAnswerInput(event: KeyboardEvent) {
-    if (event.key === 'Enter') {
-      // Trim and convert to lowercase for case-insensitive matching
-      const inputAnswer = answerInput.trim().toLowerCase();
-      
-      // Find the first answer choice that matches the input
-      const matchedChoice = answerChoices.find(choice => 
-        choice.toLowerCase() === inputAnswer
-      );
+		// Update currentNotes if an entry exists
+		currentNotes = currentQuestionEntry?.notes || '';
+	});
 
-      if (matchedChoice) {
-        // If a matching choice is found, record the answer
-        recordAnswer(matchedChoice);
-        
-        // Clear the input after recording
-        answerInput = '';
+	// Function to update notes for a specific question
+	function updateQuestionNotes() {
+		// Find the index of the current question in answerData
+		const questionIndex = answerData.findIndex((item) => item.question === currentQuestion);
 
-        // Focus back on the answer input
-        AnswerInput?.focus();
-      }
+		if (questionIndex !== -1) {
+			// Create a copy of the existing answer data
+			const updatedAnswerData = [...answerData];
 
-      event.preventDefault();
-    }
-  }
+			// Update the notes for the current question
+			updatedAnswerData[questionIndex] = {
+				...updatedAnswerData[questionIndex],
+				notes: currentNotes
+			};
 
-  function toggleFlag() {
-    const currentAnswerIndex = answerData.findIndex(item => item.question === currentQuestion);
-    if (currentAnswerIndex !== -1) {
-      answerData[currentAnswerIndex] = {
-        ...answerData[currentAnswerIndex],
-        flagged: !answerData[currentAnswerIndex].flagged
-      };
-      isFlagged = answerData[currentAnswerIndex].flagged;
-    }
-  }
+			// Update the answerData
+			answerData = updatedAnswerData;
 
-  $effect(() => {
-    const currentAnswer = answerData.find(item => item.question === currentQuestion);
-    isFlagged = currentAnswer?.flagged || false;
-  });
+			// Persist to localStorage
+			if (typeof window !== 'undefined' && window.localStorage) {
+				localStorage.setItem('answerData', JSON.stringify(answerData));
+			}
+		}
+	}
 
-  // Navigate to the next unmarked question
-  function navigateToNextUnmarkedQuestion() {
-    const unmarkedQuestions = answerData
-      .filter(item => item.correct === undefined)
-      .map(item => item.question);
-    
-    if (unmarkedQuestions.length > 0) {
-      // Move to the lowest unmarked question after the current one
-      const nextUnmarkedQuestion = Math.min(...unmarkedQuestions.filter(q => q > currentQuestion));
-      
-      // If no next unmarked question and not in tutor mode, switch back to test mode
-      if (nextUnmarkedQuestion === Infinity) {
-        if (!tutorModeEnabled) {
-          reviewModeEnabled = false;
-          currentQuestion = Math.max(...answerData.map(item => item.question), 0) + 1;
-          timeElapsed = 0;
-          startTimer();
-        } else {
-          // In tutor mode, always increment to next question
-          currentQuestion = Math.max(...answerData.map(item => item.question)) + 1;
-        }
-      } else {
-        // Move to next unmarked question
-        currentQuestion = nextUnmarkedQuestion;
-      }
-    } else {
-      // No unmarked questions
-      if (!tutorModeEnabled) {
-        // Only switch back to test mode if not in tutor mode
-        reviewModeEnabled = false;
-        currentQuestion = Math.max(...answerData.map(item => item.question), 0) + 1;
-        timeElapsed = 0;
-        startTimer();
-      } else {
-        // In tutor mode, increment to next question
-        currentQuestion = Math.max(...answerData.map(item => item.question)) + 1;
-      }
-    }
-  }
+	// Add an event listener to update notes when input loses focus
+	function handleNotesBlur() {
+		updateQuestionNotes();
+	}
+
+	// --- Date Navigation ---
+	function goToPreviousDay() {
+		const newDate = new Date(currentDate);
+		newDate.setDate(newDate.getDate() - 1);
+		currentDate = newDate;
+	}
+
+	function goToNextDay() {
+		const newDate = new Date(currentDate);
+		newDate.setDate(newDate.getDate() + 1);
+
+		// Don't allow going to future dates
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+		if (newDate <= today) {
+			currentDate = newDate;
+		}
+	}
+
+	function goToToday() {
+		currentDate = new Date();
+		currentDate.setHours(0, 0, 0, 0);
+	}
+
+	function formatDate(date: Date) {
+		return date.toLocaleDateString(undefined, {
+			weekday: 'short',
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric'
+		});
+	}
+
+	// --- Local Storage Management ---
+	function saveToLocalStorage() {
+		if (typeof window !== 'undefined' && window.localStorage) {
+			localStorage.setItem('answerData', JSON.stringify(answerData));
+			localStorage.setItem('currentQuestion', currentQuestion.toString());
+			localStorage.setItem('reviewModeEnabled', reviewModeEnabled.toString());
+			localStorage.setItem('source', source);
+		}
+	}
+
+	function exportToCsv() {
+		// Prepare CSV headers
+		const headers = ['Datetime', 'Correctness', 'Time Taken', 'Notes', 'Source'];
+
+		// Convert answer data to CSV rows
+		const csvRows = answerData.map((item) => [
+			item.datetime ? new Date(item.datetime).toLocaleString() : '',
+			// Mark undefined or null as 'Incorrect'
+			item.correct === 'Correct'
+				? 'Correct'
+				: item.correct === 'Incorrect'
+					? 'Incorrect'
+					: 'Unmarked',
+			`${item.time || 0}s`,
+			item.notes || '',
+			item.source || ''
+		]);
+
+		// Combine headers and rows
+		const csvContent = [
+			headers.join(','),
+			...csvRows.map((row) =>
+				row
+					.map(
+						(cell) =>
+							// Escape commas and quotes
+							`"${cell.toString().replace(/"/g, '""')}"`
+					)
+					.join(',')
+			)
+		].join('\n');
+
+		// Create and trigger download
+		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+		const link = document.createElement('a');
+		const url = URL.createObjectURL(blob);
+
+		link.setAttribute('href', url);
+		link.setAttribute('download', `answer_data_${new Date().toISOString().split('T')[0]}.csv`);
+		link.style.visibility = 'hidden';
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+	}
+
+	// Modify navigation functions to ensure notes are updated
+	function navigateBack() {
+		if (reviewModeEnabled) {
+			// In review mode, navigate through filtered data
+			const currentIndex = filteredAnswerData.findIndex(
+				(item) => item.question === currentQuestion
+			);
+			if (currentIndex !== -1 && currentIndex > 0) {
+				currentQuestion = filteredAnswerData[currentIndex - 1].question;
+			}
+		} else {
+			// In test mode, navigate through answered questions and next question
+			const navigableQuestions = getNavigableQuestions();
+			const currentIndex = navigableQuestions.indexOf(currentQuestion);
+			if (currentIndex > 0) {
+				currentQuestion = navigableQuestions[currentIndex - 1];
+			}
+		}
+	}
+
+	function navigateNext() {
+		if (reviewModeEnabled) {
+			// In review mode, navigate through filtered data
+			const currentIndex = filteredAnswerData.findIndex(
+				(item) => item.question === currentQuestion
+			);
+			if (currentIndex !== -1 && currentIndex < filteredAnswerData.length - 1) {
+				currentQuestion = filteredAnswerData[currentIndex + 1].question;
+			}
+		} else {
+			// In test mode, navigate through answered questions and next question
+			const navigableQuestions = getNavigableQuestions();
+			const currentIndex = navigableQuestions.indexOf(currentQuestion);
+			if (currentIndex < navigableQuestions.length - 1) {
+				currentQuestion = navigableQuestions[currentIndex + 1];
+			}
+		}
+	}
+
+	// --- Keyboard Event Handling ---
+	function incrementResult(result: 'Correct' | 'Incorrect') {
+		if (currentNotes === '') return;
+		markCorrect(result);
+	}
+
+	function resetTimer() {
+		timeElapsed = 0;
+		startTimer();
+	}
+
+	function undoLastAction() {
+		undoLastAnswer();
+	}
+
+	function handleKeyDown(event: KeyboardEvent) {
+		if (event.key === 'Enter') {
+			if (event.shiftKey || event.metaKey) {
+				// (Shift or meta) + Enter:
+				markIncorrect();
+			} else {
+				// Enter: Perform the default action
+				markCorrect();
+			}
+			event.preventDefault(); // Prevent default form submission
+		}
+		if (event.key === 'Escape') {
+			resetTimer();
+		}
+		if (event.metaKey && event.key === 'z') {
+			undoLastAction();
+		}
+	}
+
+	function handleAnswerInput(event: KeyboardEvent) {
+		if (event.key === 'Enter') {
+			// Trim and convert to lowercase for case-insensitive matching
+			const inputAnswer = answerInput.trim().toLowerCase();
+
+			// Find the first answer choice that matches the input
+			const matchedChoice = answerChoices.find((choice) => choice.toLowerCase() === inputAnswer);
+
+			if (matchedChoice) {
+				// If a matching choice is found, record the answer
+				recordAnswer(matchedChoice);
+
+				// Clear the input after recording
+				answerInput = '';
+
+				// Focus back on the answer input
+				AnswerInput?.focus();
+			}
+
+			event.preventDefault();
+		}
+	}
+
+	function toggleFlag() {
+		const currentAnswerIndex = answerData.findIndex((item) => item.question === currentQuestion);
+		if (currentAnswerIndex !== -1) {
+			answerData[currentAnswerIndex] = {
+				...answerData[currentAnswerIndex],
+				flagged: !answerData[currentAnswerIndex].flagged
+			};
+			isFlagged = answerData[currentAnswerIndex].flagged;
+		}
+	}
+
+	$effect(() => {
+		const currentAnswer = answerData.find((item) => item.question === currentQuestion);
+		isFlagged = currentAnswer?.flagged || false;
+	});
+
+	// Navigate to the next unmarked question
+	function navigateToNextUnmarkedQuestion() {
+		const unmarkedQuestions = answerData
+			.filter((item) => item.correct === undefined)
+			.map((item) => item.question);
+
+		if (unmarkedQuestions.length > 0) {
+			// Move to the lowest unmarked question after the current one
+			const nextUnmarkedQuestion = Math.min(
+				...unmarkedQuestions.filter((q) => q > currentQuestion)
+			);
+
+			// If no next unmarked question and not in tutor mode, switch back to test mode
+			if (nextUnmarkedQuestion === Infinity) {
+				if (!tutorModeEnabled) {
+					reviewModeEnabled = false;
+					currentQuestion = Math.max(...answerData.map((item) => item.question), 0) + 1;
+					timeElapsed = 0;
+					startTimer();
+				} else {
+					// In tutor mode, always increment to next question
+					currentQuestion = Math.max(...answerData.map((item) => item.question)) + 1;
+				}
+			} else {
+				// Move to next unmarked question
+				currentQuestion = nextUnmarkedQuestion;
+			}
+		} else {
+			// No unmarked questions
+			if (!tutorModeEnabled) {
+				// Only switch back to test mode if not in tutor mode
+				reviewModeEnabled = false;
+				currentQuestion = Math.max(...answerData.map((item) => item.question), 0) + 1;
+				timeElapsed = 0;
+				startTimer();
+			} else {
+				// In tutor mode, increment to next question
+				currentQuestion = Math.max(...answerData.map((item) => item.question)) + 1;
+			}
+		}
+	}
 </script>
+
 <main>
-  <!-- Existing content -->
-  <div class="flex justify-center p-3">
-    <button onclick={toggleReviewMode}>
-      { reviewModeEnabled ? 'Switch to Test Mode' : 'Switch to Review Mode' }
-    </button>
-  </div>
-  <div class="source-input-section pb-3">
-    <input 
-      id="sourceInput" 
-      type="text" 
-      bind:value={source} 
-      placeholder="Enter source for this session"
-      class="w-full p-2 border rounded mt-2"
-    />
-  </div>
+	<div class="flex justify-center p-3">
+		<button onclick={toggleReviewMode}>
+			{reviewModeEnabled ? 'Switch to Test Mode' : 'Switch to Review Mode'}
+		</button>
+	</div>
+	<div class="source-input-section pb-3">
+		<input
+			id="sourceInput"
+			type="text"
+			bind:value={source}
+			placeholder="Enter source for this session"
+			class="mt-2 w-full rounded border p-2"
+		/>
+	</div>
 
-  <div class="flex justify-center">
-    <p class="text-4xl pb-2">
-      Question:
-      <span class="bg-orange-300 text-black px-2 py-1 rounded">{currentQuestion}</span> 
-      {#if reviewModeEnabled}
-      <span class="text-4xl bg-yellow-300 text-black px-2 py-1 rounded">{currentAnswer.toUpperCase() || 'Not answered'}</span>
-      {/if}
-      {#if answerData.find(item => item.question === currentQuestion)?.flagged}
-        <span class="text-medium text-red-600 ml-4">🚩</span>
-      {/if}
-      {#if timeElapsed > 60}
-        <span class="text-sm text-red-600 ml-4">{timeElapsed}s</span>
-      {:else}
-        <span class="text-sm text-gray-600 ml-4">{timeElapsed}s</span>
-      {/if}
-    </p>
-  </div>
-  
+	<div class="flex justify-center">
+		<p class="pb-2 text-4xl">
+			Question:
+			<span class="rounded bg-orange-300 px-2 py-1 text-black">{currentQuestion}</span>
+			{#if reviewModeEnabled}
+				<span class="rounded bg-yellow-300 px-2 py-1 text-4xl text-black"
+					>{currentAnswer.toUpperCase() || 'Not answered'}</span
+				>
+			{/if}
+			{#if answerData.find((item) => item.question === currentQuestion)?.flagged}
+				<span class="text-medium ml-4 text-red-600">🚩</span>
+			{/if}
+			{#if timeElapsed > 60}
+				<span class="ml-4 text-sm text-red-600">{timeElapsed}s</span>
+			{:else}
+				<span class="ml-4 text-sm text-gray-600">{timeElapsed}s</span>
+			{/if}
+		</p>
+	</div>
 
-  {#if !reviewModeEnabled}
-    <div class="flex items-center space-x-2 justify-center pb-2">
-      <input 
-        type="checkbox" 
-        id="flagQuestion" 
-        bind:checked={isFlagged}
-        onchange={toggleFlag}
-        class="form-checkbox h-5 w-5 text-yellow-500"
-      />
-      <label for="flagQuestion" class="text-sm">Flag Question</label>
-    </div>
-    <div class="answer-choices flex flex-col items-center">
-    <div class="flex space-x-2 mb-2">
-      {#each answerChoices as choice}
-      <button
-        onclick={() => recordAnswer(choice)}
-        class="
-          px-4 py-2 
-          {currentAnswer === choice 
-            ? 'bg-blue-500 text-white' 
-            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}
-          rounded 
-          transition-colors 
+	{#if !reviewModeEnabled}
+		<div class="flex items-center justify-center space-x-2 pb-2">
+			<input
+				type="checkbox"
+				id="flagQuestion"
+				bind:checked={isFlagged}
+				onchange={toggleFlag}
+				class="form-checkbox h-5 w-5 text-yellow-500"
+			/>
+			<label for="flagQuestion" class="text-sm">Flag Question</label>
+		</div>
+		<div class="answer-choices flex flex-col items-center">
+			<div class="mb-2 flex space-x-2">
+				{#each answerChoices as choice}
+					<button
+						onclick={() => recordAnswer(choice)}
+						class="
+          px-4 py-2
+          {currentAnswer === choice
+							? 'bg-blue-500 text-white'
+							: 'bg-gray-200 text-gray-800 hover:bg-gray-300'}
+          rounded
+          transition-colors
           duration-200
         "
-      >
-        {choice.toUpperCase()}
-      </button>
-      {/each}
-    </div>
-    <div class="flex space-x-2">
-      <button
-        onclick={recordGuessAnswer}
-        class="
-          px-4 py-2 
-          {currentAnswer === '?' 
-            ? 'bg-yellow-500 text-white' 
-            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'}
-          rounded 
-          transition-colors 
+					>
+						{choice.toUpperCase()}
+					</button>
+				{/each}
+			</div>
+			<div class="flex space-x-2">
+				<button
+					onclick={recordGuessAnswer}
+					class="
+          px-4 py-2
+          {currentAnswer === '?'
+						? 'bg-yellow-500 text-white'
+						: 'bg-gray-200 text-gray-800 hover:bg-gray-300'}
+          rounded
+          transition-colors
           duration-200
         "
-      >
-        ❓ Guess
-      </button>
-      <button
-        onclick={undoLastAnswer}
-        class="
-          px-4 py-2 
-          bg-gray-200 text-gray-800 
-          hover:bg-gray-300 
-          rounded 
-          transition-colors 
+				>
+					❓ Guess
+				</button>
+				<button
+					onclick={undoLastAnswer}
+					class="
+          rounded bg-gray-200
+          px-4 py-2
+          text-gray-800
+          transition-colors
           duration-200
+          hover:bg-gray-300
         "
-        disabled={answerData.length === 0}
-      >
-        ↩️ Undo
-      </button>
-    </div>
-    {#if answerChoices.length < 26}
-    <div class="flex justify-center mt-2">
-      <button 
-        onclick={addAnswerChoice}
-        class="
+					disabled={answerData.length === 0}
+				>
+					↩️ Undo
+				</button>
+			</div>
+			{#if answerChoices.length < 26}
+				<div class="mt-2 flex justify-center">
+					<button
+						onclick={addAnswerChoice}
+						class="
+          rounded
           px-4
-          hover:bg-green-300 
-          rounded 
-          transition-colors 
+          transition-colors
           duration-200
+          hover:bg-green-300
         "
-      >
-        Add Choice
-      </button>
-    </div>
-    <div class="answer-input-section pb-3">
-      <input
-        bind:this={AnswerInput}
-        bind:value={answerInput}
-        type="text"
-        placeholder="Type answer (a, b, c, etc.)"
-        class="w-full p-2 border rounded mt-2"
-        onkeydown={handleAnswerInput}
-      />
-    </div>
-    {/if}
-  </div>
-  {:else}
-  <div class="review-controls flex flex-col items-center space-y-4">
-  
-    <!-- {#if reviewModeEnabled}
+					>
+						Add Choice
+					</button>
+				</div>
+				<div class="answer-input-section pb-3">
+					<input
+						bind:this={AnswerInput}
+						bind:value={answerInput}
+						type="text"
+						placeholder="Type answer (a, b, c, etc.)"
+						class="mt-2 w-full rounded border p-2"
+						onkeydown={handleAnswerInput}
+					/>
+				</div>
+			{/if}
+		</div>
+	{:else}
+		<div class="review-controls flex flex-col items-center space-y-4">
+			<!-- {#if reviewModeEnabled}
       <div class="flex items-center justify-center space-x-4 mb-4">
         <label class="flex items-center space-x-2">
           <input 
@@ -728,37 +750,37 @@
         </label>
       </div>
     {/if} -->
-    <!-- {#if currentAnswer} -->
-    <div class="flex space-x-4">
-      <button 
-        onclick={markCorrect} 
-        class="
-          text-4xl w-56 h-24 rounded-full 
-          bg-green-200
-          hover:bg-green-300 
-          focus:outline-none focus:ring-4 focus:ring-green-300 
-          transition-all duration-200 
-          flex items-center justify-center
+			<!-- {#if currentAnswer} -->
+			<div class="flex space-x-4">
+				<button
+					onclick={markCorrect}
+					class="
+          flex h-24 w-56 items-center
+          justify-center
+          rounded-full
+          bg-green-200 text-4xl transition-all
+          duration-200 hover:bg-green-300
+          focus:ring-4 focus:ring-green-300 focus:outline-none
           {isCorrect === 'Correct' ? 'ring-4 ring-green-700' : ''}
         "
-      >
-        ✅
-      </button>
-      <button 
-        onclick={markIncorrect} 
-        class="
-          text-4xl w-56 h-24 rounded-full 
-          bg-red-200
-          hover:bg-red-300 
-          focus:outline-none focus:ring-4 focus:ring-red-300 
-          transition-all duration-200 
-          flex items-center justify-center
+				>
+					✅
+				</button>
+				<button
+					onclick={markIncorrect}
+					class="
+          flex h-24 w-56 items-center
+          justify-center
+          rounded-full
+          bg-red-200 text-4xl transition-all
+          duration-200 hover:bg-red-300
+          focus:ring-4 focus:ring-red-300 focus:outline-none
           {isCorrect === 'Incorrect' ? 'ring-4 ring-red-700' : ''}
         "
-      >
-        ❌
-      </button>
-      <!-- <button 
+				>
+					❌
+				</button>
+				<!-- <button 
         onclick={() => markCorrect(undefined)} 
         class="
           text-2xl w-24 h-24 rounded-full 
@@ -772,239 +794,230 @@
       >
         Unmarked
       </button> -->
-      
-    </div>
-    <!-- {/if} -->
+			</div>
+			<!-- {/if} -->
+		</div>
+	{/if}
 
-  </div>
-  {/if}
+	<div class="notes-input-section pb-3">
+		<input
+			bind:this={NotesInput}
+			bind:value={currentNotes}
+			type="text"
+			placeholder="Enter notes"
+			class="mt-2 w-full rounded border p-2"
+			onblur={handleNotesBlur}
+			onkeydown={handleKeyDown}
+		/>
+	</div>
 
+	<div class="navigation">
+		<button disabled={currentQuestion === 1} onclick={navigateBack}> Back </button>
+		<button
+			disabled={reviewModeEnabled
+				? currentQuestion >= filteredAnswerData[filteredAnswerData.length - 1]?.question
+				: currentQuestion >= getNavigableQuestions()[getNavigableQuestions().length - 1]}
+			onclick={navigateNext}
+		>
+			Next
+		</button>
+	</div>
 
-
-  <div class="notes-input-section pb-3">
-    <input
-      bind:this={NotesInput}
-      bind:value={currentNotes}
-      type="text"
-      placeholder="Enter notes"
-      class="w-full p-2 border rounded mt-2"
-      onblur={handleNotesBlur}
-      onkeydown={handleKeyDown}
-    />
-  </div>
-
-  <div class="navigation">
-    <button 
-      disabled={currentQuestion === 1} 
-      onclick={navigateBack}
-    >
-      Back
-    </button>
-    <button 
-      disabled={
-        reviewModeEnabled 
-          ? currentQuestion >= filteredAnswerData[filteredAnswerData.length - 1]?.question 
-          : currentQuestion >= getNavigableQuestions()[getNavigableQuestions().length - 1]
-      }
-      onclick={navigateNext}
-    >
-      Next
-    </button>
-  </div>
-
-  <h2 class="text-2xl text-center">
-    Answer Summary 
-    <span class="text-sm text-gray-600 ml-4">
-      (Correct: {correctQuestions}/{totalQuestions}, {percentageCorrect}%)
-    </span>
-    <span class="text-sm text-gray-600 ml-4">
-      {timeElapsed}s
-    </span>
-  </h2>
-  <table class="w-full border-collapse">
-    <thead>
-      <tr class="bg-gray-200">
-        <th class="border p-2">Question</th>
-        <th class="border p-2">Flagged</th>
-        <th class="border p-2">Answer</th>
-        <th class="border p-2">Time</th>
-        <th class="border p-2">Notes</th>
-        <th class="border p-2">Source</th>
-        <th class="border p-2">Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each filteredAnswerData.slice().sort((a, b) => b.question - a.question) as item}
-        <tr 
-          class:bg-yellow-100={item.question === currentQuestion} 
-          class="hover:bg-gray-50 transition-colors"
-          class:correct={item.correct === 'Correct'}
-          class:incorrect={item.correct === 'Incorrect'}
-        >
-          <td class="border p-2 text-center">{item.question}</td>
-          <td class="border p-2 text-center">{item.flagged ? '🚩' : ''}</td>
-          <td class="border p-2 text-center">{item.answer?.toUpperCase() || 'N/A'}</td>
-          <td class="border p-2 text-center">{item.time || 0}s</td>
-          <td class="border p-2 text-center">{item.notes || ''}</td>
-          <td class="border p-2 text-center">{item.source || ''}</td>
-          <td class="border p-2 text-center">
-            {#if item.correct === 'Correct'}
-              <span class="text-green-600">✅ Correct</span>
-            {:else if item.correct === 'Incorrect'}
-              <span class="text-red-600">❌ Incorrect</span>
-            {:else}
-              <span class="text-gray-500">Unmarked</span>
-            {/if}
-          </td>
-        </tr>
-      {/each}
-      {#if answerData.length > 0}
-      <tr class="font-bold">
-        <td class="border p-2 text-center">Total</td>
-        <td class="border p-2 text-center">
-          {answerData.filter(entry => entry.flagged).length}
-        </td>
-        <td class="border p-2 text-center">
-          {answerData.filter(entry => entry.answer).length} / {answerData.length}
-        </td>
-        <td class="border p-2 text-center">
-          {Math.round(answerData.reduce((sum, entry) => sum + (entry.time || 0), 0))}
-        </td>
-        <td class="border p-2 text-center"></td>
-        <td class="border p-2 text-center"></td>
-        <td class="border p-2 text-center">
-          <span class="text-green-600">✅ {correctQuestions}</span> 
-          <span class="text-red-600 ml-2">❌ {incorrectQuestions}</span>
-          <span class="text-gray-500 ml-2">❓ {totalQuestions - correctQuestions - incorrectQuestions}</span>
-        </td>
-      </tr>
-      {/if}
-    </tbody>
-  </table>
-  <!-- Date Navigation -->
-  <div class="flex justify-between items-center p-3">
-    <button onclick={goToPreviousDay}>Previous Day</button>
-    <button onclick={goToToday}>{formatDate(currentDate)}</button>
-    <button onclick={goToNextDay}>Next Day</button>
-    <!-- <button onclick={goToToday}>Today</button> -->
-  </div>
-  <button onclick={resetData} class="reset-button">Reset All Data</button>
-  <div class="export-section">
-    <button onclick={exportToCsv}>Export to CSV</button>
-  </div>
+	<h2 class="text-center text-2xl">
+		Answer Summary
+		<span class="ml-4 text-sm text-gray-600">
+			(Correct: {correctQuestions}/{totalQuestions}, {percentageCorrect}%)
+		</span>
+		<span class="ml-4 text-sm text-gray-600">
+			{timeElapsed}s
+		</span>
+	</h2>
+	<table class="w-full border-collapse">
+		<thead>
+			<tr class="bg-gray-200">
+				<th class="border p-2">Question</th>
+				<th class="border p-2">Flagged</th>
+				<th class="border p-2">Answer</th>
+				<th class="border p-2">Time</th>
+				<th class="border p-2">Notes</th>
+				<th class="border p-2">Source</th>
+				<th class="border p-2">Status</th>
+			</tr>
+		</thead>
+		<tbody>
+			{#each filteredAnswerData.slice().sort((a, b) => b.question - a.question) as item}
+				<tr
+					class:bg-yellow-100={item.question === currentQuestion}
+					class="transition-colors hover:bg-gray-50"
+					class:correct={item.correct === 'Correct'}
+					class:incorrect={item.correct === 'Incorrect'}
+				>
+					<td class="border p-2 text-center">{item.question}</td>
+					<td class="border p-2 text-center">{item.flagged ? '🚩' : ''}</td>
+					<td class="border p-2 text-center">{item.answer?.toUpperCase() || 'N/A'}</td>
+					<td class="border p-2 text-center">{item.time || 0}s</td>
+					<td class="border p-2 text-center">{item.notes || ''}</td>
+					<td class="border p-2 text-center">{item.source || ''}</td>
+					<td class="border p-2 text-center">
+						{#if item.correct === 'Correct'}
+							<span class="text-green-600">✅ Correct</span>
+						{:else if item.correct === 'Incorrect'}
+							<span class="text-red-600">❌ Incorrect</span>
+						{:else}
+							<span class="text-gray-500">Unmarked</span>
+						{/if}
+					</td>
+				</tr>
+			{/each}
+			{#if answerData.length > 0}
+				<tr class="font-bold">
+					<td class="border p-2 text-center">Total</td>
+					<td class="border p-2 text-center">
+						{answerData.filter((entry) => entry.flagged).length}
+					</td>
+					<td class="border p-2 text-center">
+						{answerData.filter((entry) => entry.answer).length} / {answerData.length}
+					</td>
+					<td class="border p-2 text-center">
+						{Math.round(answerData.reduce((sum, entry) => sum + (entry.time || 0), 0))}
+					</td>
+					<td class="border p-2 text-center"></td>
+					<td class="border p-2 text-center"></td>
+					<td class="border p-2 text-center">
+						<span class="text-green-600">✅ {correctQuestions}</span>
+						<span class="ml-2 text-red-600">❌ {incorrectQuestions}</span>
+						<span class="ml-2 text-gray-500"
+							>❓ {totalQuestions - correctQuestions - incorrectQuestions}</span
+						>
+					</td>
+				</tr>
+			{/if}
+		</tbody>
+	</table>
+	<!-- Date Navigation -->
+	<div class="flex items-center justify-between p-3">
+		<button onclick={goToPreviousDay}>Previous Day</button>
+		<button onclick={goToToday}>{formatDate(currentDate)}</button>
+		<button onclick={goToNextDay}>Next Day</button>
+		<!-- <button onclick={goToToday}>Today</button> -->
+	</div>
+	<button onclick={resetData} class="reset-button">Reset All Data</button>
+	<div class="export-section">
+		<button onclick={exportToCsv}>Export to CSV</button>
+	</div>
 </main>
 
 <style>
-  main {
-    font-family: sans-serif;
-    padding: 20px;
-    max-width: 800px;
-    margin: 0 auto;
-  }
+	main {
+		font-family: sans-serif;
+		padding: 20px;
+		max-width: 800px;
+		margin: 0 auto;
+	}
 
-  .answer-choices {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+	.answer-choices {
+		display: flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
 
-  .answer-choices button {
-    padding: 10px 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-  }
+	.answer-choices button {
+		padding: 10px 15px;
+		border: 1px solid #ccc;
+		border-radius: 5px;
+		cursor: pointer;
+		font-size: 1em;
+	}
 
-  .answer-choices button:disabled {
-     opacity: 0.6;
-     cursor: not-allowed;
-     background-color: #eee;
-  }
+	.answer-choices button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		background-color: #eee;
+	}
 
-  .answer-choices button.selected:disabled {
-    background-color: #007bff; /* Keep selected style even if disabled */
-    color: white;
-    border-color: #007bff;
-    opacity: 1; /* Ensure selected looks normal */
-  }
+	.answer-choices button.selected:disabled {
+		background-color: #007bff; /* Keep selected style even if disabled */
+		color: white;
+		border-color: #007bff;
+		opacity: 1; /* Ensure selected looks normal */
+	}
 
-   .answer-choices button.selected {
-    background-color: #007bff;
-    color: white;
-    border-color: #007bff;
-  }
+	.answer-choices button.selected {
+		background-color: #007bff;
+		color: white;
+		border-color: #007bff;
+	}
 
-  .review-controls {
-    margin-bottom: 20px;
-    text-align: center;
-  }
+	.review-controls {
+		margin-bottom: 20px;
+		text-align: center;
+	}
 
-  .review-controls button {
-    padding: 8px 12px;
-    margin: 0 5px;
-    border-radius: 5px;
-    cursor: pointer;
-  }
+	.review-controls button {
+		padding: 8px 12px;
+		margin: 0 5px;
+		border-radius: 5px;
+		cursor: pointer;
+	}
 
-  .review-controls button.correct {
-    background-color: #28a745;
-    color: white;
-    border: 2px solid #28a745;
-  }
-   .review-controls button:not(.correct) {
-     border: 2px solid transparent; /* Placeholder border */
-   }
+	.review-controls button.correct {
+		background-color: #28a745;
+		color: white;
+		border: 2px solid #28a745;
+	}
+	.review-controls button:not(.correct) {
+		border: 2px solid transparent; /* Placeholder border */
+	}
 
-  .review-controls button.incorrect {
-    background-color: #dc3545;
-    color: white;
-     border: 2px solid #dc3545;
-  }
-   .review-controls button:not(.incorrect) {
-     border: 2px solid transparent;
-   }
+	.review-controls button.incorrect {
+		background-color: #dc3545;
+		color: white;
+		border: 2px solid #dc3545;
+	}
+	.review-controls button:not(.incorrect) {
+		border: 2px solid transparent;
+	}
 
-  .review-controls button.unmarked {
-    background-color: #ffc107;
-    color: #212529;
-    border: 2px solid #ffc107;
-  }
-   .review-controls button:not(.unmarked) {
-     border: 2px solid transparent;
-   }
+	.review-controls button.unmarked {
+		background-color: #ffc107;
+		color: #212529;
+		border: 2px solid #ffc107;
+	}
+	.review-controls button:not(.unmarked) {
+		border: 2px solid transparent;
+	}
 
-  .navigation {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    justify-content: center;
-  }
+	.navigation {
+		display: flex;
+		gap: 10px;
+		margin-bottom: 20px;
+		justify-content: center;
+	}
 
-  button {
-    padding: 10px 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-  }
+	button {
+		padding: 10px 20px;
+		border: 1px solid #ccc;
+		border-radius: 5px;
+		cursor: pointer;
+		font-size: 1em;
+	}
 
-  .navigation button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+	.navigation button:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
 
-  .reset-button {
-    display: block;
-    width: 200px;
-    margin: 20px auto;
-    padding: 10px 15px;
-    border: 1px solid #dc3545;
-    border-radius: 5px;
-    background-color: white;
-    color: #dc3545;
-    cursor: pointer;
-    font-size: 1em;
-  }
+	.reset-button {
+		display: block;
+		width: 200px;
+		margin: 20px auto;
+		padding: 10px 15px;
+		border: 1px solid #dc3545;
+		border-radius: 5px;
+		background-color: white;
+		color: #dc3545;
+		cursor: pointer;
+		font-size: 1em;
+	}
 </style>

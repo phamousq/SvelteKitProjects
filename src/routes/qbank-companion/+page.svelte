@@ -11,7 +11,7 @@
 		correctQuestionsStore,
 		correctPercentageStore
 	} from '$lib/store';
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { sineOut } from 'svelte/easing';
 	import { scaleTime, scaleBand } from 'd3-scale';
 	import { format } from 'date-fns';
@@ -44,7 +44,7 @@
 	let historyCorrect = $derived(history.filter((item) => item.result === 'Correct').length);
 	let historyIncorrect = $derived(history.filter((item) => item.result === 'Incorrect').length);
 	let undoHistory = $state([]);
-	let source = $state('');
+	let source = $sourceStore;
 	let csvLoaded = $state(false);
 	let currentNotes = $state('');
 
@@ -125,7 +125,7 @@
 		if (storedCorrect) correctCount = parseInt(storedCorrect);
 		if (storedIncorrect) incorrectCount = parseInt(storedIncorrect);
 		if (storedHistory) history = JSON.parse(storedHistory);
-		if (storedSource) source = storedSource;
+		if (storedSource) sourceStore.set(storedSource);
 		if (storedCsvLoaded) csvLoaded = storedCsvLoaded === 'true';
 
 		currentDate = new Date();
@@ -240,7 +240,7 @@
 			time: timeElapsed,
 			notes: currentNotes,
 			datetime: currentTimestamp.toISOString(),
-			source: source
+			source: $sourceStore
 		};
 
 		undoHistory = [
@@ -469,16 +469,6 @@
 		} else console.log('NotesInput or currentNotes is missing');
 	}
 
-	// resetTimer function in Block 2, merged with Block 1's timer reset logic
-	function resetTimer() {
-		// Original Block 2 logic:
-		previousTimestamp = new Date();
-
-		// Copied logic from Block 1's resetTimer:
-		timeElapsed = 0;
-		startTimer(); // Call the copied startTimer
-	}
-
 	function updateNotes(index, notes) {
 		// Find the actual history item that corresponds to the filtered item
 		const actualItem = history.find((item) => item === filteredHistory[index]);
@@ -531,11 +521,57 @@
 			event.preventDefault(); // Prevent default form submission
 		}
 		if (event.key === 'Escape') {
-			resetTimer(); // This will now call the merged resetTimer
+			startTimer(); // This will now call the merged resetTimer
 		}
 		if (event.metaKey && event.key === 'z') {
 			undoLastAction();
 		}
+	}
+
+	let editingSource = $state(false);
+	let tempSource = $state('');
+
+	function startEditing() {
+		editingSource = true;
+		tempSource = $sourceStore || '';
+		// Ensure the input gets focus after Svelte updates the DOM
+		setTimeout(() => {
+			const inputElement = document.getElementById('sourceEditorInput');
+			inputElement?.focus();
+		}, 0);
+	}
+
+	function handleSourceInputKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter') {
+			sourceStore.set(tempSource.trim());
+			editingSource = false;
+		} else if (event.key === 'Escape') {
+			editingSource = false;
+		}
+	}
+
+	// Svelte Action for auto-growing textareas
+	function autogrow(node: HTMLTextAreaElement, value: string) {
+		const adjustHeight = () => {
+			node.style.height = 'auto'; // Temporarily shrink to get correct scrollHeight
+			node.style.height = `${node.scrollHeight}px`;
+			node.style.overflowY = 'hidden'; // Optional: hide scrollbar if content fits
+		};
+
+		adjustHeight(); // Initial adjustment
+		node.addEventListener('input', adjustHeight);
+
+		return {
+			async update(newValue: string) {
+				// newValue is passed but adjustHeight reads directly from node.scrollHeight
+				// which will reflect the latest content after tick().
+				await tick(); // Wait for Svelte to update the DOM with the new value
+				adjustHeight();
+			},
+			destroy() {
+				node.removeEventListener('input', adjustHeight);
+			}
+		};
 	}
 </script>
 
@@ -609,54 +645,83 @@
 			</PieChart>
 		</div>
 	</div>
-	<div class="wrapper" id="QuestionContainer">
+	<div id="QuestionContainer" class="wrapper">
 		<div>
 			<h1 style="font-size: 20px; font-weight: bold;">Daily: {dailyQuestionCount}</h1>
 		</div>
 	</div>
-	{#if source}
-		<div class="flex items-center justify-center text-center">
-			<div>
-				<h2 style="font-size: 24px; font-weight: bold;">
-					{source}
-				</h2>
-				<span class="rounded bg-orange-300 px-2 py-1 text-xl text-black"
-					>{sourcedQuestionCount(source) + 1}</span
-				>
-				{#if timeElapsed >= 90}
-					<button class="ml-4 text-sm text-red-600" onclick={resetTimer}>{timeElapsed}s</button>
-				{:else if timeElapsed >= 60}
-					<button class="ml-4 text-sm text-orange-400" onclick={resetTimer}>{timeElapsed}s</button>
-				{:else}
-					<button class="ml-4 text-sm text-gray-600" onclick={resetTimer}>{timeElapsed}s</button>
-				{/if}
+	<div id="SourceContainer" class="pb-2">
+		{#if editingSource}
+			<div class="flex items-center justify-center p-2 text-center">
+				<input
+					id="sourceEditorInput"
+					type="text"
+					bind:value={tempSource}
+					onkeydown={handleSourceInputKeydown}
+					onblur={() => {
+						// Optional: Save on blur, or require Enter/Escape
+						// For now, blur will also cancel to avoid accidental changes without "Enter"
+						// To save on blur:
+						if (tempSource.trim() !== ($sourceStore || '')) {
+							sourceStore.set(tempSource.trim());
+						}
+						editingSource = false;
+					}}
+					placeholder="Enter source..."
+					class="w-2/3 rounded border p-2 text-center"
+				/>
 			</div>
+		{:else if $sourceStore}
+			<div
+				class="flex cursor-pointer items-center justify-center p-2"
+				onclick={startEditing}
+				title="Click to edit source"
+			>
+				<div>
+					<h2 style="font-size: 24px; font-weight: bold;" class="rounded bg-yellow-200 p-1 px-2">
+						{$sourceStore}
+					</h2>
+				</div>
+			</div>
+		{:else}
+			<div class="flex items-center justify-center p-2 text-center">
+				<button
+					onclick={startEditing}
+					class="rounded border bg-blue-500 p-2 text-white hover:bg-blue-600"
+					>Set Source
+				</button>
+			</div>
+		{/if}
+		<div class="flex items-center justify-center text-center">
+			<span class="rounded bg-orange-300 px-2 py-1 text-xl text-black"
+				>{sourcedQuestionCount($sourceStore) + 1}</span
+			>
+			{#if timeElapsed >= 90}
+				<div class="ml-4 cursor-pointer text-sm text-red-600" onclick={startTimer}>
+					{timeElapsed}s
+				</div>
+			{:else if timeElapsed >= 60}
+				<div class="ml-4 cursor-pointer text-sm text-orange-400" onclick={startTimer}>
+					{timeElapsed}s
+				</div>
+			{:else}
+				<div class="ml-4 cursor-pointer text-sm text-gray-600" onclick={startTimer}>
+					{timeElapsed}s
+				</div>
+			{/if}
 		</div>
-	{/if}
-	<!-- Source input field -->
-	<div id="SourceInput" class="input-container" style="padding-top: 10px">
-		<label for="source-input">Source:</label>
-		<input
-			id="source-input"
-			type="text"
-			bind:value={source}
-			placeholder="Enter source..."
-			class="source-input"
-		/>
 	</div>
 
-	<!-- NOTES -->
-	<div class="input-container">
-		<label for="source-input">Notes:</label>
-		<input
-			type="text"
+	<div id="NotesContainer" class="input-container">
+		<textarea
+			use:autogrow={currentNotes}
 			bind:value={currentNotes}
-			bind:this={NotesInput}
 			onkeydown={handleKeyDown}
 			placeholder="Enter notes..."
 			class="source-input"
 			id="notes-input"
-		/>
+			rows="1"
+		></textarea>
 	</div>
 
 	<div id="Scoreboard" class="scoreboard">
@@ -920,8 +985,7 @@
 		border: 1px solid #ccc;
 		border-radius: 5px;
 		font-size: 16px;
-		margin-left: 10px;
-		width: 60%;
+		width: 80%;
 	}
 
 	.source-input:focus {
