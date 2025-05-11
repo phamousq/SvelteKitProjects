@@ -44,7 +44,7 @@
 	let historyCorrect = $derived(history.filter((item) => item.result === 'Correct').length);
 	let historyIncorrect = $derived(history.filter((item) => item.result === 'Incorrect').length);
 	let undoHistory = $state([]);
-	let source = $sourceStore;
+	let source = '';
 	let csvLoaded = $state(false);
 	let currentNotes = $state('');
 
@@ -118,7 +118,6 @@
 		const storedCorrect = localStorage.getItem('correctCount');
 		const storedIncorrect = localStorage.getItem('incorrectCount');
 		const storedHistory = localStorage.getItem('history');
-		const storedSource = localStorage.getItem('source');
 		const storedCsvLoaded = localStorage.getItem('csvLoaded');
 		const storedUndoHistory = localStorage.getItem('undoHistory');
 
@@ -126,7 +125,6 @@
 		if (storedCorrect) correctCount = parseInt(storedCorrect);
 		if (storedIncorrect) incorrectCount = parseInt(storedIncorrect);
 		if (storedHistory) history = JSON.parse(storedHistory);
-		if (storedSource) sourceStore.set(storedSource);
 		if (storedCsvLoaded) csvLoaded = storedCsvLoaded === 'true';
 
 		currentDate = new Date();
