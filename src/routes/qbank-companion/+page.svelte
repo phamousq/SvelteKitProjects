@@ -72,6 +72,7 @@
 
 	let sourcedQuestionCount = $derived((sourceName: string) => {
 		// Get the target source name from the state variable, trim whitespace, and convert to lowercase for case-insensitive matching.
+		if (!sourceName) return 0;
 		const targetSource = sourceName.trim().toLowerCase();
 
 		if (targetSource === '') {
@@ -288,12 +289,12 @@
 	}
 
 	function exportCSV() {
-		const header = 'Datetime,Correctness,Time Taken,Notes,Source';
+		const header = 'Datetime,Correctness,Time (s),Notes,Source';
 		const rows = history
 			.map((item) => {
 				const datetime = item.datetime || new Date().toISOString();
 				const itemSource = item.source || '';
-				return `${datetime},${item.result},${item.time !== undefined ? item.time + 's' : 'N/A'},"${item.notes.replace(/"/g, '""')}","${itemSource.replace(/"/g, '""')}"`;
+				return `${datetime},${item.result},${item.time !== undefined ? item.time : 'N/A'},"${item.notes.replace(/"/g, '""')}","${itemSource.replace(/"/g, '""')}"`;
 			})
 			.join('\n');
 		const csvContent = `${header}\n${rows}`;
@@ -435,7 +436,6 @@
 	}
 
 	function undoLastAction() {
-		NotesInput.focus();
 		if (undoHistory.length > 0) {
 			const lastUndo = undoHistory.pop();
 			correctCount = lastUndo.previousCorrect;
@@ -508,7 +508,13 @@
 
 	function handleKeyDown(event: KeyboardEvent) {
 		if (event.key === 'Enter') {
-			if (event.shiftKey || event.metaKey) {
+			if (event.shiftKey) {
+				// insert newline
+				currentNotes += '\n';
+				event.preventDefault(); // Prevent the browser from adding a second newline
+				return;
+			}
+			if (event.metaKey) {
 				// (Shift or meta) + Enter:
 				// Block 2 doesn't have a direct equivalent for Block 1's markIncorrect() here
 				// It calls incrementResult('Incorrect') which has its own notes check
@@ -697,17 +703,26 @@
 				>{sourcedQuestionCount($sourceStore) + 1}</span
 			>
 			{#if timeElapsed >= 90}
-				<div class="ml-4 cursor-pointer text-sm text-red-600" onclick={startTimer}>
+				<button
+					class="ml-4 cursor-pointer text-sm text-red-600 hover:text-red-800"
+					onclick={startTimer}
+				>
 					{timeElapsed}s
-				</div>
+				</button>
 			{:else if timeElapsed >= 60}
-				<div class="ml-4 cursor-pointer text-sm text-orange-400" onclick={startTimer}>
+				<button
+					class="ml-4 cursor-pointer text-sm text-orange-400 hover:text-orange-600"
+					onclick={startTimer}
+				>
 					{timeElapsed}s
-				</div>
+				</button>
 			{:else}
-				<div class="ml-4 cursor-pointer text-sm text-gray-600" onclick={startTimer}>
+				<button
+					class="ml-4 cursor-pointer text-sm text-gray-600 hover:text-gray-800"
+					onclick={startTimer}
+				>
 					{timeElapsed}s
-				</div>
+				</button>
 			{/if}
 		</div>
 	</div>
@@ -747,116 +762,135 @@
 		</button>
 	</div>
 
-	<!-- <div style="display: flex; padding-left: 10px; padding-right: 10px">
-		<Progressbar
-			progress={visiblePercentCorrect}
-			animate
-			precision={0}
-			labelInside
-			tweenDuration={500}
-			easing={sineOut}
-			size="h-6"
-			labelInsideClass="bg-green-600 text-green-100 text-base font-medium text-center p-1 leading-none rounded-full"
-			class="mb-8"
-		/>
-	</div> -->
+	{#if history.length > 0}
+		<!-- Date navigation controls -->
+		<div class="date-navigation">
+			<Button class="max-w-1/3 hover:bg-gray-200" onclick={goToPreviousDay}
+				>&lt; Previous Day</Button
+			>
+			<div class="current-date">
+				<button onclick={goToToday}>
+					{isToday(currentDate) ? 'Today' : formatDate(currentDate)}
+				</button>
+			</div>
+			<Button
+				class="max-w-1/3 hover:bg-gray-200"
+				onclick={goToNextDay}
+				disabled={isToday(currentDate)}
+			>
+				Next Day &gt;
+			</Button>
+		</div>
 
-	<!-- Date navigation controls -->
-	<div class="date-navigation">
-		<Button class="max-w-1/3" onclick={goToPreviousDay}>&lt; Previous Day</Button>
-		<div class="current-date">
-			<button onclick={goToToday}>
-				{isToday(currentDate) ? 'Today' : formatDate(currentDate)}
-			</button>
-		</div>
-		<Button class="max-w-1/3" onclick={goToNextDay} disabled={isToday(currentDate)}>
-			Next Day &gt;
-		</Button>
-	</div>
+		<!-- Filtered view statistics -->
+		{#if filteredHistory.length > 0}
+			<div class="filtered-stats">
+				<p>
+					{filteredHistory.length} questions on {formatDate(currentDate)}:
+					<span class="correct-stat">{visibleCorrectCount}</span> /
+					<span class="incorrect-stat">{visibleIncorrectCount}</span>
+					({visiblePercentCorrect}%)
+				</p>
+			</div>
+		{:else}
+			<div class="filtered-stats empty">
+				<p>No entries found for {formatDate(currentDate)}</p>
+			</div>
+		{/if}
 
-	<!-- Filtered view statistics -->
-	{#if filteredHistory.length > 0}
-		<div class="filtered-stats">
-			<p>
-				{filteredHistory.length} questions on {formatDate(currentDate)}:
-				<span class="correct-stat">{visibleCorrectCount}</span> /
-				<span class="incorrect-stat">{visibleIncorrectCount}</span>
-				({visiblePercentCorrect}%)
-			</p>
+		<div class="history-table">
+			<table class="w-full border-collapse">
+				<thead>
+					<tr>
+						<th class="border p-2">Q</th>
+						<th class="border p-2">Time (s)</th>
+						<th class="border p-2">Status</th>
+						<th class="border p-2">Notes</th>
+						<th class="border p-2">Source</th>
+						<th class="border p-2">Date</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each filteredHistory
+						.slice()
+						.sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime()) as item, index}
+						<tr
+							class:bg-green-100={item.result === 'Correct'}
+							class:bg-red-100={item.result === 'Incorrect'}
+							class="transition-colors hover:bg-gray-50"
+						>
+							<td class="border p-2 text-center">{filteredHistory.length - index}</td>
+							<td class="border p-2 text-center">{item.time || 0}s</td>
+							<td class="border p-2 text-center">
+								{#if item.result === 'Correct'}
+									<span class="text-green-600">✅</span>
+								{:else if item.result === 'Incorrect'}
+									<span class="text-red-600">❌</span>
+								{:else}
+									<span class="text-gray-500">Unmarked</span>
+								{/if}
+							</td>
+							<td class="border p-2 text-center">
+								<textarea
+									bind:value={item.notes}
+									oninput={() => updateNotes(filteredHistory.length - index - 1, item.notes)}
+								></textarea>
+							</td>
+							<td class="border p-2 text-center">{item.source || ''}</td>
+							<td class="border p-2 text-center">
+								{new Date(item.datetime).toLocaleString()}
+							</td>
+						</tr>
+					{/each}
+					{#if filteredHistory.length === 0}
+						<tr>
+							<td colspan="6" class="empty-message">No entries for this date.</td>
+						</tr>
+					{/if}
+				</tbody>
+			</table>
 		</div>
-	{:else}
-		<div class="filtered-stats empty">
-			<p>No entries found for {formatDate(currentDate)}</p>
-		</div>
+		{#if listUniqueSources()}
+			<div class="sources-list">
+				<!-- <h3 class="text-center text-lg font-semibold">Sources</h3> -->
+				<table>
+					<thead>
+						<tr>
+							<th>Source</th>
+							<th>Count</th>
+							<th>% Correct</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each listUniqueSources() as uniqueSource}
+							<tr>
+								<td>{uniqueSource}</td>
+								<td class="text-right">{sourcedQuestionCount(uniqueSource)}</td>
+								<td class="text-right"
+									>{(
+										((sourcedQuestionCount(uniqueSource) - sourcedIncorrectCount(uniqueSource)) /
+											sourcedQuestionCount(uniqueSource)) *
+										100
+									).toFixed(0)}%</td
+								>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{/if}
 	{/if}
 
-	<div class="history-table">
-		<table class="w-full border-collapse">
-			<thead>
-				<tr>
-					<th class="border p-2">Question</th>
-					<th class="border p-2">Time</th>
-					<th class="border p-2">Status</th>
-					<th class="border p-2">Notes</th>
-					<th class="border p-2">Source</th>
-					<th class="border p-2">Datetime</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each filteredHistory
-					.slice()
-					.sort((a, b) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime()) as item, index}
-					<tr
-						class:bg-green-100={item.result === 'Correct'}
-						class:bg-red-100={item.result === 'Incorrect'}
-						class="transition-colors hover:bg-gray-50"
-					>
-						<td class="border p-2 text-center">{filteredHistory.length - index}</td>
-						<td class="border p-2 text-center">{item.time || 0}s</td>
-						<td class="border p-2 text-center">
-							{#if item.result === 'Correct'}
-								<span class="text-green-600">✅ Correct</span>
-							{:else if item.result === 'Incorrect'}
-								<span class="text-red-600">❌ Incorrect</span>
-							{:else}
-								<span class="text-gray-500">Unmarked</span>
-							{/if}
-						</td>
-						<td class="border p-2 text-center">
-							<textarea
-								bind:value={item.notes}
-								oninput={() => updateNotes(filteredHistory.length - index - 1, item.notes)}
-							></textarea>
-						</td>
-						<td class="border p-2 text-center">{item.source || ''}</td>
-						<td class="border p-2 text-center">
-							{new Date(item.datetime).toLocaleString()}
-						</td>
-					</tr>
-				{/each}
-				{#if filteredHistory.length === 0}
-					<tr>
-						<td colspan="6" class="empty-message">No entries for this date.</td>
-					</tr>
-				{/if}
-			</tbody>
-		</table>
-	</div>
-	<div class="wrapper pb-4">
+	<div id="ImportExport" class="flex justify-center gap-2 p-2 px-5">
+		<Button onclick={resetCounts} class="hover:bg-red-200">Reset</Button>
+
 		{#if history.length > 0}
-			<Button onclick={resetCounts}>Reset</Button>
-			<Button onclick={exportCSV}>Export</Button>
+			<Button onclick={exportCSV} class="hover:bg-blue-200">Export</Button>
 		{/if}
 		<!-- CSV import section -->
 		<div class="csv-import-section">
-			<label for="csvImport" class="block text-sm font-medium text-gray-700"> Import CSV </label>
-			<input
-				id="csvImport"
-				type="file"
-				accept=".csv"
-				onchange={importCSV}
-				class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm"
-			/>
+			<Button onclick={importCSV} class="hover:bg-green-200">Import CSV</Button>
+
 			{#if importConfirmation}
 				<div
 					class="import-confirmation mt-2 rounded p-2 {importedEntriesCount > 0
@@ -868,60 +902,6 @@
 			{/if}
 		</div>
 	</div>
-
-	<!-- <div class="wrapper">
-		Total Questions Done: {history.length}
-	</div>
-	<div class="wrapper">Percent Correct: {percentCorrect}%</div> -->
-
-	<!-- <div class="wrapper">
-		<h3>Last 7 Days:</h3>
-		<ul>
-			{#each lastSevenDaysData().reverse() as day}
-				<li>{day.label}: {day.count}</li>
-			{/each}
-		</ul>
-	</div> -->
-
-	<!-- <div class="h-[300px] p-4 border rounded">
-		<AreaChart
-			data={lastSevenDaysData()}
-			x="date"	
-			y="count"
-			points
-			labels={{ offset: 10 }}
-			
-		/>
-	</div> -->
-	{#if listUniqueSources()}
-		<div class="sources-list">
-			<h3 class="text-center text-lg font-semibold">Unique Sources</h3>
-			<table>
-				<thead>
-					<tr>
-						<th>Source</th>
-						<th>Count</th>
-						<th>% Correct</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each listUniqueSources() as uniqueSource}
-						<tr>
-							<td>{uniqueSource}</td>
-							<td class="text-right">{sourcedQuestionCount(uniqueSource)}</td>
-							<td class="text-right"
-								>{(
-									((sourcedQuestionCount(uniqueSource) - sourcedIncorrectCount(uniqueSource)) /
-										sourcedQuestionCount(uniqueSource)) *
-									100
-								).toFixed(0)}%</td
-							>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
-	{/if}
 </main>
 
 <style>
@@ -933,6 +913,8 @@
 		gap: 5px;
 		padding: 5px;
 		font-family: sans-serif;
+		width: 99%;
+		margin: 0 auto;
 	}
 
 	.counter-box {
@@ -952,17 +934,29 @@
 		background-color: #d4edda;
 		border-color: #c3e6cb;
 		color: #155724;
+		&:hover {
+			font-weight: bold;
+			background-color: #c3e6cb;
+		}
 	}
 
 	.incorrect {
 		background-color: #f8d7da;
 		border-color: #f5c6cb;
 		color: #721c24;
+		&:hover {
+			font-weight: bold;
+			background-color: #f5c6cb;
+		}
 	}
 	.undo {
 		background-color: #c8c8c8;
 		border-color: #a0a0a0;
 		color: #4b4b4b;
+		&:hover {
+			font-weight: bold;
+			background-color: #a0a0a0;
+		}
 	}
 
 	.wrapper {
@@ -997,6 +991,7 @@
 	.history-table {
 		margin-top: 20px;
 		text-align: center;
+		vertical-align: middle;
 	}
 
 	table {
@@ -1024,7 +1019,8 @@
 	td {
 		border: 1px solid #ddd;
 		padding: 8px;
-		text-align: left;
+		text-align: center;
+		vertical-align: middle;
 	}
 
 	th {
