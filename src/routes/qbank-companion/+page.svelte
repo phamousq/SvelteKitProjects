@@ -571,6 +571,7 @@
 		} else if (event.key === 'Escape') {
 			editingSource = false;
 		}
+		startTimer();
 	}
 
 	// Svelte Action for auto-growing textareas
