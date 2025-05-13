@@ -331,84 +331,90 @@
 
 			const reader = new FileReader();
 			reader.onload = (loadEvent) => {
-				const csvText = loadEvent.target?.result as string;
-				const rows = csvText.split('\n').slice(1); // Skip header row
+				const csvText = (loadEvent.target?.result as string) + '\n'; // Add trailing newline
+				const parsedRows = [];
+				let currentRow = [];
+				let currentCell = '';
+				let inQuotes = false;
 
-				const importedEntries = rows
-					.filter((row) => row.trim() !== '') // Remove empty rows
-					.map((row) => {
-						// More robust CSV parsing that respects quoted fields
-						const cells = [];
-						let currentCell = '';
-						let inQuotes = false;
-						let escaped = false;
+				for (let i = 0; i < csvText.length; i++) {
+					const char = csvText[i];
+					const nextChar = i + 1 < csvText.length ? csvText[i + 1] : null;
 
-						for (let char of row) {
-							if (escaped) {
-								currentCell += char;
-								escaped = false;
-							} else if (char === '\\') {
-								escaped = true;
-							} else if (char === '"') {
-								inQuotes = !inQuotes;
-							} else if (char === ',' && !inQuotes) {
-								cells.push(currentCell.trim());
-								currentCell = '';
-							} else {
-								currentCell += char;
+					if (char === '"') {
+						if (inQuotes && nextChar === '"') {
+							// Escaped double quote
+							currentCell += '"';
+							i++; // Skip the next quote
+						} else {
+							// Start or end of quoted field
+							inQuotes = !inQuotes;
+						}
+					} else if (char === ',' && !inQuotes) {
+						// End of a cell
+						currentRow.push(currentCell.trim());
+						currentCell = '';
+					} else if (char === '\n' && !inQuotes) {
+						// End of a row
+						currentRow.push(currentCell.trim());
+						// Basic header skip (adjust if header differs)
+						if (
+							parsedRows.length > 0 ||
+							currentRow.join(',').toLowerCase() !== 'datetime,result,time,notes,source'
+						) {
+							if (currentRow.length > 1 || (currentRow.length === 1 && currentRow[0] !== '')) {
+								parsedRows.push([...currentRow]);
 							}
 						}
-						cells.push(currentCell.trim()); // Add last cell
+						currentRow = [];
+						currentCell = '';
+					} else {
+						// Regular character within a cell
+						currentCell += char;
+					}
+				}
 
-						// Remove surrounding quotes if present
-						cells.forEach((cell, index) => {
-							if (cell.startsWith('"') && cell.endsWith('"')) {
-								cells[index] = cell.slice(1, -1).replace(/""/g, '"');
-							}
-						});
+				const importedEntries = parsedRows.map((cells) => {
+					// Ensure we have enough columns, padding with empty strings if necessary
+					while (cells.length < 5) {
+						cells.push('');
+					}
 
-						// Ensure we have enough columns
-						while (cells.length < 5) {
-							cells.push('');
-						}
+					// Destructure based on the expected CSV columns
+					const [datetimeStr, resultStr, timeDifferenceCsvStr, notesStr, sourceStr] = cells;
 
-						// Destructure based on the CSV columns
-						const [datetimeStr, resultStr, timeDifferenceCsvStr, notesStr, sourceStr] = cells;
+					// Normalize correctness
+					const normalizedCorrectness =
+						resultStr === 'true' ||
+						resultStr === 'correct' ||
+						(resultStr && resultStr.toUpperCase() === 'CORRECT')
+							? 'Correct'
+							: resultStr === 'false' ||
+								  resultStr === 'incorrect' ||
+								  (resultStr && resultStr.toUpperCase() === 'INCORRECT')
+								? 'Incorrect'
+								: undefined;
 
-						// Normalize correctness
-						const normalizedCorrectness =
-							resultStr === 'true' ||
-							resultStr === 'correct' ||
-							(resultStr && resultStr.toUpperCase() === 'CORRECT')
-								? 'Correct'
-								: resultStr === 'false' ||
-									  resultStr === 'incorrect' ||
-									  (resultStr && resultStr.toUpperCase() === 'INCORRECT')
-									? 'Incorrect'
-									: undefined;
+					let parsedNumericTimeDifference = 0;
+					if (timeDifferenceCsvStr) {
+						const timeValueOnly = timeDifferenceCsvStr.replace(/[^\d.]/g, '');
+						parsedNumericTimeDifference = parseFloat(timeValueOnly) || 0;
+					}
 
-						let parsedNumericTimeDifference = 0;
-						if (timeDifferenceCsvStr) {
-							const timeValueOnly = timeDifferenceCsvStr.replace(/[^\d.]/g, '');
-							parsedNumericTimeDifference = parseFloat(timeValueOnly) || 0;
-						}
+					const parsedDate = new Date(datetimeStr);
+					if (isNaN(parsedDate.getTime())) {
+						console.error('Invalid date string encountered during CSV import:', datetimeStr);
+						return null; // Mark as invalid for filtering later
+					}
 
-						const parsedDate = new Date(datetimeStr);
-						if (isNaN(parsedDate.getTime())) {
-							console.error('Invalid date string encountered during CSV import:', datetimeStr);
-							// Optionally, handle the error, e.g., skip this entry or use a default date
-							// For now, let's return null or an object indicating the error to filter later
-							return null;
-						}
-
-						return {
-							datetime: parsedDate.toISOString(),
-							result: normalizedCorrectness,
-							time: parsedNumericTimeDifference,
-							notes: notesStr || '',
-							source: sourceStr || ''
-						};
-					});
+					return {
+						datetime: parsedDate.toISOString(),
+						result: normalizedCorrectness,
+						time: parsedNumericTimeDifference,
+						notes: notesStr, // Use notesStr directly, newlines are now preserved
+						source: sourceStr || ''
+					};
+				});
 
 				// Filter out any entries that failed date parsing
 				const validImportedEntries = importedEntries.filter((entry) => entry !== null);
