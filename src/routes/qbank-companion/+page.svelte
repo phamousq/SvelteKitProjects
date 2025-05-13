@@ -393,8 +393,16 @@
 							parsedNumericTimeDifference = parseFloat(timeValueOnly) || 0;
 						}
 
+						const parsedDate = new Date(datetimeStr);
+						if (isNaN(parsedDate.getTime())) {
+							console.error('Invalid date string encountered during CSV import:', datetimeStr);
+							// Optionally, handle the error, e.g., skip this entry or use a default date
+							// For now, let's return null or an object indicating the error to filter later
+							return null;
+						}
+
 						return {
-							datetime: new Date(datetimeStr).toISOString(),
+							datetime: parsedDate.toISOString(),
 							result: normalizedCorrectness,
 							time: parsedNumericTimeDifference,
 							notes: notesStr || '',
@@ -402,10 +410,13 @@
 						};
 					});
 
+				// Filter out any entries that failed date parsing
+				const validImportedEntries = importedEntries.filter((entry) => entry !== null);
+
 				// Merge imported entries with existing history
 				const mergedHistory = [
 					...history,
-					...importedEntries.filter(
+					...validImportedEntries.filter(
 						(newEntry) =>
 							!history.some(
 								(existingEntry) =>
@@ -430,8 +441,14 @@
 				localStorage.setItem('csvLoaded', 'true');
 
 				// Set import confirmation and count
-				importedEntriesCount = importedEntries.length;
+				importedEntriesCount = validImportedEntries.length;
 				importConfirmation = `Successfully imported ${importedEntriesCount} records.`;
+				if (importedEntries.length !== validImportedEntries.length) {
+					importConfirmation += ` Skipped ${importedEntries.length - validImportedEntries.length} due to invalid dates.`;
+					console.warn(
+						`Skipped ${importedEntries.length - validImportedEntries.length} CSV entries due to invalid date format.`
+					);
+				}
 
 				// Clear the file input value (though it will be removed anyway)
 				target.value = '';
