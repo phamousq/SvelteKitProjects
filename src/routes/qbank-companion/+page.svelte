@@ -239,7 +239,8 @@
 			time: timeElapsed,
 			notes: currentNotes,
 			datetime: currentTimestamp.toISOString(),
-			source: $sourceStore
+			source: $sourceStore,
+			sourceCount: sourcedQuestionCount($sourceStore) + 1
 		};
 
 		undoHistory = [
@@ -287,12 +288,12 @@
 	}
 
 	function exportCSV() {
-		const header = 'Datetime,Correctness,Time (s),Notes,Source';
+		const header = 'Datetime,Correctness,Time (s),Notes,Source,Source Count';
 		const rows = history
 			.map((item) => {
 				const datetime = item.datetime || new Date().toISOString();
 				const itemSource = item.source || '';
-				return `${datetime},${item.result},${item.time !== undefined ? item.time : 'N/A'},"${item.notes.replace(/"/g, '""')}","${itemSource.replace(/"/g, '""')}"`;
+				return `${datetime},${item.result},${item.time !== undefined ? item.time : 'N/A'},"${item.notes.replace(/"/g, '""')}","${itemSource.replace(/"/g, '""')}",${item.sourceCount}`;
 			})
 			.join('\n');
 		const csvContent = `${header}\n${rows}`;
@@ -376,12 +377,19 @@
 
 				const importedEntries = parsedRows.map((cells) => {
 					// Ensure we have enough columns, padding with empty strings if necessary
-					while (cells.length < 5) {
+					while (cells.length < 6) {
 						cells.push('');
 					}
 
 					// Destructure based on the expected CSV columns
-					const [datetimeStr, resultStr, timeDifferenceCsvStr, notesStr, sourceStr] = cells;
+					const [
+						datetimeStr,
+						resultStr,
+						timeDifferenceCsvStr,
+						notesStr,
+						sourceStr,
+						sourceCountStr
+					] = cells;
 
 					// Normalize correctness
 					const normalizedCorrectness =
@@ -412,7 +420,8 @@
 						result: normalizedCorrectness,
 						time: parsedNumericTimeDifference,
 						notes: notesStr, // Use notesStr directly, newlines are now preserved
-						source: sourceStr || ''
+						source: sourceStr || '',
+						sourceCount: parseInt(sourceCountStr) || 0
 					};
 				});
 
@@ -694,7 +703,8 @@
 	</div>
 	<div id="QuestionContainer" class="wrapper">
 		<div>
-			<h1 style="font-size: 20px; font-weight: bold;">Daily: {dailyQuestionCount}</h1>
+			<span style="font-size: 20px; font-weight: bold;">Daily: {dailyQuestionCount}</span>
+			<span class="ml-2 text-xs">{visiblePercentCorrect}%</span>
 		</div>
 	</div>
 	<div id="SourceContainer" class="pb-2">
@@ -877,7 +887,11 @@
 									oninput={() => updateNotes(filteredHistory.length - index - 1, item.notes)}
 								></textarea>
 							</td>
-							<td class="border p-2 text-center">{item.source || ''}</td>
+							<td class="border p-2 text-center">
+								{item.source || ''}
+								<br />
+								{item.sourceCount}</td
+							>
 							<td class="border p-2 text-center">
 								{String(new Date(item.datetime).getHours()).padStart(2, '0')}:{String(
 									new Date(item.datetime).getMinutes()
