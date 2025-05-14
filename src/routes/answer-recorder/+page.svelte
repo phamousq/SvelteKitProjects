@@ -1,3 +1,4 @@
+<!-- TODO: export with source count, flagged -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 

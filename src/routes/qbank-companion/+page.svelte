@@ -36,6 +36,7 @@
 	import { cls } from '@layerstack/tailwind';
 	let renderContext = 'svg';
 
+	let flagged = $state(false);
 	let correctCount = $state(0);
 	let incorrectCount = $state(0);
 	let countComplete = $derived(correctCount + incorrectCount);
@@ -62,6 +63,7 @@
 	);
 
 	let NotesInput: HTMLInputElement;
+	let SourceInput: HTMLInputElement;
 
 	let importConfirmation = $state('');
 	let importedEntriesCount = $state(0);
@@ -241,7 +243,8 @@
 			notes: currentNotes,
 			datetime: currentTimestamp.toISOString(),
 			source: $sourceStore,
-			sourceCount: sourcedQuestionCount($sourceStore) + 1
+			sourceCount: sourcedQuestionCount($sourceStore) + 1,
+			flagged: flagged
 		};
 
 		undoHistory = [
@@ -251,7 +254,9 @@
 				previousCorrect: correctCount,
 				previousIncorrect: incorrectCount,
 				previousHistory: history,
-				previousNotes: currentNotes
+				previousNotes: currentNotes,
+				previousSource: $sourceStore,
+				previousFlagged: flagged
 			}
 		];
 
@@ -264,6 +269,7 @@
 		}
 		currentNotes = '';
 		NotesInput ? NotesInput.focus() : null;
+		flagged = false;
 
 		timeElapsed = 0; // (Copied from Block 1) Reset timer display AFTER recording
 		startTimer(); // (Copied from Block 1) Start timer for the new context
@@ -284,17 +290,21 @@
 		incorrectCount = 0;
 		history = [];
 		csvLoaded = false;
-		timeElapsed = 0; // (Copied from Block 1)
-		startTimer(); // (Copied from Block 1)
+		timeElapsed = 0;
+		currentNotes = '';
+		flagged = false;
+		sourceStore.set('');
+		SourceInput ? SourceInput.focus() : null;
+		startTimer();
 	}
 
 	function exportCSV() {
-		const header = 'Datetime,Correctness,Time (s),Notes,Source,Source Count';
+		const header = 'Datetime,Correctness,Time (s),Notes,Source,Source Count,Flagged';
 		const rows = history
 			.map((item) => {
 				const datetime = item.datetime || new Date().toISOString();
 				const itemSource = item.source || '';
-				return `${datetime},${item.result},${item.time !== undefined ? item.time : 'N/A'},"${item.notes.replace(/"/g, '""')}","${itemSource.replace(/"/g, '""')}",${item.sourceCount}`;
+				return `${datetime},${item.result},${item.time !== undefined ? item.time : 'N/A'},"${item.notes.replace(/"/g, '""')}","${itemSource.replace(/"/g, '""')}",${item.sourceCount},${item.flagged}`;
 			})
 			.join('\n');
 		const csvContent = `${header}\n${rows}`;
@@ -378,7 +388,7 @@
 
 				const importedEntries = parsedRows.map((cells) => {
 					// Ensure we have enough columns, padding with empty strings if necessary
-					while (cells.length < 6) {
+					while (cells.length < 7) {
 						cells.push('');
 					}
 
@@ -389,7 +399,8 @@
 						timeDifferenceCsvStr,
 						notesStr,
 						sourceStr,
-						sourceCountStr
+						sourceCountStr,
+						flaggedStr
 					] = cells;
 
 					// Normalize correctness
@@ -422,7 +433,8 @@
 						time: parsedNumericTimeDifference,
 						notes: notesStr, // Use notesStr directly, newlines are now preserved
 						source: sourceStr || '',
-						sourceCount: parseInt(sourceCountStr) || 0
+						sourceCount: parseInt(sourceCountStr) || 0,
+						flagged: flaggedStr === 'true'
 					};
 				});
 
@@ -492,6 +504,7 @@
 			incorrectCount = lastUndo.previousIncorrect;
 			history = lastUndo.previousHistory;
 			currentNotes = lastUndo.previousNotes;
+			flagged = lastUndo.previousFlagged;
 
 			timeElapsed = 0; // (Copied from Block 1)
 			startTimer(); // (Copied from Block 1)
@@ -579,8 +592,18 @@
 		if (event.key === 'Escape') {
 			startTimer(); // This will now call the merged resetTimer
 		}
-		if (event.metaKey && event.key === 'z') {
-			undoLastAction();
+		if (event.metaKey) {
+			if (event.key === 'z') {
+				undoLastAction();
+			}
+			if (event.key === 's') {
+				event.preventDefault();
+				exportCSV();
+			}
+			if (event.key === 'r') {
+				event.preventDefault();
+				resetCounts();
+			}
 		}
 	}
 
@@ -741,10 +764,11 @@
 		{/if}
 	</div>
 	<div id="SourceContainer" class="pb-2">
-		{#if editingSource}
+		{#if !$sourceStore}
 			<div class="flex items-center justify-center p-2 text-center">
 				<input
-					id="sourceEditorInput"
+					bind:this={SourceInput}
+					id="source-input"
 					type="text"
 					bind:value={tempSource}
 					onkeydown={handleSourceInputKeydown}
@@ -777,18 +801,23 @@
 					{/if}
 				</div>
 			</div>
-		{:else}
-			<div class="flex items-center justify-center p-2 text-center">
-				<button
-					onclick={startEditing}
-					class="rounded border bg-blue-500 p-2 text-white hover:bg-blue-600"
-					>Set Source
-				</button>
-			</div>
 		{/if}
+	</div>
+	{#if $sourceStore}
 		<div class="flex items-center justify-center text-center">
-			<span class="rounded bg-orange-300 px-2 py-1 text-xl text-black"
-				>{sourcedQuestionCount($sourceStore) + 1}</span
+			<input type="checkbox" bind:checked={flagged} class="mr-4 h-6 w-6 text-yellow-500" />
+			<span
+				class="rounded bg-orange-300 px-2 py-1 text-xl text-black"
+				onclick={() => {
+					flagged = !flagged;
+				}}
+				onkeydown={(e) => {
+					if (e.key === 'Enter') {
+						flagged = !flagged;
+					}
+				}}
+				role="button"
+				tabindex="0">{sourcedQuestionCount($sourceStore) + 1}</span
 			>
 			{#if timeElapsed >= 90}
 				<button
@@ -813,79 +842,40 @@
 				</button>
 			{/if}
 		</div>
-	</div>
 
-	<div id="NotesContainer" class="input-container">
-		<textarea
-			use:autogrow={currentNotes}
-			bind:value={currentNotes}
-			onkeydown={handleKeyDown}
-			placeholder="Enter notes..."
-			class="source-input"
-			id="notes-input"
-			rows="1"
-		></textarea>
-	</div>
-
-	<div id="Scoreboard" class="scoreboard">
-		<button
-			class="counter-box correct"
-			style="flex-grow: 10"
-			onclick={() => incrementResult('Correct')}
-		>
-			<h2>Correct (Enter)</h2>
-			<p>{visibleCorrectCount}</p>
-		</button>
-
-		<button
-			class="counter-box incorrect"
-			style="flex-grow: 10"
-			onclick={() => incrementResult('Incorrect')}
-		>
-			<h2>Incorrect (Shift+Enter)</h2>
-			<p>{visibleIncorrectCount}</p>
-		</button>
-		<button class="counter-box undo" style="flex-grow: 1" onclick={undoLastAction}>
-			<h2>Undo (Cmd+z)</h2>
-		</button>
-	</div>
-
-	{#if history.length > 0}
-		<!-- Date navigation controls -->
-		<div class="date-navigation">
-			<Button class="max-w-1/3 hover:bg-gray-200" onclick={goToPreviousDay}
-				>&lt; Previous Day</Button
+		<div id="Scoreboard" class="scoreboard">
+			<textarea
+				use:autogrow={currentNotes}
+				bind:value={currentNotes}
+				onkeydown={handleKeyDown}
+				placeholder="Enter notes..."
+				class="source-input"
+				id="notes-input"
+				rows="1"
+			></textarea>
+			<button
+				class="counter-box correct"
+				style="flex-grow: 10"
+				onclick={() => incrementResult('Correct')}
 			>
-			<div class="current-date">
-				<button onclick={goToToday}>
-					{isToday(currentDate) ? 'Today' : formatDate(currentDate)}
-				</button>
-			</div>
-			<Button
-				class="max-w-1/3 hover:bg-gray-200"
-				onclick={goToNextDay}
-				disabled={isToday(currentDate)}
+				<h2>Correct (Enter)</h2>
+				<p>{visibleCorrectCount}</p>
+			</button>
+
+			<button
+				class="counter-box incorrect"
+				style="flex-grow: 10"
+				onclick={() => incrementResult('Incorrect')}
 			>
-				Next Day &gt;
-			</Button>
+				<h2>Incorrect (Shift+Enter)</h2>
+				<p>{visibleIncorrectCount}</p>
+			</button>
+			<button class="counter-box undo" style="flex-grow: 1" onclick={undoLastAction}>
+				<h2>Undo (Cmd+z)</h2>
+			</button>
 		</div>
-
-		<!-- Filtered view statistics -->
-		{#if filteredHistory.length > 0}
-			<div class="filtered-stats">
-				<p>
-					{filteredHistory.length} questions on {formatDate(currentDate)}:
-					<span class="correct-stat">{visibleCorrectCount}</span> /
-					<span class="incorrect-stat">{visibleIncorrectCount}</span>
-					({visiblePercentCorrect}%)
-				</p>
-			</div>
-		{:else}
-			<div class="filtered-stats empty">
-				<p>No entries found for {formatDate(currentDate)}</p>
-			</div>
-		{/if}
-
+	{/if}
+	{#if filteredHistory.length}
 		<div class="history-table">
 			<table class="w-full border-collapse">
 				<thead>
@@ -912,23 +902,19 @@
 							<td class="border p-2 text-center">
 								{#if item.result === 'Correct'}
 									<span class="text-green-600">✅</span>
-								{:else if item.result === 'Incorrect'}
-									<span class="text-red-600">❌</span>
 								{:else}
-									<span class="text-gray-500">Unmarked</span>
+									<span class="text-red-600">❌</span>
 								{/if}
+								{item.flagged ? '🚩' : ''}
 							</td>
 							<td class="border p-2 text-center">
 								<textarea
+									use:autogrow={item.notes}
 									bind:value={item.notes}
 									oninput={() => updateNotes(filteredHistory.length - index - 1, item.notes)}
 								></textarea>
 							</td>
-							<td class="border p-2 text-center">
-								{item.source || ''}
-								<br />
-								{item.sourceCount}</td
-							>
+							<td class="border p-2 text-center"> {item.source || ''} | {item.sourceCount}</td>
 							<td class="border p-2 text-center">
 								{String(new Date(item.datetime).getHours()).padStart(2, '0')}:{String(
 									new Date(item.datetime).getMinutes()
@@ -943,6 +929,39 @@
 					{/if}
 				</tbody>
 			</table>
+		</div>
+		<!-- Filtered view statistics -->
+		{#if filteredHistory.length > 0}
+			<div class="filtered-stats">
+				<p>
+					{filteredHistory.length} questions on {formatDate(currentDate)}:
+					<span class="correct-stat">{visibleCorrectCount}</span> /
+					<span class="incorrect-stat">{visibleIncorrectCount}</span>
+					({visiblePercentCorrect}%)
+				</p>
+			</div>
+		{:else}
+			<div class="filtered-stats empty">
+				<p>No entries found for {formatDate(currentDate)}</p>
+			</div>
+		{/if}
+		<!-- Date navigation controls -->
+		<div class="date-navigation">
+			<Button class="max-w-1/3 hover:bg-gray-200" onclick={goToPreviousDay}
+				>&lt; Previous Day</Button
+			>
+			<div class="current-date">
+				<button onclick={goToToday}>
+					{isToday(currentDate) ? 'Today' : formatDate(currentDate)}
+				</button>
+			</div>
+			<Button
+				class="max-w-1/3 hover:bg-gray-200"
+				onclick={goToNextDay}
+				disabled={isToday(currentDate)}
+			>
+				Next Day &gt;
+			</Button>
 		</div>
 		{#if listUniqueSources()}
 			<div class="sources-list">
