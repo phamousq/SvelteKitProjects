@@ -293,13 +293,7 @@
 		timeElapsed = 0;
 		currentNotes = '';
 		flagged = false;
-		sourceStore.set('');
-		setTimeout(() => {
-			if (SourceInput) {
-				SourceInput.focus();
-			}
-		}, 0);
-		startTimer();
+		startEditing();
 	}
 
 	function exportCSV() {
