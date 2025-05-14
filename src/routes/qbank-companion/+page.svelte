@@ -47,6 +47,7 @@
 	let source = '';
 	let csvLoaded = $state(false);
 	let currentNotes = $state('');
+	let isQuestionContainerHovered = $state(false);
 
 	let currentDate = $state(new Date());
 	let filteredHistory = $derived(filterHistoryByDate(history, currentDate));
@@ -629,6 +630,32 @@
 			}
 		};
 	}
+	// Hover state management
+	function createHoverState() {
+		let isHovered = $state(false);
+		return {
+			isHovered: () => isHovered,
+			handlers: {
+				onmouseenter: () => (isHovered = true),
+				onmouseleave: () => (isHovered = false),
+				onkeydown: (e: KeyboardEvent) => {
+					if (e.key === 'Enter' || e.key === ' ') {
+						isHovered = !isHovered;
+					}
+				}
+			}
+		};
+	}
+	const questionContainer = createHoverState();
+	const sourceContainer = createHoverState();
+
+	let sourcePercentCorrect = (source: string) => {
+		return (
+			((sourcedQuestionCount(source) - sourcedIncorrectCount(source)) /
+				sourcedQuestionCount(source)) *
+			100
+		).toFixed(0);
+	};
 </script>
 
 <main>
@@ -701,11 +728,17 @@
 			</PieChart>
 		</div>
 	</div>
-	<div id="QuestionContainer" class="wrapper">
-		<div>
-			<span style="font-size: 20px; font-weight: bold;">Daily: {dailyQuestionCount}</span>
+	<div
+		id="QuestionContainer"
+		class="flex cursor-pointer items-center justify-center"
+		role="button"
+		tabindex="0"
+		{...questionContainer.handlers}
+	>
+		<span style="font-size: 20px; font-weight: bold;">Daily: {dailyQuestionCount}</span>
+		{#if questionContainer.isHovered()}
 			<span class="ml-2 text-xs">{visiblePercentCorrect}%</span>
-		</div>
+		{/if}
 	</div>
 	<div id="SourceContainer" class="pb-2">
 		{#if editingSource}
@@ -733,11 +766,15 @@
 				class="flex cursor-pointer items-center justify-center p-2"
 				onclick={startEditing}
 				title="Click to edit source"
+				{...sourceContainer.handlers}
 			>
 				<div>
-					<h2 style="font-size: 24px; font-weight: bold;" class="rounded bg-yellow-200 p-1 px-2">
+					<span style="font-size: 24px; font-weight: bold;" class="rounded bg-yellow-200 p-1 px-2">
 						{$sourceStore}
-					</h2>
+					</span>
+					{#if sourceContainer.isHovered()}
+						<span class="ml-2 text-xs">{sourcePercentCorrect($sourceStore)}%</span>
+					{/if}
 				</div>
 			</div>
 		{:else}
@@ -923,13 +960,7 @@
 							<tr>
 								<td>{uniqueSource}</td>
 								<td class="text-right">{sourcedQuestionCount(uniqueSource)}</td>
-								<td class="text-right"
-									>{(
-										((sourcedQuestionCount(uniqueSource) - sourcedIncorrectCount(uniqueSource)) /
-											sourcedQuestionCount(uniqueSource)) *
-										100
-									).toFixed(0)}%</td
-								>
+								<td class="text-right">{sourcePercentCorrect(uniqueSource)}%</td>
 							</tr>
 						{/each}
 					</tbody>
