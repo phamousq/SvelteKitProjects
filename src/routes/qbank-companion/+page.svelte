@@ -593,6 +593,12 @@
 			}
 			event.preventDefault(); // Prevent default form submission
 		}
+		if (event.key === 'Tab') {
+			if (event.shiftKey) {
+				// shift + tab
+				startEditing();
+			}
+		}
 		if (event.key === 'Escape') {
 			event.preventDefault();
 			startTimer(); // This will now call the merged resetTimer
@@ -624,24 +630,22 @@
 		tempSource = $sourceStore || '';
 		// Ensure the input gets focus after Svelte updates the DOM
 		setTimeout(() => {
-			const inputElement = document.getElementById('sourceEditorInput');
-			inputElement?.focus();
+			if (SourceInput) {
+				SourceInput.select();
+			}
 		}, 0);
 	}
 
 	function handleSourceInputKeydown(event: KeyboardEvent) {
-		if (event.key === 'Enter') {
+		if (event.key === 'Enter' || event.key === 'Escape' || event.key === 'Tab') {
 			sourceStore.set(tempSource.trim());
 			editingSource = false;
-		} else if (event.key === 'Escape') {
-			editingSource = false;
+			setTimeout(() => {
+				if (NotesInput) {
+					NotesInput.focus();
+				}
+			}, 0);
 		}
-
-		setTimeout(() => {
-			if (NotesInput) {
-				NotesInput.focus();
-			}
-		}, 0);
 		startTimer();
 	}
 
@@ -779,7 +783,7 @@
 		{/if}
 	</div>
 	<div id="SourceContainer" class="pb-2">
-		{#if !$sourceStore}
+		{#if editingSource}
 			<div class="flex items-center justify-center p-2 text-center">
 				<input
 					bind:this={SourceInput}
@@ -800,7 +804,7 @@
 					class="w-2/3 rounded border p-2 text-center"
 				/>
 			</div>
-		{:else if $sourceStore}
+		{:else}
 			<div
 				class="flex cursor-pointer items-center justify-center p-2"
 				onclick={startEditing}
