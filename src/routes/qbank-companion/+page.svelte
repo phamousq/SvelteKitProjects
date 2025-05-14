@@ -148,8 +148,6 @@
 
 		currentDate = new Date();
 		currentDate.setHours(0, 0, 0, 0);
-
-		startTimer(); // (Copied from Block 1) Start timer on mount
 	});
 
 	// $effect(() => {
@@ -616,7 +614,7 @@
 		}
 	}
 
-	let editingSource = $state(false);
+	let editingSource = $state(true);
 	let tempSource = $state('');
 
 	function startEditing() {
