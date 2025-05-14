@@ -117,6 +117,21 @@
 		return Array.from(uniqueSources).sort((a, b) => a.localeCompare(b));
 	});
 
+	// --- Timer Functions (Copied from Block 1) ---
+	function startTimer(residualTime: number = 0) {
+		questionStartTime = Date.now();
+		// Clear existing timer before starting a new one to prevent multiple timers
+		if (timerInterval) clearInterval(timerInterval);
+		timerInterval = setInterval(() => {
+			timeElapsed = Math.floor((Date.now() - questionStartTime) / 1000) + residualTime;
+		}, 1000);
+	}
+
+	function stopTimer() {
+		if (timerInterval) clearInterval(timerInterval);
+		timerInterval = null;
+	}
+
 	onMount(() => {
 		const storedCorrect = localStorage.getItem('correctCount');
 		const storedIncorrect = localStorage.getItem('incorrectCount');
@@ -144,21 +159,6 @@
 	// 	localStorage.setItem('csvLoaded', csvLoaded.toString());
 	// 	localStorage.setItem('undoHistory', JSON.stringify(undoHistory));
 	// });
-
-	// --- Timer Functions (Copied from Block 1) ---
-	function startTimer() {
-		questionStartTime = Date.now();
-		// Clear existing timer before starting a new one to prevent multiple timers
-		if (timerInterval) clearInterval(timerInterval);
-		timerInterval = setInterval(() => {
-			timeElapsed = Math.floor((Date.now() - questionStartTime) / 1000);
-		}, 1000);
-	}
-
-	function stopTimer() {
-		if (timerInterval) clearInterval(timerInterval);
-		timerInterval = null;
-	}
 
 	// Filter history entries by date
 	function filterHistoryByDate(historyItems: any, date: any) {
@@ -256,7 +256,8 @@
 				previousHistory: history,
 				previousNotes: currentNotes,
 				previousSource: $sourceStore,
-				previousFlagged: flagged
+				previousFlagged: flagged,
+				previousTimeElapsed: timeElapsed
 			}
 		];
 
@@ -270,7 +271,6 @@
 		currentNotes = '';
 		flagged = false;
 
-		timeElapsed = 0; // (Copied from Block 1) Reset timer display AFTER recording
 		startTimer(); // (Copied from Block 1) Start timer for the new context
 	}
 
@@ -509,8 +509,8 @@
 			currentNotes = lastUndo.previousNotes;
 			flagged = lastUndo.previousFlagged;
 
-			timeElapsed = 0; // (Copied from Block 1)
-			startTimer(); // (Copied from Block 1)
+			// timeElapsed = 0; // (Copied from Block 1)
+			startTimer(lastUndo?.previousTimeElapsed ?? 0); // (Copied from Block 1)
 		}
 
 		if (NotesInput && currentNotes.length > 0) {
@@ -593,6 +593,7 @@
 			event.preventDefault(); // Prevent default form submission
 		}
 		if (event.key === 'Escape') {
+			event.preventDefault();
 			startTimer(); // This will now call the merged resetTimer
 		}
 		if (event.metaKey) {
