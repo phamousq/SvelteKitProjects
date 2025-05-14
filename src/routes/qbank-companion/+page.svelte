@@ -121,6 +121,7 @@
 	function startTimer(residualTime: number = 0) {
 		questionStartTime = Date.now();
 		// Clear existing timer before starting a new one to prevent multiple timers
+		timeElapsed = residualTime;
 		if (timerInterval) clearInterval(timerInterval);
 		timerInterval = setInterval(() => {
 			timeElapsed = Math.floor((Date.now() - questionStartTime) / 1000) + residualTime;
