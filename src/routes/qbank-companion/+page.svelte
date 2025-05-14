@@ -268,7 +268,6 @@
 			goToToday();
 		}
 		currentNotes = '';
-		NotesInput ? NotesInput.focus() : null;
 		flagged = false;
 
 		timeElapsed = 0; // (Copied from Block 1) Reset timer display AFTER recording
@@ -294,7 +293,11 @@
 		currentNotes = '';
 		flagged = false;
 		sourceStore.set('');
-		SourceInput ? SourceInput.focus() : null;
+		setTimeout(() => {
+			if (SourceInput) {
+				SourceInput.focus();
+			}
+		}, 0);
 		startTimer();
 	}
 
@@ -604,6 +607,10 @@
 				event.preventDefault();
 				resetCounts();
 			}
+			if (event.key === 'f') {
+				flagged = !flagged;
+				event.preventDefault();
+			}
 		}
 	}
 
@@ -627,6 +634,12 @@
 		} else if (event.key === 'Escape') {
 			editingSource = false;
 		}
+
+		setTimeout(() => {
+			if (NotesInput) {
+				NotesInput.focus();
+			}
+		}, 0);
 		startTimer();
 	}
 
@@ -847,6 +860,7 @@
 			<textarea
 				use:autogrow={currentNotes}
 				bind:value={currentNotes}
+				bind:this={NotesInput}
 				onkeydown={handleKeyDown}
 				placeholder="Enter notes..."
 				class="source-input"
