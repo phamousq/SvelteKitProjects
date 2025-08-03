@@ -81,7 +81,12 @@
 
 	// --- Timer Functions ---
 	function startTimer() {
-		questionStartTime = Date.now();
+		const currentAnswerEntry = answerData.find((item) => item.question === currentQuestion);
+		if (currentAnswerEntry) {
+			questionStartTime = Date.now() - (currentAnswerEntry.time * 1000);
+		} else {
+			questionStartTime = Date.now();
+		}
 		// Clear existing timer before starting a new one to prevent multiple timers
 		if (timerInterval) clearInterval(timerInterval);
 		timerInterval = setInterval(() => {
@@ -96,7 +101,7 @@
 
 	// --- Answer Recording Functions ---
 	function recordAnswer(answer: string) {
-		stopTimer();
+		// stopTimer();
 		const currentTimestamp = new Date();
 		const existingEntryIndex = answerData.findIndex((item) => item.question === currentQuestion);
 
@@ -136,8 +141,6 @@
 		}
 
 		answerChoices = ['a', 'b', 'c', 'd', 'e'];
-		// Reset timeElapsed immediately AFTER recording, before starting new timer
-		timeElapsed = 0;
 		currentNotes = '';
 		startTimer(); // Start timer for the *new* question
 	}
@@ -255,15 +258,15 @@
 		if (answerData.length > 0) {
 			// Remove the last answer entry
 			answerData = answerData.slice(0, -1);
+			// Restart timer for the previous question
+			startTimer();
 
 			// Go back to the previous question
 			if (currentQuestion > 1) {
 				currentQuestion -= 1;
 			}
 
-			// Restart timer for the previous question
-			timeElapsed = 0;
-			startTimer();
+			
 		}
 	}
 
@@ -278,7 +281,6 @@
 			const currentAnswerEntry = answerData.find((item) => item.question === currentQuestion);
 			if (!reviewModeEnabled) {
 				// In test mode, always restart the timer for the current question
-				stopTimer();
 				timeElapsed = currentAnswerEntry?.time || 0; // Load existing time if re-visiting
 				startTimer();
 			} else {
@@ -460,7 +462,17 @@
 	}
 
 	// Modify navigation functions to ensure notes are updated
+	function updateElapsedTime() {
+		const currentAnswerEntry = answerData.find((item) => item.question === currentQuestion);
+		if (currentAnswerEntry) {
+			currentAnswerEntry.time = timeElapsed;
+		}
+	}
+
 	function navigateBack() {
+		// Update time for current question before navigating away
+		updateElapsedTime();
+		
 		if (reviewModeEnabled) {
 			// In review mode, navigate through filtered data
 			const currentIndex = filteredAnswerData.findIndex(
@@ -480,6 +492,9 @@
 	}
 
 	function navigateNext() {
+		// Update time for current question before navigating away
+		updateElapsedTime();
+		
 		if (reviewModeEnabled) {
 			// In review mode, navigate through filtered data
 			const currentIndex = filteredAnswerData.findIndex(
@@ -533,26 +548,18 @@
 	}
 
 	function handleAnswerInput(event: KeyboardEvent) {
-		if (event.key === 'Enter') {
-			// Trim and convert to lowercase for case-insensitive matching
-			const inputAnswer = answerInput.trim().toLowerCase();
+		if (event.key === 'Enter' && answerInput.length == 1) {
+			// If a matching choice is found, record the answer
+			recordAnswer(answerInput);
 
-			// Find the first answer choice that matches the input
-			const matchedChoice = answerChoices.find((choice) => choice.toLowerCase() === inputAnswer);
+			// Clear the input after recording
+			answerInput = '';
 
-			if (matchedChoice) {
-				// If a matching choice is found, record the answer
-				recordAnswer(matchedChoice);
-
-				// Clear the input after recording
-				answerInput = '';
-
-				// Focus back on the answer input
-				AnswerInput?.focus();
-			}
-
+			// Focus back on the answer input
+			AnswerInput?.focus();
 			event.preventDefault();
 		}
+		
 	}
 
 	function toggleFlag() {
@@ -597,6 +604,11 @@
 			} else {
 				// Move to next unmarked question
 				currentQuestion = nextUnmarkedQuestion;
+				// Clear notes and focus the notes input
+				currentNotes = '';
+				queueMicrotask(() => {
+					NotesInput?.focus();
+				});
 			}
 		} else {
 			// No unmarked questions
@@ -635,13 +647,13 @@
 			Question:
 			<span class="rounded bg-orange-300 px-2 py-1 text-black">{currentQuestion}</span>
 			{#if reviewModeEnabled}
-				<span class="rounded bg-yellow-300 px-2 py-1 text-4xl text-black"
-					>{currentAnswer.toUpperCase() || 'Not answered'}</span
-				>
+				<span class="rounded bg-yellow-300 px-2 py-1 text-4xl text-black">{currentAnswer.toUpperCase() || 'Not answered'}</span>
 			{/if}
 			{#if answerData.find((item) => item.question === currentQuestion)?.flagged}
 				<span class="text-medium ml-4 text-red-600">🚩</span>
 			{/if}
+		</p>
+		<p onclick={startTimer}>
 			{#if timeElapsed > 60}
 				<span class="ml-4 text-sm text-red-600">{timeElapsed}s</span>
 			{:else}
@@ -696,7 +708,7 @@
 					❓ Guess
 				</button>
 				<button
-					onclick={undoLastAnswer}
+					onclick={navigateBack}
 					class="
           rounded bg-gray-200
           px-4 py-2
@@ -756,14 +768,15 @@
 				<button
 					onclick={markCorrect}
 					class="
-          flex h-24 w-56 items-center
-          justify-center
-          rounded-full
-          bg-green-200 text-4xl transition-all
-          duration-200 hover:bg-green-300
-          focus:ring-4 focus:ring-green-300 focus:outline-none
-          {isCorrect === 'Correct' ? 'ring-4 ring-green-700' : ''}
-        "
+						flex h-24 w-56 items-center
+						justify-center
+						rounded-full
+						bg-green-200 text-4xl transition-all
+						duration-200 hover:bg-green-300
+						focus:ring-4 focus:ring-green-300 focus:outline-none
+						{isCorrect === 'Correct' ? 'ring-4 ring-green-700' : ''}
+					"
+					id="markCorrectButton"
 				>
 					✅
 				</button>
@@ -778,6 +791,7 @@
           focus:ring-4 focus:ring-red-300 focus:outline-none
           {isCorrect === 'Incorrect' ? 'ring-4 ring-red-700' : ''}
         "
+				id="markIncorrectButton"
 				>
 					❌
 				</button>
